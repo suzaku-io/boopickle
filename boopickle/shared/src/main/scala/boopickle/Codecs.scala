@@ -1,14 +1,14 @@
 package boopickle
 
-import java.nio.ByteBuffer
+import java.nio.{ByteOrder, ByteBuffer}
 import java.nio.charset.{CharacterCodingException, StandardCharsets}
 
-class Decoder(buf:ByteBuffer) {
+class Decoder(buf: ByteBuffer) {
   /**
    * Decodes a single byte
    * @return
    */
-  def readByte: Byte = {
+  @inline def readByte: Byte = {
     buf.get
   }
 
@@ -18,12 +18,12 @@ class Decoder(buf:ByteBuffer) {
    */
   def readChar: Char = {
     val b0 = buf.get.toShort & 0xFF
-    if(b0 < 0x80)
+    if (b0 < 0x80)
       b0.toChar
-    else if((b0 & 0xE0) == 0xC0) {
+    else if ((b0 & 0xE0) == 0xC0) {
       val b1 = buf.get.toShort & 0xFF
       ((b0 & 0x1F) << 6 | (b1 & 0x3F)).toChar
-    } else if((b0 & 0xF0) == 0xE0) {
+    } else if ((b0 & 0xF0) == 0xE0) {
       val s0 = buf.getShort
       ((b0 & 0x0F) << 12 | (s0 & 0x3F00) >> 2 | (s0 & 0x003F)).toChar
     } else
@@ -38,15 +38,15 @@ class Decoder(buf:ByteBuffer) {
    * 1001 XXXX  b0                        = -1 to -4096
    * 1010 XXXX  b0 b1                     = 4096 to 1048575
    * 1011 XXXX  b0 b1                     = -4097 to -1048576
-   * 1100 XXXX  b0 b1 b2                  = 1048575 to 268435455
-   * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435456
+   * 1100 XXXX  b0 b1 b2                  = 1048576 to 268435455
+   * 1101 XXXX  b0 b1 b2                  = -1048577 to -268435456
    * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
    * 1111 ????                            = reserved for special codings
    * </pre>
    * @return
    */
   def readInt: Int = {
-    val b = buf.get
+    val b = buf.get & 0xFF
     if ((b & 0x80) != 0) {
       // special coding, expand sign bit
       val b0 = b & 0xF | (b << 27 >> 27)
@@ -89,7 +89,7 @@ class Decoder(buf:ByteBuffer) {
    * @return
    */
   def readLong: Long = {
-    val b = buf.get
+    val b = buf.get & 0xFF
     if ((b & 0x80) != 0) {
       // special coding, expand sign bit
       val b0 = b & 0xF | (b << 27 >> 27)
@@ -104,10 +104,12 @@ class Decoder(buf:ByteBuffer) {
           buf.position(buf.position - 1)
           val b1 = buf.getInt & 0x00FFFFFF
           b0 << 24 | b1
-        case 0xE if b0 == 0xE0 =>
+        case 0xE => if (b == 0xE0)
           buf.getInt
-        case 0xE if b0 == 0xE1 =>
+        else if (b == 0xE1) // TODO, revert to normal case+if once ScalaJS compiler is fixed #1589
           buf.getLong
+        else
+          throw new IllegalArgumentException("Unknown long coding")
         case _ =>
           throw new IllegalArgumentException("Unknown long coding")
       }
@@ -120,7 +122,7 @@ class Decoder(buf:ByteBuffer) {
    * Decodes a 32-bit float (4 bytes)
    * @return
    */
-  def readFloat: Float = {
+  @inline def readFloat: Float = {
     buf.getFloat
   }
 
@@ -128,7 +130,7 @@ class Decoder(buf:ByteBuffer) {
    * Decodes a 64-bit double (8 bytes)
    * @return
    */
-  def readDouble: Double = {
+  @inline def readDouble: Double = {
     buf.getDouble
   }
 
@@ -140,12 +142,7 @@ class Decoder(buf:ByteBuffer) {
   def readString: String = {
     // read string length
     val len = readInt
-    "" //StringCodec.decodeUTF8(len, buf)
-/*
-    val strBytes = new Array[Byte](len)
-    buf.get(strBytes)
-    new String(strBytes, "UTF-8")
-*/
+    StringCodec.decodeUTF8(len, buf)
   }
 
   /**
@@ -153,7 +150,7 @@ class Decoder(buf:ByteBuffer) {
    * @return
    */
   def readLength: Either[Byte, Int] = {
-    val b = buf.get
+    val b = buf.get & 0xFF
     if ((b & 0x80) != 0) {
       // special coding, expand sign bit
       val b0 = b & 0xF | (b << 27 >> 27)
@@ -172,7 +169,7 @@ class Decoder(buf:ByteBuffer) {
           val b1 = buf.getInt
           Right(b1)
         case _ =>
-          Left(b)
+          Left(b.toByte)
       }
     } else {
       Right(b)
@@ -183,7 +180,7 @@ class Decoder(buf:ByteBuffer) {
 class Encoder {
   private final val initSize = 1024
   private final val maxIncrement = initSize * 32
-  private var buf = ByteBuffer.allocateDirect(initSize)
+  private var buf = ByteBuffer.allocateDirect(initSize).order(ByteOrder.BIG_ENDIAN)
   @inline private def utf8 = StandardCharsets.UTF_8
 
   /**
@@ -209,7 +206,7 @@ class Encoder {
    * @param b Byte to encode
    * @return
    */
-  def writeByte(b: Byte): Encoder = {
+  @inline def writeByte(b: Byte): Encoder = {
     alloc(1).put(b)
     this
   }
@@ -221,9 +218,9 @@ class Encoder {
    * @return
    */
   def writeChar(c: Char): Encoder = {
-    if(c < 0x80) {
+    if (c < 0x80) {
       alloc(1).put(c.toByte)
-    } else if(c < 0x800) {
+    } else if (c < 0x800) {
       alloc(2).putShort((0xC080 | (c << 2 & 0x1F00) | (c & 0x3F)).toShort)
     } else {
       alloc(3).put((0xE0 | (c >>> 12)).toByte).put((0x80 | (c >>> 6 & 0x3F)).toByte).put((0x80 | (c & 0x3F)).toByte)
@@ -264,7 +261,7 @@ class Encoder {
       if (i >= -4096) {
         alloc(2).putShort((0x9000 | (i & 0x0FFF)).toShort)
       } else if (i >= -1048576) {
-        alloc(3).putShort((0xB000 | ((i >> 8) & 0x0FFFF)).toShort).put((i & 0xFF).toByte)
+        alloc(3).putShort((0xB000 | ((i >> 8) & 0x0FFF)).toShort).put((i & 0xFF).toByte)
       } else if (i >= -268435456) {
         alloc(4).putInt(0xD0000000 | (i & 0x0FFFFFFF))
       } else {
@@ -307,9 +304,9 @@ class Encoder {
    * @return
    */
   def writeString(s: String): Encoder = {
-    val strBytes = s.getBytes(utf8)
-    writeInt(strBytes.length)
-    alloc(strBytes.length).put(strBytes)
+    val strBytes = StringCodec.encodeUTF8(s)
+    writeInt(strBytes.limit)
+    alloc(strBytes.limit).put(strBytes)
     this
   }
 
@@ -319,7 +316,7 @@ class Encoder {
    * @param f Float to encode
    * @return
    */
-  def writeFloat(f: Float): Encoder = {
+  @inline def writeFloat(f: Float): Encoder = {
     alloc(4).putFloat(f)
     this
   }
@@ -330,8 +327,17 @@ class Encoder {
    * @param d Double to encode
    * @return
    */
-  def writeDouble(d: Double): Encoder = {
+  @inline def writeDouble(d: Double): Encoder = {
     alloc(8).putDouble(d)
     this
+  }
+
+  /**
+   * Completes the encoding and returns the ByteBuffer
+   * @return
+   */
+  def encode = {
+    buf.flip()
+    buf
   }
 }
