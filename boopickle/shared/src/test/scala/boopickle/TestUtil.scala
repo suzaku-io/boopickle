@@ -1,0 +1,4 @@
+package boopickle
+
+object TestUtil {
+}

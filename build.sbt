@@ -24,4 +24,5 @@ val boopickle = crossProject.settings(
   )
 
 lazy val boopickleJS = boopickle.js
+
 lazy val boopickleJVM = boopickle.jvm

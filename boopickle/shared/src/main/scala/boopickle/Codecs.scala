@@ -52,10 +52,10 @@ class Decoder(buf: ByteBuffer) {
       val b0 = b & 0xF | (b << 27 >> 27)
       b >> 4 match {
         case 0x8 | 0x9 =>
-          val b1 = buf.get
+          val b1 = buf.get & 0xFF
           b0 << 8 | b1
         case 0xA | 0xB =>
-          val b1 = buf.getShort
+          val b1 = buf.getShort & 0xFFFF
           b0 << 16 | b1
         case 0xC | 0xD =>
           buf.position(buf.position - 1)
@@ -95,10 +95,10 @@ class Decoder(buf: ByteBuffer) {
       val b0 = b & 0xF | (b << 27 >> 27)
       b >> 4 match {
         case 0x8 | 0x9 =>
-          val b1 = buf.get
+          val b1 = buf.get & 0xFF
           b0 << 8 | b1
         case 0xA | 0xB =>
-          val b1 = buf.getShort
+          val b1 = buf.getShort & 0xFFFF
           b0 << 16 | b1
         case 0xC | 0xD =>
           buf.position(buf.position - 1)
@@ -146,7 +146,15 @@ class Decoder(buf: ByteBuffer) {
   }
 
   /**
-   * Decodes a 32-bit integer, or returns the first byte if it doesn't provide valid encoding marker
+   * Decodes a UTF-8 encoded string whose length is already known
+   * @param len Length of the string (in bytes)
+   * @return
+   */
+  def readString(len:Int): String = {
+    StringCodec.decodeUTF8(len, buf)
+  }
+  /**
+   * Decodes a 32-bit integer, or returns the first byte if it doesn't contain a valid encoding marker
    * @return
    */
   def readLength: Either[Byte, Int] = {
@@ -156,10 +164,10 @@ class Decoder(buf: ByteBuffer) {
       val b0 = b & 0xF | (b << 27 >> 27)
       b >> 4 match {
         case 0x8 | 0x9 =>
-          val b1 = buf.get
+          val b1 = buf.get & 0xFF
           Right(b0 << 8 | b1)
         case 0xA | 0xB =>
-          val b1 = buf.getShort
+          val b1 = buf.getShort & 0xFFFF
           Right(b0 << 16 | b1)
         case 0xC | 0xD =>
           buf.position(buf.position - 1)
@@ -187,7 +195,7 @@ class Encoder {
    * Makes sure the ByteBuffer has enough space for new data. If not, allocates a new ByteBuffer
    * and copies data from the old one.
    *
-   * @param size Number of bytes are needed for new data
+   * @param size Number of bytes needed for new data
    * @return
    */
   private def alloc(size: Int): ByteBuffer = {

@@ -3,6 +3,14 @@ package boopickle
 import utest._
 
 object CodecTests extends TestSuite {
+  /**
+   * Helper function to run codec tests.
+   *
+   * @param data Sequence of data
+   * @param w Writer function
+   * @param r Reader/comparison function
+   * @tparam T Data type
+   */
   def runCodec[T](data: Seq[T], w: (Encoder, T) => Unit, r: (Decoder, T) => Boolean) = {
     val e = new Encoder
     data.foreach { x => w(e, x) }
@@ -18,7 +26,7 @@ object CodecTests extends TestSuite {
     }
 
     'Int - {
-      val data = Seq(0, 1, -1, -4096, -4097, 4096, 1048575, 1048576, -1048576, -1048577, 268435455, 268435456, -268435456, -268435457, Int.MaxValue, Int.MinValue)
+      val data = Seq(0, 1, -1, 4095, -4096, -4097, 4096, 1048575, 1048576, -1048576, -1048577, 268435455, 268435456, -268435456, -268435457, Int.MaxValue, Int.MinValue)
       runCodec[Int](data, (e, x) => e.writeInt(x), (d, x) => d.readInt == x)
     }
 
