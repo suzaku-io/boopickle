@@ -1,8 +1,12 @@
 package boopickle
 
 import java.nio.ByteBuffer
+import java.util.UUID
+
+import boopickle.Unpickler._
 
 import scala.collection.mutable
+import scala.concurrent.duration.Duration
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 
@@ -11,21 +15,35 @@ object Unpickle {
 }
 
 case class UnpickledCurry[A](u: Unpickler[A]) {
-  def fromBytes(bytes: ByteBuffer): A = {
-    u.unpickle(new UnpickleState(new Decoder(bytes)))
-  }
+  def apply(implicit state: UnpickleState): A = u.unpickle(state)
+
+  def fromBytes(bytes: ByteBuffer): A = u.unpickle(new UnpickleState(new Decoder(bytes)))
+
+  def fromState(state: UnpickleState): A = u.unpickle(state)
 }
 
 trait Unpickler[A] {
   def unpickle(implicit state: UnpickleState): A
 }
 
-object Unpickler {
+trait UnpicklerHelper {
+  type U[A] = Unpickler[A]
+  /**
+   * Helper function to unpickle a type
+   */
+  def read[A](implicit state: UnpickleState, u: U[A]): A = u.unpickle
+}
+
+object Unpickler extends TupleUnpicklers {
 
   import Constants._
 
-  implicit object BooleanUnpickler extends Unpickler[Boolean] {
-    override def unpickle(implicit state: UnpickleState): Boolean = {
+  implicit object UnitUnpickler extends U[Unit] {
+    @inline override def unpickle(implicit state: UnpickleState): Unit = { /* do nothing */ }
+  }
+
+  implicit object BooleanUnpickler extends U[Boolean] {
+    @inline override def unpickle(implicit state: UnpickleState): Boolean = {
       if (state.dec.readByte == 1)
         true
       else
@@ -33,45 +51,52 @@ object Unpickler {
     }
   }
 
-  implicit object ByteUnpickler extends Unpickler[Byte] {
-    override def unpickle(implicit state: UnpickleState): Byte = {
-      state.dec.readByte
+  implicit object ByteUnpickler extends U[Byte] {
+    @inline override def unpickle(implicit state: UnpickleState): Byte = state.dec.readByte
+  }
+
+  implicit object ShortUnpickler extends U[Short] {
+    @inline override def unpickle(implicit state: UnpickleState): Short = state.dec.readInt.toShort
+  }
+
+  implicit object CharUnpickler extends U[Char] {
+    @inline override def unpickle(implicit state: UnpickleState): Char = state.dec.readChar
+  }
+
+  implicit object IntUnpickler extends U[Int] {
+    @inline override def unpickle(implicit state: UnpickleState): Int = state.dec.readInt
+  }
+
+  implicit object LongUnpickler extends U[Long] {
+    @inline override def unpickle(implicit state: UnpickleState): Long = state.dec.readLong
+  }
+
+  implicit object FloatUnpickler extends U[Float] {
+    @inline override def unpickle(implicit state: UnpickleState): Float = state.dec.readFloat
+  }
+
+  implicit object DoubleUnpickler extends U[Double] {
+    @inline override def unpickle(implicit state: UnpickleState): Double = state.dec.readDouble
+  }
+
+  implicit object DurationUnpickler extends U[Duration] {
+    @inline override def unpickle(implicit state: UnpickleState): Duration = {
+      state.dec.readLongCode match {
+        case Left(c) if c == specialCode(DurationInf) =>
+          Duration.Inf
+        case Left(c) if c == specialCode(DurationMinusInf) =>
+          Duration.MinusInf
+        case Left(c) if c == specialCode(DurationUndefined) =>
+          Duration.Undefined
+        case Right(value) =>
+          Duration.fromNanos(value)
+      }
     }
   }
 
-  implicit object ShortUnpickler extends Unpickler[Short] {
-    override def unpickle(implicit state: UnpickleState): Short = {
-      state.dec.readInt.toShort
-    }
-  }
-
-  implicit object IntUnpickler extends Unpickler[Int] {
-    override def unpickle(implicit state: UnpickleState): Int = {
-      state.dec.readInt
-    }
-  }
-
-  implicit object LongUnpickler extends Unpickler[Long] {
-    override def unpickle(implicit state: UnpickleState): Long = {
-      state.dec.readLong
-    }
-  }
-
-  implicit object FloatUnpickler extends Unpickler[Float] {
-    override def unpickle(implicit state: UnpickleState): Float = {
-      state.dec.readFloat
-    }
-  }
-
-  implicit object DoubleUnpickler extends Unpickler[Double] {
-    override def unpickle(implicit state: UnpickleState): Double = {
-      state.dec.readDouble
-    }
-  }
-
-  implicit object StringUnpickler extends Unpickler[String] {
+  implicit object StringUnpickler extends U[String] {
     override def unpickle(implicit state: UnpickleState): String = {
-      state.dec.readLength match {
+      state.dec.readIntCode match {
         case Left(code) =>
           throw new IllegalArgumentException("Unknown string length coding")
         case Right(0) => ""
@@ -79,6 +104,7 @@ object Unpickler {
           state.immutableFor[String](-idx)
         case Right(len) =>
           val s = state.dec.readString(len)
+          // add short strings to immutable refs
           if (len < MaxRefStringLen)
             state.addImmutableRef(s)
           s
@@ -86,11 +112,17 @@ object Unpickler {
     }
   }
 
-  implicit def OptionUnpickler[T: Unpickler](implicit u: Unpickler[T]): Unpickler[Option[T]] = new Unpickler[Option[T]] {
+  implicit object UUIDUnpickler extends U[UUID] {
+    @inline override def unpickle(implicit state: UnpickleState): UUID = {
+      new UUID(state.dec.readRawLong, state.dec.readRawLong)
+    }
+  }
+
+  implicit def OptionUnpickler[T: U]: U[Option[T]] = new U[Option[T]] {
     override def unpickle(implicit state: UnpickleState): Option[T] = {
       state.dec.readInt match {
         case 0 =>
-          val o = Some(u.unpickle)
+          val o = Some(read[T])
           state.addIdentityRef(o)
           o
         case idx if idx < 0 =>
@@ -99,20 +131,32 @@ object Unpickler {
     }
   }
 
+  implicit def EitherUnpickler[T: U, S: U]: U[Either[T, S]] = new U[Either[T, S]] {
+    override def unpickle(implicit state: UnpickleState): Either[T, S] = {
+      state.dec.readByte match {
+        case EitherLeft =>
+          Left(read[T])
+        case EitherRight =>
+          Right(read[S])
+        case _ =>
+          throw new IllegalArgumentException("Invalid coding for Either type")
+      }
+    }
+  }
+
   import collection.generic.CanBuildFrom
 
   /**
-   * Unpickler for all iterables that have a builder
-   * @param cbf Builder for this iterable type
-   * @param u Unpickler for the objects in the iterable
-   * @tparam T Type of the data objects
+   * U for all iterables that have a builder. Using a builder is an efficient way to build the correct collection right away.
+   *
+   * @tparam T Type of the values
    * @tparam V Type of the iterable
    * @return
    */
-  implicit def SeqishUnpickler[T: Unpickler, V[_] <: Iterable[_]]
-  (implicit cbf: CanBuildFrom[Nothing, T, V[T]], u: Unpickler[T]): Unpickler[V[T]] = new Unpickler[V[T]] {
+  implicit def SeqishUnpickler[T: U, V[_] <: Iterable[_]]
+  (implicit cbf: CanBuildFrom[Nothing, T, V[T]]): U[V[T]] = new U[V[T]] {
     override def unpickle(implicit state: UnpickleState): V[T] = {
-      state.dec.readLength match {
+      state.dec.readIntCode match {
         case Left(code) =>
           throw new IllegalArgumentException("Unknown sequence length coding")
         case Right(0) =>
@@ -123,7 +167,7 @@ object Unpickler {
         case Right(len) =>
           val b = cbf()
           for (i <- 0 until len) {
-            b += u.unpickle
+            b += read[T]
           }
           val res = b.result()
           state.addIdentityRef(res)
@@ -132,9 +176,15 @@ object Unpickler {
     }
   }
 
-  implicit def ArrayUnpickler[T: Unpickler : ClassTag](implicit u: Unpickler[T]): Unpickler[Array[T]] = new Unpickler[Array[T]] {
+  /**
+   * U for Arrays
+   *
+   * @tparam T Type of the values
+   * @return
+   */
+  implicit def ArrayUnpickler[T: U : ClassTag]: U[Array[T]] = new U[Array[T]] {
     override def unpickle(implicit state: UnpickleState): Array[T] = {
-      state.dec.readLength match {
+      state.dec.readIntCode match {
         case Left(code) =>
           throw new IllegalArgumentException("Unknown sequence length coding")
         case Right(0) =>
@@ -145,17 +195,25 @@ object Unpickler {
         case Right(len) =>
           val a = new Array[T](len)
           for (i <- 0 until len) {
-            a(i) = u.unpickle
+            a(i) = read[T]
           }
           state.addIdentityRef(a)
           a
       }
     }
   }
-  implicit def MapUnpickler[T: Unpickler, S: Unpickler, V[_, _] <: scala.collection.Map[T, S]]
-  (implicit cbf: CanBuildFrom[Nothing, (T, S), V[T, S]], ut: Unpickler[T], us: Unpickler[S]): Unpickler[V[T, S]] = new Unpickler[V[T, S]] {
+
+  /**
+   * U for all Map types that have a builder. Using a builder is an efficient way to build the correct map right away.
+   *
+   * @tparam T Type of the values
+   * @tparam V Type of the map
+   * @return
+   */
+  implicit def MapUnpickler[T: U, S: U, V[_, _] <: scala.collection.Map[T, S]]
+  (implicit cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): U[V[T, S]] = new U[V[T, S]] {
     override def unpickle(implicit state: UnpickleState): V[T, S] = {
-      state.dec.readLength match {
+      state.dec.readIntCode match {
         case Left(code) =>
           throw new IllegalArgumentException("Unknown sequence length coding")
         case Right(0) =>
@@ -166,7 +224,7 @@ object Unpickler {
         case Right(len) =>
           val b = cbf()
           for (i <- 0 until len) {
-            b += ut.unpickle -> us.unpickle
+            b += read[T] -> read[S]
           }
           val res = b.result()
           state.addIdentityRef(res)
@@ -222,4 +280,8 @@ final class UnpickleState(val dec: Decoder) {
   private[boopickle] def addIdentityRef(obj: AnyRef): Unit = {
     identityRefs += obj
   }
+}
+
+object UnpickleState {
+  def apply(bytes: ByteBuffer) = new UnpickleState(new Decoder(bytes))
 }

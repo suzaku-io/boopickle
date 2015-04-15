@@ -1,8 +1,12 @@
 package boopickle
 
 import java.nio.ByteBuffer
+import java.util.UUID
+
+import boopickle.Pickler._
 
 import scala.collection.mutable
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.language.higherKinds
 
 object Pickle {
@@ -20,59 +24,60 @@ trait Pickler[A] {
   def pickle(obj: A)(implicit state: PickleState)
 }
 
-object Pickler {
+trait PicklerHelper {
+  type P[A] = Pickler[A]
+
+  /**
+   * Helper function to write pickled types
+   */
+  def write[A](value: A)(implicit state: PickleState, p: P[A]): Unit = p.pickle(value)(state)
+}
+
+object Pickler extends TuplePicklers {
 
   import Constants._
 
-  implicit val NothingPickler = new Pickler[Nothing] {
-    override def pickle(b: Nothing)(implicit state: PickleState): Unit = {
-      // do nothing
-    }
+  implicit val NothingPickler = new P[Nothing] {
+    override def pickle(b: Nothing)(implicit state: PickleState): Unit = ???
   }
 
-  implicit object BooleanPickler extends Pickler[Boolean] {
-    override def pickle(value: Boolean)(implicit state: PickleState): Unit = {
-      state.enc.writeByte(if (value) 1 else 0)
-    }
+  implicit val UnitPickler = new P[Unit] {
+    @inline override def pickle(b: Unit)(implicit state: PickleState): Unit = ()
   }
 
-  implicit object BytePickler extends Pickler[Byte] {
-    override def pickle(value: Byte)(implicit state: PickleState): Unit = {
-      state.enc.writeByte(value)
-    }
+  implicit object BooleanPickler extends P[Boolean] {
+    @inline override def pickle(value: Boolean)(implicit state: PickleState): Unit = state.enc.writeByte(if (value) 1 else 0)
   }
 
-  implicit object ShortPickler extends Pickler[Short] {
-    override def pickle(value: Short)(implicit state: PickleState): Unit = {
-      state.enc.writeInt(value)
-    }
+  implicit object BytePickler extends P[Byte] {
+    @inline override def pickle(value: Byte)(implicit state: PickleState): Unit = state.enc.writeByte(value)
   }
 
-  implicit object IntPickler extends Pickler[Int] {
-    override def pickle(value: Int)(implicit state: PickleState): Unit = {
-      state.enc.writeInt(value)
-    }
+  implicit object ShortPickler extends P[Short] {
+    @inline override def pickle(value: Short)(implicit state: PickleState): Unit = state.enc.writeInt(value)
   }
 
-  implicit object LongPickler extends Pickler[Long] {
-    override def pickle(value: Long)(implicit state: PickleState): Unit = {
-      state.enc.writeLong(value)
-    }
+  implicit object CharPickler extends P[Char] {
+    @inline override def pickle(value: Char)(implicit state: PickleState): Unit = state.enc.writeChar(value)
   }
 
-  implicit object FloatPickler extends Pickler[Float] {
-    override def pickle(value: Float)(implicit state: PickleState): Unit = {
-      state.enc.writeFloat(value)
-    }
+  implicit object IntPickler extends P[Int] {
+    @inline override def pickle(value: Int)(implicit state: PickleState): Unit = state.enc.writeInt(value)
   }
 
-  implicit object DoublePickler extends Pickler[Double] {
-    override def pickle(value: Double)(implicit state: PickleState): Unit = {
-      state.enc.writeDouble(value)
-    }
+  implicit object LongPickler extends P[Long] {
+    @inline override def pickle(value: Long)(implicit state: PickleState): Unit = state.enc.writeLong(value)
   }
 
-  implicit object StringPickler extends Pickler[String] {
+  implicit object FloatPickler extends P[Float] {
+    @inline override def pickle(value: Float)(implicit state: PickleState): Unit = state.enc.writeFloat(value)
+  }
+
+  implicit object DoublePickler extends P[Double] {
+    @inline override def pickle(value: Double)(implicit state: PickleState): Unit = state.enc.writeDouble(value)
+  }
+
+  implicit object StringPickler extends P[String] {
     override def pickle(s: String)(implicit state: PickleState): Unit = {
       // check for previously pickled string
       state.immutableRefFor(s) match {
@@ -87,12 +92,39 @@ object Pickler {
     }
   }
 
-  implicit def OptionPickler[T](implicit p: Pickler[T]): Pickler[Option[T]] = new Pickler[Option[T]] {
+  implicit object UUIDPickler extends P[UUID] {
+    override def pickle(s: UUID)(implicit state: PickleState): Unit = {
+      state.enc.writeRawLong(s.getMostSignificantBits)
+      state.enc.writeRawLong(s.getLeastSignificantBits)
+    }
+  }
+
+  implicit object DurationPickler extends P[Duration] {
+    override def pickle(value: Duration)(implicit state: PickleState): Unit = {
+      // take care of special Durations
+      value match {
+        case Duration.Inf =>
+          state.enc.writeByte(specialCode(DurationInf))
+        case Duration.MinusInf =>
+          state.enc.writeByte(specialCode(DurationMinusInf))
+        case x if x eq Duration.Undefined =>
+          state.enc.writeByte(specialCode(DurationUndefined))
+        case x =>
+          state.enc.writeLong(x.toNanos)
+      }
+    }
+  }
+
+  @inline implicit def FiniteDurationPickler: P[FiniteDuration] = DurationPickler.asInstanceOf[Pickler[FiniteDuration]]
+
+  @inline implicit def InfiniteDurationPickler: P[Duration.Infinite] = DurationPickler.asInstanceOf[Pickler[Duration.Infinite]]
+
+  implicit def OptionPickler[T: P] = new P[Option[T]] {
     override def pickle(obj: Option[T])(implicit state: PickleState): Unit = {
       obj match {
         case Some(x) =>
           state.enc.writeByte(0)
-          p.pickle(x)
+          write[T](x)
         case None =>
           val idx = state.identityRefFor(obj).get
           // encode index as negative "length"
@@ -101,15 +133,32 @@ object Pickler {
     }
   }
 
-  implicit def SomePickler[T](implicit p: Pickler[T]): Pickler[Some[T]] = OptionPickler[T].asInstanceOf[Pickler[Some[T]]]
+  @inline implicit def SomePickler[T](implicit p: P[T]): P[Some[T]] = OptionPickler[T].asInstanceOf[Pickler[Some[T]]]
+
+  implicit def EitherPickler[T: P, S: P]: P[Either[T, S]] = new P[Either[T, S]] {
+    override def pickle(obj: Either[T, S])(implicit state: PickleState): Unit = {
+      obj match {
+        case Left(l) =>
+          state.enc.writeByte(EitherLeft)
+          write[T](l)
+        case Right(r) =>
+          state.enc.writeByte(EitherRight)
+          write[S](r)
+      }
+    }
+  }
+
+  implicit def LeftPickler[T: Pickler, S: Pickler] = EitherPickler[T, S].asInstanceOf[Pickler[Left[T, S]]]
+
+  implicit def RightPickler[T: Pickler, S: Pickler] = EitherPickler[T, S].asInstanceOf[Pickler[Right[T, S]]]
 
   /**
    * This pickler works on all collections that derive from Iterable (Vector, Set, List, etc)
-   * @tparam T type of the data objects
+   * @tparam T type of the values
    * @tparam V type of the collection
    * @return
    */
-  implicit def iterablePickler[T: Pickler, V[_] <: Iterable[_]](implicit p: Pickler[T]): Pickler[V[T]] = new Pickler[V[T]] {
+  implicit def iterablePickler[T: P, V[_] <: Iterable[_]] = new P[V[T]] {
     override def pickle(iterable: V[T])(implicit state: PickleState): Unit = {
       // check if this iterable has been pickled already
       state.identityRefFor(iterable) match {
@@ -120,13 +169,18 @@ object Pickler {
           // encode length
           state.enc.writeInt(iterable.size)
           // encode contents
-          iterable.iterator.asInstanceOf[Iterator[T]].foreach(a => p.pickle(a))
+          iterable.iterator.asInstanceOf[Iterator[T]].foreach(a => write[T](a))
           state.addIdentityRef(iterable)
       }
     }
   }
 
-  implicit def arrayPickler[T: Pickler](implicit p: Pickler[T]): Pickler[Array[T]] = new Pickler[Array[T]] {
+  /**
+   * Specific pickler for Arrays
+   * @tparam T Type of values
+   * @return
+   */
+  implicit def arrayPickler[T: P] = new P[Array[T]] {
     override def pickle(array: Array[T])(implicit state: PickleState): Unit = {
       // check if this iterable has been pickled already
       state.identityRefFor(array) match {
@@ -137,7 +191,7 @@ object Pickler {
           // encode length
           state.enc.writeInt(array.length)
           // encode contents
-          array.foreach(a => p.pickle(a))
+          array.foreach(a => write[T](a))
           state.addIdentityRef(array)
       }
     }
@@ -149,7 +203,7 @@ object Pickler {
    * @tparam S Type of values
    * @return
    */
-  implicit def mapPickler[T: Pickler, S: Pickler, V[_, _] <: scala.collection.Map[_, _]]: Pickler[V[T, S]] = new Pickler[V[T, S]] {
+  implicit def mapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]] = new P[V[T, S]] {
     override def pickle(map: V[T, S])(implicit state: PickleState): Unit = {
       // check if this map has been pickled already
       state.identityRefFor(map) match {
@@ -160,18 +214,12 @@ object Pickler {
           // encode length
           state.enc.writeInt(map.size)
           // encode contents as a sequence
-          map.iterator.asInstanceOf[Iterator[(T, S)]].foreach(a => Pickle(a))
+          map.iterator.asInstanceOf[Iterator[(T, S)]].foreach { a => write[T](a._1); write[S](a._2) }
           state.addIdentityRef(map)
       }
     }
   }
 
-  implicit def Tuple2Pickler[T1: Pickler, T2: Pickler]: Pickler[(T1, T2)] = new Pickler[(T1, T2)] {
-    override def pickle(t: (T1, T2))(implicit state: PickleState): Unit = {
-      Pickle(t._1)
-      Pickle(t._2)
-    }
-  }
 }
 
 final class PickleState(val enc: Encoder) {

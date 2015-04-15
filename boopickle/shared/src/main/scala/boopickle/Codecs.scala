@@ -72,6 +72,10 @@ class Decoder(buf: ByteBuffer) {
     }
   }
 
+  def readRawInt:Int = {
+    buf.getInt
+  }
+
   /**
    * Decodes a 64-bit integer (1-9 bytes)
    * <pre>
@@ -118,6 +122,75 @@ class Decoder(buf: ByteBuffer) {
     }
   }
 
+  def readRawLong:Long = {
+    buf.getLong
+  }
+
+  /**
+   * Decodes a 32-bit integer, or returns the first byte if it doesn't contain a valid encoding marker
+   * @return
+   */
+  def readIntCode: Either[Byte, Int] = {
+    val b = buf.get & 0xFF
+    if ((b & 0x80) != 0) {
+      // special coding, expand sign bit
+      val b0 = b & 0xF | (b << 27 >> 27)
+      b >> 4 match {
+        case 0x8 | 0x9 =>
+          val b1 = buf.get & 0xFF
+          Right(b0 << 8 | b1)
+        case 0xA | 0xB =>
+          val b1 = buf.getShort & 0xFFFF
+          Right(b0 << 16 | b1)
+        case 0xC | 0xD =>
+          buf.position(buf.position - 1)
+          val b1 = buf.getInt & 0x00FFFFFF
+          Right(b0 << 24 | b1)
+        case 0xE if b == 0xE0 =>
+          val b1 = buf.getInt
+          Right(b1)
+        case _ =>
+          Left(b.toByte)
+      }
+    } else {
+      Right(b)
+    }
+  }
+
+  /**
+   * Decodes a 64-bit long, or returns the first byte if it doesn't contain a valid encoding marker
+   * @return
+   */
+  def readLongCode: Either[Byte, Long] = {
+    val b = buf.get & 0xFF
+    if ((b & 0x80) != 0) {
+      // special coding, expand sign bit
+      val b0 = b & 0xF | (b << 27 >> 27)
+      b >> 4 match {
+        case 0x8 | 0x9 =>
+          val b1 = buf.get & 0xFF
+          Right(b0 << 8 | b1)
+        case 0xA | 0xB =>
+          val b1 = buf.getShort & 0xFFFF
+          Right(b0 << 16 | b1)
+        case 0xC | 0xD =>
+          buf.position(buf.position - 1)
+          val b1 = buf.getInt & 0x00FFFFFF
+          Right(b0 << 24 | b1)
+        case 0xE => if (b == 0xE0)
+          Right(buf.getInt)
+        else if (b == 0xE1) // TODO, revert to normal case+if once ScalaJS compiler is fixed #1589
+          Right(buf.getLong)
+        else
+          throw new IllegalArgumentException("Unknown long coding")
+        case _ =>
+          Left(b.toByte)
+      }
+    } else {
+      Right(b)
+    }
+  }
+
   /**
    * Decodes a 32-bit float (4 bytes)
    * @return
@@ -152,36 +225,6 @@ class Decoder(buf: ByteBuffer) {
    */
   def readString(len:Int): String = {
     StringCodec.decodeUTF8(len, buf)
-  }
-  /**
-   * Decodes a 32-bit integer, or returns the first byte if it doesn't contain a valid encoding marker
-   * @return
-   */
-  def readLength: Either[Byte, Int] = {
-    val b = buf.get & 0xFF
-    if ((b & 0x80) != 0) {
-      // special coding, expand sign bit
-      val b0 = b & 0xF | (b << 27 >> 27)
-      b >> 4 match {
-        case 0x8 | 0x9 =>
-          val b1 = buf.get & 0xFF
-          Right(b0 << 8 | b1)
-        case 0xA | 0xB =>
-          val b1 = buf.getShort & 0xFFFF
-          Right(b0 << 16 | b1)
-        case 0xC | 0xD =>
-          buf.position(buf.position - 1)
-          val b1 = buf.getInt & 0x00FFFFFF
-          Right(b0 << 24 | b1)
-        case 0xE if b == 0xE0 =>
-          val b1 = buf.getInt
-          Right(b1)
-        case _ =>
-          Left(b.toByte)
-      }
-    } else {
-      Right(b)
-    }
   }
 }
 
@@ -280,6 +323,17 @@ class Encoder {
     this
   }
 
+
+  /**
+   * Encodes an integer in 32-bits
+   * @param i Integer to encode
+   * @return
+   */
+  def writeRawInt(i:Int):Encoder = {
+    alloc(4).putInt(i)
+    this
+  }
+
   /**
    * Encodes a long efficiently in 1 to 9 bytes
    * <pre>
@@ -305,6 +359,15 @@ class Encoder {
     this
   }
 
+  /**
+   * Encodes a long in 64-bits
+   * @param l Long to encode
+   * @return
+   */
+  def writeRawLong(l:Long):Encoder = {
+    alloc(8).putLong(l)
+    this
+  }
   /**
    * Encodes a string using UTF8
    *
