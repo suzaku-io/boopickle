@@ -3,10 +3,9 @@ package boopickle
 import java.nio.ByteBuffer
 import java.util.UUID
 
-import boopickle.Pickler._
-
 import scala.collection.mutable
 import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.language.experimental.macros
 import scala.language.higherKinds
 
 object Pickle {
@@ -33,7 +32,7 @@ trait PicklerHelper {
   def write[A](value: A)(implicit state: PickleState, p: P[A]): Unit = p.pickle(value)(state)
 }
 
-object Pickler extends TuplePicklers {
+object Pickler extends TuplePicklers with MaterializePicklerFallback {
 
   import Constants._
 
@@ -115,42 +114,58 @@ object Pickler extends TuplePicklers {
     }
   }
 
-  @inline implicit def FiniteDurationPickler: P[FiniteDuration] = DurationPickler.asInstanceOf[Pickler[FiniteDuration]]
+  @inline implicit def FiniteDurationPickler: P[FiniteDuration] = DurationPickler.asInstanceOf[P[FiniteDuration]]
 
-  @inline implicit def InfiniteDurationPickler: P[Duration.Infinite] = DurationPickler.asInstanceOf[Pickler[Duration.Infinite]]
+  @inline implicit def InfiniteDurationPickler: P[Duration.Infinite] = DurationPickler.asInstanceOf[P[Duration.Infinite]]
 
   implicit def OptionPickler[T: P] = new P[Option[T]] {
     override def pickle(obj: Option[T])(implicit state: PickleState): Unit = {
       obj match {
         case Some(x) =>
-          state.enc.writeByte(0)
-          write[T](x)
+          // check if this Option has been pickled already
+          state.identityRefFor(obj) match {
+            case Some(idx) =>
+              // encode index as negative "length"
+              state.enc.writeInt(-idx)
+            case None =>
+              state.enc.writeInt(OptionSome)
+              write[T](x)
+              state.addIdentityRef(obj)
+          }
         case None =>
+          // `None` is always encoded as reference
           val idx = state.identityRefFor(obj).get
-          // encode index as negative "length"
           state.enc.writeInt(-idx)
       }
     }
   }
 
-  @inline implicit def SomePickler[T](implicit p: P[T]): P[Some[T]] = OptionPickler[T].asInstanceOf[Pickler[Some[T]]]
+  @inline implicit def SomePickler[T](implicit p: P[T]): P[Some[T]] = OptionPickler[T].asInstanceOf[P[Some[T]]]
 
   implicit def EitherPickler[T: P, S: P]: P[Either[T, S]] = new P[Either[T, S]] {
     override def pickle(obj: Either[T, S])(implicit state: PickleState): Unit = {
-      obj match {
-        case Left(l) =>
-          state.enc.writeByte(EitherLeft)
-          write[T](l)
-        case Right(r) =>
-          state.enc.writeByte(EitherRight)
-          write[S](r)
+      // check if this Either has been pickled already
+      state.identityRefFor(obj) match {
+        case Some(idx) =>
+          // encode index as negative "length"
+          state.enc.writeInt(-idx)
+        case None =>
+          obj match {
+            case Left(l) =>
+              state.enc.writeInt(EitherLeft)
+              write[T](l)
+            case Right(r) =>
+              state.enc.writeInt(EitherRight)
+              write[S](r)
+          }
+          state.addIdentityRef(obj)
       }
     }
   }
 
-  implicit def LeftPickler[T: Pickler, S: Pickler] = EitherPickler[T, S].asInstanceOf[Pickler[Left[T, S]]]
+  implicit def LeftPickler[T: P, S: P] = EitherPickler[T, S].asInstanceOf[P[Left[T, S]]]
 
-  implicit def RightPickler[T: Pickler, S: Pickler] = EitherPickler[T, S].asInstanceOf[Pickler[Right[T, S]]]
+  implicit def RightPickler[T: P, S: P] = EitherPickler[T, S].asInstanceOf[P[Right[T, S]]]
 
   /**
    * This pickler works on all collections that derive from Iterable (Vector, Set, List, etc)
@@ -220,6 +235,7 @@ object Pickler extends TuplePicklers {
     }
   }
 
+  implicit def toPickler[A <: AnyRef](implicit pair: PicklerPair[A]): Pickler[A] = pair.pickler
 }
 
 final class PickleState(val enc: Encoder) {
@@ -290,4 +306,8 @@ object PickleState {
       System.identityHashCode(obj)
   }
 
+}
+
+trait MaterializePicklerFallback {
+  implicit def materializePickler[T]: Pickler[T] = macro PicklerMaterializersImpl.materializePickler[T]
 }

@@ -2,7 +2,7 @@ import sbt.Keys._
 
 val boopickle = crossProject.settings(
   organization := "me.chrons",
-  version := "0.0.1",
+  version := Version.library,
   scalaVersion := "2.11.6",
   name := "boopickle",
   scalacOptions ++= Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf8"),

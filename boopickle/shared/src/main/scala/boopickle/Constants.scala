@@ -1,7 +1,7 @@
 package boopickle
 
 private[boopickle] object Constants {
-  final val MaxRefStringLen = 64
+  final val MaxRefStringLen = 256
 
   /**
    * Code for encoding special values in place of int/length
@@ -19,8 +19,14 @@ private[boopickle] object Constants {
   final val DurationUndefined = 3
 
   // codes for Either
-  final val EitherLeft = 1.toByte
-  final val EitherRight = 2.toByte
+  final val EitherLeft = 1
+  final val EitherRight = 2
+
+  // codes for Option
+  final val OptionSome = 1
+
+  // codes for Composite pickler
+  final val CompositeNull = 0
 
   val immutableInitData = Seq("null", "true", "false", "0", "1", "-1")
 

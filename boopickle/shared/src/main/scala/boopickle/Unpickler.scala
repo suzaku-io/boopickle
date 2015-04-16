@@ -7,6 +7,7 @@ import boopickle.Unpickler._
 
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
+import scala.language.experimental.macros
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 
@@ -34,7 +35,7 @@ trait UnpicklerHelper {
   def read[A](implicit state: UnpickleState, u: U[A]): A = u.unpickle
 }
 
-object Unpickler extends TupleUnpicklers {
+object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
 
   import Constants._
 
@@ -120,24 +121,28 @@ object Unpickler extends TupleUnpicklers {
 
   implicit def OptionUnpickler[T: U]: U[Option[T]] = new U[Option[T]] {
     override def unpickle(implicit state: UnpickleState): Option[T] = {
-      state.dec.readInt match {
-        case 0 =>
+      state.dec.readIntCode match {
+        case Right(OptionSome) =>
           val o = Some(read[T])
           state.addIdentityRef(o)
           o
-        case idx if idx < 0 =>
-          state.identityFor(-idx)
+        case Right(idx) if idx < 0 =>
+          state.identityFor[Option[T]](-idx)
+        case _ =>
+          throw new IllegalArgumentException("Invalid coding for Option type")
       }
     }
   }
 
   implicit def EitherUnpickler[T: U, S: U]: U[Either[T, S]] = new U[Either[T, S]] {
     override def unpickle(implicit state: UnpickleState): Either[T, S] = {
-      state.dec.readByte match {
-        case EitherLeft =>
+      state.dec.readIntCode match {
+        case Right(EitherLeft) =>
           Left(read[T])
-        case EitherRight =>
+        case Right(EitherRight) =>
           Right(read[S])
+        case Right(idx) if idx < 0 =>
+          state.identityFor[Either[T, S]](-idx)
         case _ =>
           throw new IllegalArgumentException("Invalid coding for Either type")
       }
@@ -232,6 +237,8 @@ object Unpickler extends TupleUnpicklers {
       }
     }
   }
+
+  implicit def toUnpickler[A <: AnyRef](implicit pair: PicklerPair[A]): Unpickler[A] = pair.unpickler
 }
 
 final class UnpickleState(val dec: Decoder) {
@@ -280,8 +287,14 @@ final class UnpickleState(val dec: Decoder) {
   private[boopickle] def addIdentityRef(obj: AnyRef): Unit = {
     identityRefs += obj
   }
+
+  def unpickle[A](implicit state: UnpickleState, u: U[A]): A = u.unpickle
 }
 
 object UnpickleState {
   def apply(bytes: ByteBuffer) = new UnpickleState(new Decoder(bytes))
+}
+
+trait MaterializeUnpicklerFallback {
+  implicit def materializeUnpickler[T]: Unpickler[T] = macro PicklerMaterializersImpl.materializeUnpickler[T]
 }
