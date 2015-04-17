@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.96.1/css/materialize.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+</head>
+<body onload="BooApp().main()">
+<nav class="light-blue lighten-1" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" href="#" class="brand-logo">BooPickle</a></div>
+</nav>
+<div class="container">
+    <h3 class="header blue-text">Performance tests</h3>
+
+    <p class="light">This small <a href="http://www.scala-js.org">Scala.js</a> application compares the performance of
+        common pickling (aka serialization) libraries with <a href="https://github.com/ochrons/boopickle">BooPickle</a>. The
+        performance tests are only indicative of real world performance, but should give a rough estimate on how the various
+        pickling libraries compare in terms of browser performance.</p>
+</div>
+<div class="container" id="contentRoot">
+</div>
+<!--
+<script src="../perftests-fastopt.js"></script>
+-->
+
+<script src="gzip.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.96.1/js/materialize.min.js"></script>
+<script src="../perftests-opt.js"></script>
+</body>
+</html>

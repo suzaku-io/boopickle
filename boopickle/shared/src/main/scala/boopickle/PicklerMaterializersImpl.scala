@@ -10,7 +10,7 @@ object PicklerMaterializersImpl {
     val tpe = weakTypeOf[T]
 
     if (!tpe.typeSymbol.isClass)
-      throw new RuntimeException("Enclosure: " + c.enclosingPosition.toString)
+      throw new RuntimeException(s"Enclosure: ${c.enclosingPosition.toString}, type = $tpe")
 
     val sym = tpe.typeSymbol.asClass
 

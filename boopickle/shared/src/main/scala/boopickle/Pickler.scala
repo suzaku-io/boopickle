@@ -37,7 +37,7 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
   import Constants._
 
   implicit val NothingPickler = new P[Nothing] {
-    override def pickle(b: Nothing)(implicit state: PickleState): Unit = ???
+    override def pickle(b: Nothing)(implicit state: PickleState): Unit = throw new NotImplementedError("Cannot pickle Nothing!")
   }
 
   implicit val UnitPickler = new P[Unit] {
@@ -77,6 +77,18 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
   }
 
   implicit object StringPickler extends P[String] {
+    def encodeUUID(str:String, code:Byte)(implicit state: PickleState): Unit = {
+      // special coding for lowercase UUID
+      val uuid = UUID.fromString(str)
+      state.enc.writeByte(code)
+      state.enc.writeRawLong(uuid.getMostSignificantBits)
+      state.enc.writeRawLong(uuid.getLeastSignificantBits)
+    }
+
+    val uuidRE = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}".r
+    val UUIDRE = "[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}".r
+    val numRE = "^-?[1-9][0-9]*$".r
+
     override def pickle(s: String)(implicit state: PickleState): Unit = {
       // check for previously pickled string
       state.immutableRefFor(s) match {
@@ -84,9 +96,37 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
           // encode index as negative "length"
           state.enc.writeInt(-idx)
         case None =>
-          if (s.length < MaxRefStringLen && s.nonEmpty)
-            state.addImmutableRef(s)
-          state.enc.writeString(s)
+          if(s.length > 1 && s.length < 21 && (s(0).isDigit || s(0) == '-') && numRE.pattern.matcher(s).matches()) {
+            // string represents an integer/long
+            try {
+              val l = java.lang.Long.parseLong(s)
+              if (l > Int.MaxValue || l < Int.MinValue) {
+                // value bigger than Int
+                state.enc.writeByte(specialCode(StringLong))
+                state.enc.writeRawLong(l)
+              } else {
+                // value fits into an Int
+                state.enc.writeByte(specialCode(StringInt))
+                state.enc.writeInt(l.toInt)
+              }
+            } catch {
+              case e:NumberFormatException =>
+                // probably too big for Long even with all the precautions taken above
+                state.addImmutableRef(s)
+                state.enc.writeString(s)
+            }
+          } else if (s.length == 36 && uuidRE.pattern.matcher(s).matches()) {
+            // lower-case UUID
+            encodeUUID(s, specialCode(StringUUID) )
+          } else if (s.length == 36 && UUIDRE.pattern.matcher(s).matches()) {
+            // upper-case UUID
+            encodeUUID(s, specialCode(StringUUIDUpper) )
+          } else {
+            // normal string
+            if (s.nonEmpty)
+              state.addImmutableRef(s)
+            state.enc.writeString(s)
+          }
       }
     }
   }
@@ -243,7 +283,7 @@ final class PickleState(val enc: Encoder) {
   import PickleState._
 
   /**
-   * Object reference for pickled immutable objects
+   * Object reference for pickled immutable objects. Currently only for strings.
    *
    * Index 0 is not used
    * Index 1 = null
@@ -256,15 +296,15 @@ final class PickleState(val enc: Encoder) {
   addImmutableRef(null)
   Constants.immutableInitData.foreach(addImmutableRef)
 
-  private[boopickle] def immutableRefFor(obj: AnyRef) = immutableRefs.get(obj)
+  @inline private[boopickle] def immutableRefFor(obj: AnyRef) = immutableRefs.get(obj)
 
-  private[boopickle] def addImmutableRef(obj: AnyRef): Unit = {
+  @inline private[boopickle] def addImmutableRef(obj: AnyRef): Unit = {
     immutableRefs += obj -> immutableIdx
     immutableIdx += 1
   }
 
   /**
-   * Object reference for pickled mutable objects (use identity for equality comparison)
+   * Object reference for pickled objects (use identity for equality comparison)
    *
    * Index 0 is not used
    * Index 1 = null
@@ -277,14 +317,14 @@ final class PickleState(val enc: Encoder) {
   addIdentityRef(null)
   Constants.identityInitData.foreach(addIdentityRef)
 
-  private[boopickle] def identityRefFor(obj: AnyRef) = identityRefs.get(Identity(obj))
+  @inline private[boopickle] def identityRefFor(obj: AnyRef) = identityRefs.get(Identity(obj))
 
-  private[boopickle] def addIdentityRef(obj: AnyRef): Unit = {
+  @inline private[boopickle] def addIdentityRef(obj: AnyRef): Unit = {
     identityRefs += Identity(obj) -> identityIdx
     identityIdx += 1
   }
 
-  def pickle[A](value: A)(implicit p: Pickler[A]): PickleState = {
+  @inline def pickle[A](value: A)(implicit p: Pickler[A]): PickleState = {
     p.pickle(value)(this)
     this
   }
@@ -305,7 +345,6 @@ object PickleState {
     override def hashCode(): Int =
       System.identityHashCode(obj)
   }
-
 }
 
 trait MaterializePicklerFallback {

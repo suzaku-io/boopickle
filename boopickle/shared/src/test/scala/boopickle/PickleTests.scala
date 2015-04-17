@@ -175,6 +175,38 @@ object PickleTests extends TestSuite {
         assert(bb.limit == 1 + 6)
         assert(Unpickle[String].fromBytes(bb) == "normal")
       }
+      'numeric {
+        val bb = Pickle.intoBytes("100")
+        assert(bb.limit == 1 + 1)
+        assert(Unpickle[String].fromBytes(bb) == "100")
+      }
+      'numericSmall {
+        val bb = Pickle.intoBytes("5")
+        assert(bb.limit == 2)
+        assert(Unpickle[String].fromBytes(bb) == "5")
+      }
+      'numericLarge {
+        val bb = Pickle.intoBytes("-10000000000")
+        assert(bb.limit == 1 + 8)
+        assert(Unpickle[String].fromBytes(bb) == "-10000000000")
+      }
+      'numericStart {
+        val bb = Pickle.intoBytes("100x")
+        assert(bb.limit == 1 + 4)
+        assert(Unpickle[String].fromBytes(bb) == "100x")
+      }
+      'uuid {
+        val uuidStr = UUID.randomUUID().toString
+        val bb = Pickle.intoBytes(uuidStr)
+        assert(bb.limit == 1 + 16)
+        assert(Unpickle[String].fromBytes(bb) == uuidStr)
+      }
+      'uuidUpperCase {
+        val uuidStr = UUID.randomUUID().toString.toUpperCase
+        val bb = Pickle.intoBytes(uuidStr)
+        assert(bb.limit == 1 + 16)
+        assert(Unpickle[String].fromBytes(bb) == uuidStr)
+      }
     }
     'Option - {
       'some {
@@ -270,6 +302,18 @@ object PickleTests extends TestSuite {
         val bb = Pickle.intoBytes(Seq("test", "test", "test", "test"))
         assert(bb.limit == 1 + 5 + 3 * 2) // seq length, first "test", 3x reference
         assert(Unpickle[Seq[String]].fromBytes(bb) == Seq("test", "test", "test", "test"))
+      }
+      'longSeq {
+        val data = Vector.tabulate[Int](10000)(x => -x)
+        val bb = Pickle.intoBytes(data)
+        assert(bb.limit == 25905)
+        val u = Unpickle[Vector[Int]].fromBytes(bb)
+        assert(u == data)
+      }
+      'dupEmpty {
+        val data = Seq(Seq(), Seq("test"), Seq("test"), Seq(), Seq())
+        val bb = Pickle.intoBytes(data)
+        assert(Unpickle[Seq[Seq[String]]].fromBytes(bb) == data)
       }
     }
     'Map - {

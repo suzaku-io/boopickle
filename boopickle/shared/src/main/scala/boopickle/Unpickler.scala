@@ -3,13 +3,12 @@ package boopickle
 import java.nio.ByteBuffer
 import java.util.UUID
 
-import boopickle.Unpickler._
-
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.language.experimental.macros
 import scala.language.higherKinds
 import scala.reflect.ClassTag
+import scala.util.Try
 
 object Unpickle {
   def apply[A](implicit u: Unpickler[A]) = UnpickledCurry(u)
@@ -20,6 +19,7 @@ case class UnpickledCurry[A](u: Unpickler[A]) {
 
   def fromBytes(bytes: ByteBuffer): A = u.unpickle(new UnpickleState(new Decoder(bytes)))
 
+  def tryFromBytes(bytes: ByteBuffer): Try[A] = Try {u.unpickle(new UnpickleState(new Decoder(bytes)))}
   def fromState(state: UnpickleState): A = u.unpickle(state)
 }
 
@@ -45,10 +45,11 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
 
   implicit object BooleanUnpickler extends U[Boolean] {
     @inline override def unpickle(implicit state: UnpickleState): Boolean = {
-      if (state.dec.readByte == 1)
-        true
-      else
-        false
+      state.dec.readByte match {
+        case 1 => true
+        case 0 => false
+        case x => throw new IllegalArgumentException(s"Invalid value $x for Boolean")
+      }
     }
   }
 
@@ -98,16 +99,28 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
   implicit object StringUnpickler extends U[String] {
     override def unpickle(implicit state: UnpickleState): String = {
       state.dec.readIntCode match {
-        case Left(code) =>
-          throw new IllegalArgumentException("Unknown string length coding")
+        // handle special codings
+        case Left(code) if code == specialCode(StringInt) =>
+          val i = state.dec.readInt
+          String.valueOf(i)
+        case Left(code) if code == specialCode(StringLong) =>
+          val l = state.dec.readRawLong
+          String.valueOf(l)
+        case Left(code) if code == specialCode(StringUUID) || code == specialCode(StringUUIDUpper) =>
+          val uuid = new UUID(state.dec.readRawLong, state.dec.readRawLong)
+          val s = uuid.toString
+          if (code == specialCode(StringUUIDUpper))
+            s.toUpperCase
+          else
+            s
+        case Left(_) =>
+          throw new IllegalArgumentException("Unknown string coding")
         case Right(0) => ""
         case Right(idx) if idx < 0 =>
           state.immutableFor[String](-idx)
         case Right(len) =>
           val s = state.dec.readString(len)
-          // add short strings to immutable refs
-          if (len < MaxRefStringLen)
-            state.addImmutableRef(s)
+          state.addImmutableRef(s)
           s
       }
     }
@@ -152,13 +165,13 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
   import collection.generic.CanBuildFrom
 
   /**
-   * U for all iterables that have a builder. Using a builder is an efficient way to build the correct collection right away.
+   * Unpickler for all iterables that have a builder. Using a builder is an efficient way to build the correct collection right away.
    *
    * @tparam T Type of the values
    * @tparam V Type of the iterable
    * @return
    */
-  implicit def SeqishUnpickler[T: U, V[_] <: Iterable[_]]
+  implicit def IterableUnpickler[T: U, V[_] <: Iterable[_]]
   (implicit cbf: CanBuildFrom[Nothing, T, V[T]]): U[V[T]] = new U[V[T]] {
     override def unpickle(implicit state: UnpickleState): V[T] = {
       state.dec.readIntCode match {
@@ -166,7 +179,9 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
           throw new IllegalArgumentException("Unknown sequence length coding")
         case Right(0) =>
           // empty sequence
-          cbf().result()
+          val res = cbf().result()
+          state.addIdentityRef(res)
+          res
         case Right(idx) if idx < 0 =>
           state.identityFor[V[T]](-idx)
         case Right(len) =>
@@ -182,7 +197,7 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
   }
 
   /**
-   * U for Arrays
+   * Unpickler for Arrays
    *
    * @tparam T Type of the values
    * @return
@@ -194,7 +209,9 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
           throw new IllegalArgumentException("Unknown sequence length coding")
         case Right(0) =>
           // empty Array
-          Array.empty[T]
+          val a = Array.empty[T]
+          state.addIdentityRef(a)
+          a
         case Right(idx) if idx < 0 =>
           state.identityFor[Array[T]](-idx)
         case Right(len) =>
@@ -209,7 +226,7 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
   }
 
   /**
-   * U for all Map types that have a builder. Using a builder is an efficient way to build the correct map right away.
+   * Unpickler for all Map types that have a builder. Using a builder is an efficient way to build the correct map right away.
    *
    * @tparam T Type of the values
    * @tparam V Type of the map
@@ -223,7 +240,9 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
           throw new IllegalArgumentException("Unknown sequence length coding")
         case Right(0) =>
           // empty map
-          cbf().result()
+          val res = cbf().result()
+          state.addIdentityRef(res)
+          res
         case Right(idx) if idx < 0 =>
           state.identityFor[V[T, S]](-idx)
         case Right(len) =>
@@ -243,7 +262,7 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
 
 final class UnpickleState(val dec: Decoder) {
   /**
-   * Object reference for pickled immutable objects
+   * Object reference for pickled immutable objects. Currently only for strings.
    *
    * Index 0 is not used
    * Index 1 = null
@@ -256,17 +275,17 @@ final class UnpickleState(val dec: Decoder) {
   addImmutableRef(null)
   Constants.immutableInitData.foreach(addImmutableRef)
 
-  private[boopickle] def immutableFor[A <: AnyRef](ref: Int): A = {
+  @inline private[boopickle] def immutableFor[A <: AnyRef](ref: Int): A = {
     assert(ref > 0)
     immutableRefs(ref).asInstanceOf[A]
   }
 
-  private[boopickle] def addImmutableRef(obj: AnyRef): Unit = {
+  @inline private[boopickle] def addImmutableRef(obj: AnyRef): Unit = {
     immutableRefs += obj
   }
 
   /**
-   * Object reference for pickled mutable objects (use identity for equality comparison)
+   * Object reference for pickled objects (use identity for equality comparison)
    *
    * Index 0 is not used
    * Index 1 = null
@@ -279,16 +298,16 @@ final class UnpickleState(val dec: Decoder) {
   addIdentityRef(null)
   Constants.identityInitData.foreach(addIdentityRef)
 
-  private[boopickle] def identityFor[A <: AnyRef](ref: Int): A = {
+  @inline private[boopickle] def identityFor[A <: AnyRef](ref: Int): A = {
     assert(ref > 0)
     identityRefs(ref).asInstanceOf[A]
   }
 
-  private[boopickle] def addIdentityRef(obj: AnyRef): Unit = {
+  @inline private[boopickle] def addIdentityRef(obj: AnyRef): Unit = {
     identityRefs += obj
   }
 
-  def unpickle[A](implicit state: UnpickleState, u: U[A]): A = u.unpickle
+  @inline def unpickle[A](implicit state: UnpickleState, u: Unpickler[A]): A = u.unpickle
 }
 
 object UnpickleState {
