@@ -1,6 +1,6 @@
 # BooPickle
 
-BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization library (aka pickling) library for Scala 
+BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization (aka pickling) library for Scala 
 and [Scala.js](http://www.scala-js.org). It encodes into a binary format instead of the more customary JSON. A binary format brings efficiency 
 gains in both size and speed, at the cost of legibility of the encoded data. BooPickle borrows heavily from both [uPickle](https://github.com/lihaoyi/upickle) 
 and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li Haoyi and Ben Hutchison for those two great libraries!
@@ -20,7 +20,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 ## Getting started
 
 Currently BooPickle is not published into a repository, so you'll have to download the sources from GitHub and publish it locally (`publishLocal` command
-in SBT). Once you have published it, you can include it in your product with the following dependency declaration: `"me.chrons" %%% "boopickle" % "0.1.0"`
+in SBT). Once you have published it, you can include it in your project with the following dependency declaration: `"me.chrons" %%% "boopickle" % "0.1.0"`
 
 To use it in your code, simply import the main package contents.
 
@@ -37,7 +37,7 @@ val buf = Pickle.intoBytes(data)
 ```
 
 And to deserialize (unpickle) the buffer, call `Unpickle.fromBytes`, specifying the type of your data. BooPickle doesn't encode *any* type information,
-so you *must* use same types when pickling and unpickling.
+so you *must* use the same types when pickling and unpickling.
 
 ```scala
 val helloWorld = Unpickle[Seq[String]].fromBytes(buf)
@@ -186,10 +186,10 @@ If your object is immutable, you can use `immutableRefFor` and `addImmutableRef`
 On the unpickling side you'll need to do following:
 - read reference/length/special code using `state.readIntCode`
 - depending on the result,
--- get an existing reference
--- use length to know how much to unpickle
--- use the special code to determine what to unpickle
--- unpickle class members
+- get an existing reference
+- or use length to know how much to unpickle
+- or use the special code to determine what to unpickle
+- unpickle class members
 - finally add the reference to identity table
 
 Again, if you are using immutable refs in pickling, make sure to use them when unpickling as well. These are two different indexes.
@@ -204,7 +204,7 @@ On the JVM you can run the tests simply with the `run` command and the output wi
 test at least twice to ensure JVM has optimized the code properly.
 
 On the JS side, you'll need to use `fullOptJS` to compile the code into JavaScript and then run it in your browser at
-http://localhost:12345/perftests/js/target/scala-2.11/classes/index.html To ensure good results, run the tests at least twice in the browser.
+[http://localhost:12345/perftests/js/target/scala-2.11/classes/index.html] To ensure good results, run the tests at least twice in the browser.
 
 Both tests provide similar output, although there are small differences in the Gzipped sizes due to the use of different libraries.
 
@@ -218,7 +218,7 @@ uPickle    6280       25.3%      678        353%       227        121%
 ```
 
 Performance test suite measures how many encode or decode operations the library can do in one second and also checks the size of the raw
-and gzipped output. Relative speed and size is shown as percentages (bigger is better for speed, smaller is better for size). Typically
+and gzipped output. Relative speed and size are shown as percentages (bigger is better for speed, smaller is better for size). Typically
 BooPickle is 4 to 10 times faster than uPickle in decoding and 2 to 5 times faster in encoding. Prickle seems to suffer from scalability
 issues, leaving it far behind the two other libraries when data sizes grow.
 
