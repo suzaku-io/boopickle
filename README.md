@@ -204,7 +204,8 @@ On the JVM you can run the tests simply with the `run` command and the output wi
 test at least twice to ensure JVM has optimized the code properly.
 
 On the JS side, you'll need to use `fullOptJS` to compile the code into JavaScript and then run it in your browser at
-[http://localhost:12345/perftests/js/target/scala-2.11/classes/index.html] To ensure good results, run the tests at least twice in the browser.
+[http://localhost:12345/perftests/js/target/scala-2.11/classes/index.html](http://localhost:12345/perftests/js/target/scala-2.11/classes/index.html) 
+To ensure good results, run the tests at least twice in the browser.
 
 Both tests provide similar output, although there are small differences in the Gzipped sizes due to the use of different libraries.
 
