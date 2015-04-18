@@ -6,6 +6,7 @@ import utest._
 
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
+import scala.util.Random
 
 object PickleTests extends TestSuite {
   override def tests = TestSuite {
@@ -331,6 +332,14 @@ object PickleTests extends TestSuite {
         val bb = Pickle.intoBytes(mutable.HashMap(1 -> 2))
         assert(bb.limit == 3)
         assert(Unpickle[mutable.HashMap[Int, Int]].fromBytes(bb) == mutable.HashMap(1 -> 2))
+      }
+      'large {
+        val largeStringIntMap:Map[String, Int] = {
+          val r = new Random(0)
+          (for(i <- 0 until 10000) yield s"ID$i" -> (1.0/(1.0 + r.nextDouble()*1e5)*1e7).toInt).toMap
+        }
+        val bb = Pickle.intoBytes(largeStringIntMap)
+        assert(Unpickle[Map[String, Int]].fromBytes(bb) == largeStringIntMap)
       }
     }
     'Set - {

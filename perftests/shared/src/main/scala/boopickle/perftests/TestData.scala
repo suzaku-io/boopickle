@@ -2,6 +2,7 @@ package boopickle.perftests
 
 import java.util.UUID
 
+import scala.collection.mutable
 import scala.util.Random
 
 object TestData {
@@ -47,6 +48,13 @@ object TestData {
   val largeIntSeq:Seq[Int] = {
     val r = new Random(0)
     for(i <- 0 until 10000) yield (1.0/(1.0 + r.nextDouble()*1e5)*1e7).toInt
+  }
+
+  val largeStringIntMap:Map[String, Int] = {
+    val r = new Random(0)
+    var map = Map.empty[String, Int]
+    for(i <- 0 until 10000) map += s"ID$i" -> (1.0/(1.0 + r.nextDouble()*1e5)*1e7).toInt
+    map
   }
 
   val largeFloatSeq:Seq[Float] = {

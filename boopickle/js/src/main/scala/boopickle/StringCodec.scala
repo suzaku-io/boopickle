@@ -25,11 +25,9 @@ class TextEncoder extends js.Object {
 object StringCodec {
   private val utf8decoder: (Int8Array) => String = {
     if (js.isUndefined(js.Dynamic.global.TextDecoder)) {
-      println("Shimming TextDecoder")
       // emulated functionality
       (data: Int8Array) => new String(data.toArray, StandardCharsets.UTF_8)
     } else {
-      println("Native TextDecoder")
       val td = new TextDecoder
       // use native TextDecoder
       (data: Int8Array) => td.decode(data)
@@ -38,11 +36,9 @@ object StringCodec {
 
   private val utf8encoder: (String) => Int8Array = {
     if (js.isUndefined(js.Dynamic.global.TextEncoder)) {
-      println("Shimming TextEncoder")
       // emulated functionality
       (str: String) => new Int8Array(str.getBytes(StandardCharsets.UTF_8).toJSArray)
     } else {
-      println("Native TextEncoder")
       val te = new TextEncoder
       // use native TextEncoder
       (str: String) => te.encode(str)

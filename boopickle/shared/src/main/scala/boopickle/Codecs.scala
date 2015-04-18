@@ -229,8 +229,8 @@ class Decoder(buf: ByteBuffer) {
 }
 
 class Encoder {
-  private final val initSize = 1024
-  private final val maxIncrement = initSize * 32
+  private final val initSize = 4096
+  private final val maxIncrement = initSize * 16
   private var buf = ByteBuffer.allocateDirect(initSize).order(ByteOrder.BIG_ENDIAN)
   @inline private def utf8 = StandardCharsets.UTF_8
 
@@ -244,7 +244,7 @@ class Encoder {
   private def alloc(size: Int): ByteBuffer = {
     if (buf.remaining() < size) {
       // resize the buffer
-      val increment = size max maxIncrement max buf.limit
+      val increment = size max (buf.limit min maxIncrement)
       val newBuf = ByteBuffer.allocateDirect(buf.limit + increment)
       buf.flip()
       buf = newBuf.put(buf)

@@ -248,6 +248,7 @@ To be documented
 - special encoding of UUID and numeral strings
 - case class pickler generation via macros
 - use of `TextDecoder` and `TextEncoder` when available on JS for efficient UTF-8 decoding/encoding
+- testing JS code requires PhantomJS
 
 ## Change history
 

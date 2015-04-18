@@ -33,8 +33,8 @@ class PerfTester(suite: PerfTestSuite) {
     val datas = suite.runners.map { runner =>
       runner.initialize
     }
-    // warm up the VM
     val startTime = System.currentTimeMillis()
+    // warm up the VM
     while (System.currentTimeMillis() - startTime < testTime / 2) {
       suite.runners.foreach(_.run)
     }
@@ -46,7 +46,8 @@ class PerfTester(suite: PerfTestSuite) {
         runner.run
         counter += 1
       }
-      (counter * 1000L / testTime).toInt
+      val endTime = System.currentTimeMillis()
+      (counter * 1000L / (endTime - startTime)).toInt
     }
     val results = (suite.runners.map(_.name), counters, datas).zipped.toList.map((PerfTestResult.apply _).tupled)
     PerfTestGroupResult(suite.name, results)

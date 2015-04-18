@@ -43,15 +43,25 @@ object Tests {
       PrickleRunners.decodeRunner(TestData.largeFloatSeq),
       UPickleRunners.decodeRunner(TestData.largeFloatSeq)
     )),
-    PerfTestSuite("Encode a tree", Seq(
+    PerfTestSuite("Encode an object tree", Seq(
       BooPickleRunners.encodeRunner(tree),
       PrickleRunners.encodeRunner(tree),
       UPickleRunners.encodeRunner(tree)
     )),
-    PerfTestSuite("Decode a tree", Seq(
+    PerfTestSuite("Decode an object tree", Seq(
       BooPickleRunners.decodeRunner(tree),
       PrickleRunners.decodeRunner(tree),
       UPickleRunners.decodeRunner(tree)
+    )),
+    PerfTestSuite("Encode very large Map[String, Int]", List(
+      BooPickleRunners.encodeRunner(TestData.largeStringIntMap),
+      PrickleRunners.encodeRunner(TestData.largeStringIntMap),
+      UPickleRunners.encodeRunner(TestData.largeStringIntMap)
+    )),
+    PerfTestSuite("Decode very large Map[String, Int]", List(
+      BooPickleRunners.decodeRunner(TestData.largeStringIntMap),
+      PrickleRunners.decodeRunner(TestData.largeStringIntMap),
+      UPickleRunners.decodeRunner(TestData.largeStringIntMap)
     )),
     PerfTestSuite("Encoding Seq[Book] with random IDs", Seq(
       BooPickleRunners.encodeRunner(TestData.booksRandomID),
