@@ -13,6 +13,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 - Handles [references and deduplication of identical objects](#references)
 - Very fast
 - Very efficient coding
+- Low memory usage, no intermediate structures needed
 - Special optimization for UUID and numeric strings
 - Zero dependencies
 - Scala 2.11 (no Scala 2.10.x support at the moment)
@@ -265,6 +266,8 @@ To be documented
 BooPickle was created and is maintained by [Otto Chrons](https://github.com/ochrons) (otto@chrons.me).
 
 Special thanks to Li Haoyi and Ben Hutchison for their pickling libraries, which provided more than inspiration to BooPickle.
+
+Contributors: @japgolly
 
 ## MIT License
 
