@@ -55,6 +55,14 @@ object PropTests extends TestSuite {
     g
   }
 
+  def crazy =
+    for {
+      a <- Gen.int.list.option
+      b <- Gen.char.triple.mapBy(Gen.alphanumericstring1)
+      c <- Gen.boolean.option either Gen.char.set
+      d <- Gen.long.vector
+    } yield (a,b,c,d)
+
   override def tests = TestSuite {
     'boolean - Domain.boolean.mustProve  (prop)
     'byte    - Domain.byte   .mustProve  (prop)
@@ -64,6 +72,7 @@ object PropTests extends TestSuite {
     // 'string  - Gen.string    .mustSatisfy(debugStrProp)
     'float   - Gen.float     .mustSatisfy(prop)
     'double  - Gen.double    .mustSatisfy(prop)
+    'short   - Gen.short     .mustSatisfy(prop)
 
     'adt - genADT.mustSatisfy(prop)
 
@@ -71,7 +80,12 @@ object PropTests extends TestSuite {
     'list   - Gen.int.list            .mustSatisfy(prop)
     'stream - Gen.int.stream          .mustSatisfy(prop)
     'vector - Gen.int.vector          .mustSatisfy(prop)
+    'set    - Gen.int.set             .mustSatisfy(prop)
     'map    - Gen.int.mapTo(Gen.char) .mustSatisfy(prop)
     'either - Gen.int.either(Gen.char).mustSatisfy(prop)
+    'pair   - Gen.int.pair            .mustSatisfy(prop)
+    'triple - Gen.int.triple          .mustSatisfy(prop)
+
+    'crazy - crazy.mustSatisfy(prop)
   }
 }
