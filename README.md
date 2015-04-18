@@ -240,6 +240,10 @@ But because there is no type information, it is also possible to benefit from th
 as a `Vector[String]` because all collections use the same serialization format internally. Note, however, that this too is rather fragile, 
 especially for empty collections that occur multiple times in the data.
 
+If your data contains a lot of (non-repeating) strings, then BooPickle performance is not so hot (depending on browser) as it has to do
+UTF-8 coding itself. Several browsers provide a `TextDecoder` interface to do this efficiently, but it's still not as fast as with `JSON.parse`. On
+other browsers, BooPickle relies on Scala.js implementation for coding UTF-8.
+
 ## Internal details
 
 To be documented
