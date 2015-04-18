@@ -69,6 +69,8 @@ object PropTests extends TestSuite {
 
     'option - Domain.byte.option      .mustProve(prop)
     'list   - Gen.int.list            .mustSatisfy(prop)
+    'stream - Gen.int.stream          .mustSatisfy(prop)
+    'vector - Gen.int.vector          .mustSatisfy(prop)
     'map    - Gen.int.mapTo(Gen.char) .mustSatisfy(prop)
     'either - Gen.int.either(Gen.char).mustSatisfy(prop)
   }
