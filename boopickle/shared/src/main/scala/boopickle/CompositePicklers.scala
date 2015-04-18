@@ -6,7 +6,7 @@ import scala.reflect.ClassTag
  * Encodes a class belonging to a type hierarchy. Type is identified by the index in the `picklers` sequence, so care
  * must be taken to ensure picklers are added in the same order.
  */
-case class CompositePickler[A <: AnyRef](picklers:Vector[(String, Pickler[_])] = Vector()) extends Pickler[A] {
+case class CompositePickler[A <: AnyRef](var picklers:Vector[(String, Pickler[_])] = Vector()) extends Pickler[A] {
   import Constants._
   override def pickle(obj: A)(implicit state: PickleState): Unit = {
     if(obj == null) {
@@ -21,8 +21,9 @@ case class CompositePickler[A <: AnyRef](picklers:Vector[(String, Pickler[_])] =
     }
   }
 
-  def concreteType[B <: A](implicit p: Pickler[B], tag: ClassTag[B]): CompositePickler[A] = {
-    copy(picklers = this.picklers :+ (tag.runtimeClass.getName -> p))
+  def addConcreteType[B <: A](implicit p: Pickler[B], tag: ClassTag[B]): CompositePickler[A] = {
+    picklers = this.picklers :+ (tag.runtimeClass.getName -> p)
+    this
   }
 }
 
@@ -30,7 +31,7 @@ case class CompositePickler[A <: AnyRef](picklers:Vector[(String, Pickler[_])] =
  * Decodes a class belonging to a type hierarchy. Type is identified by the index in the `unpicklers` sequence, so care
  * must be taken to ensure unpicklers are added in the same order.
  */
-case class CompositeUnpickler[A <: AnyRef](unpicklers:Vector[(String, Unpickler[_])] = Vector()) extends Unpickler[A] {
+case class CompositeUnpickler[A <: AnyRef](var unpicklers:Vector[(String, Unpickler[_])] = Vector()) extends Unpickler[A] {
   override def unpickle(implicit state: UnpickleState): A = {
     val idx = state.dec.readInt
     if(idx == 0)
@@ -42,8 +43,9 @@ case class CompositeUnpickler[A <: AnyRef](unpicklers:Vector[(String, Unpickler[
     }
   }
 
-  def concreteType[B <: A](implicit p: Unpickler[B], tag: ClassTag[B]): CompositeUnpickler[A] = {
-    copy(unpicklers = this.unpicklers :+ (tag.runtimeClass.getName -> p))
+  def addConcreteType[B <: A](implicit p: Unpickler[B], tag: ClassTag[B]): CompositeUnpickler[A] = {
+    unpicklers = this.unpicklers :+ (tag.runtimeClass.getName -> p)
+    this
   }
 }
 
@@ -55,7 +57,9 @@ object CompositePickler {
 case class PicklerPair[A <: AnyRef](pickler: CompositePickler[A] = new CompositePickler[A](),
                                     unpickler: CompositeUnpickler[A] = new CompositeUnpickler[A]()) {
 
-  def concreteType[B <: A](implicit p: Pickler[B], u: Unpickler[B], tag: ClassTag[B]) = {
-    copy(pickler = this.pickler.concreteType[B], unpickler = this.unpickler.concreteType[B])
+  def addConcreteType[B <: A](implicit p: Pickler[B], u: Unpickler[B], tag: ClassTag[B]) = {
+    pickler.addConcreteType[B]
+    unpickler.addConcreteType[B]
+    this
   }
 }

@@ -17,6 +17,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 - Special optimization for UUID and numeric strings
 - Zero dependencies
 - Scala 2.11 (no Scala 2.10.x support at the moment)
+- All modern browsers are supported (not IE9 and below, though)
 
 ## Getting started
 
@@ -82,7 +83,7 @@ As this is such a common situation, BooPickle provides a helper class `Composite
 above, all you need to do is to define an implicit pickler like this:
 
 ```scala
-implicit val fruitPickler = CompositePickler[Fruit].concreteType[Banana].concreteType[Kiwi].concreteType[Carambola]
+implicit val fruitPickler = CompositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
 ```
 
 Now you can freely pickle any `Fruit` and when unpickling, BooPickle will know what type to decode.
@@ -97,6 +98,24 @@ assert(u == fruits)
 ```
 
 Note that internally `CompositePickler` encodes types using indices, so they must be specified in the same order on both sides!
+
+### Recursive composite types
+
+If you have a recursive composite type (a sub type has a reference to the super type), you need to build the `CompositePickler` in two steps,
+as shown below.
+
+```scala
+sealed trait Tree
+case object Leaf extends Tree
+case class Node(value: Int, children:Seq[Tree]) extends Tree
+
+object Tree {
+  implicit val treePickler = CompositePickler[Tree]
+  treePickler.addConcreteType[Node].addConcreteType[Leaf.type]
+}
+```
+
+This is because the compiler must find a pickler for `Tree` when it's building a pickler for `Node`.
 
 ## References
 
@@ -229,7 +248,19 @@ issues, leaving it far behind the two other libraries when data sizes grow.
 You can define your own tests by modifying the `Tests.scala` and `TestData.scala` source files. Just look at the examples provided
 and model your own data (as realistically as possible) to see which library works best for you.
 
-## Benefits and downsides
+## What is it good for?
+
+BooPickle is not a very generic serialization library, so you should think carefully before using it in your application. Typical good and
+bad use cases are listed below.
+
+:thumbsup: Good :thumbsup: | :thumbsdown: Bad :thumbsdown:
+----------------|-----------------------------------------
+Mobile client/server communication | Public API for your service
+Data transfer over Websocket binary protocol | Data storage (you will lose it if something changes!)
+Scala <-> Scala communication | Scala <-> some-other-language communication
+Clients with limited resources | Communication between server components
+
+## Known limitations
 
 BooPickle is first and foremost focused on optimization of the pickled data. This gives you good performance and small data size, but at the same
 time it also makes the protocol extremely fragile. Unlike JSON, which can survive quite easily from additional or missing data, the binary
@@ -243,8 +274,12 @@ especially for empty collections that occur multiple times in the data.
 
 If your data contains a lot of (non-repeating) strings, then BooPickle performance is not so hot (depending on browser) as it has to do
 UTF-8 coding itself. Several browsers provide a `TextDecoder` interface to do this efficiently, but it's still not as fast as with `JSON.parse`. On
-other browsers, BooPickle relies on Scala.js implementation for coding UTF-8.
+other browsers, BooPickle relies on Scala.js' implementation for coding UTF-8.
 
+Under Scala.js BooPickle depends indirectly on [typed arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays) 
+because direct ByteBuffers are implemented with typed arrays. These may not be available on all JS platforms (most notably Node.js, which has its 
+own Buffers, and IE versions 9 and below).
+ 
 ## Internal details
 
 To be documented
@@ -273,8 +308,12 @@ Contributors: @japgolly
 
 Copyright (c) 2015, Otto Chrons (otto@chrons.me)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in 
+the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of 
+the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS 
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER 
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

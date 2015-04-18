@@ -3,7 +3,7 @@ package boopickle
 import java.nio.{ByteOrder, ByteBuffer}
 import java.nio.charset.{CharacterCodingException, StandardCharsets}
 
-class Decoder(buf: ByteBuffer) {
+class Decoder(val buf: ByteBuffer) {
   /**
    * Decodes a single byte
    * @return
@@ -229,7 +229,7 @@ class Decoder(buf: ByteBuffer) {
 }
 
 class Encoder {
-  private final val initSize = 4096
+  private final val initSize = 4032
   private final val maxIncrement = initSize * 16
   private var buf = ByteBuffer.allocateDirect(initSize).order(ByteOrder.BIG_ENDIAN)
   @inline private def utf8 = StandardCharsets.UTF_8
@@ -245,7 +245,7 @@ class Encoder {
     if (buf.remaining() < size) {
       // resize the buffer
       val increment = size max (buf.limit min maxIncrement)
-      val newBuf = ByteBuffer.allocateDirect(buf.limit + increment)
+      val newBuf = ByteBuffer.allocateDirect(buf.limit + increment).order(ByteOrder.BIG_ENDIAN)
       buf.flip()
       buf = newBuf.put(buf)
     }

@@ -9,8 +9,7 @@ import utest._
 
 object PropTests extends TestSuite {
 
-  // TODO String tests fail.
-  // TODO CompositePickler doesn't handle recursive data types.
+  // TODO String tests fail because nyaya produces invalid UTF16 characters
 
   def prop[A: Equal: Pickler: Unpickler] =
     Prop.equalSelf[A]("decode.encode = id",
@@ -38,9 +37,10 @@ object PropTests extends TestSuite {
     case class B(a: Char, b: Long, c: Option[Char]) extends ADT
     case object C extends ADT
     case class D() extends ADT
-//    case class R(child: ADT) extends ADT
+    case class R(child: ADT) extends ADT
     implicit val equality: Equal[ADT] = Equal.equalA
-    implicit val codec = CompositePickler[ADT].concreteType[A].concreteType[B].concreteType[C.type].concreteType[D] //.concreteType[R]
+    implicit val adtCodec = CompositePickler[ADT]
+    adtCodec.addConcreteType[A].addConcreteType[B].addConcreteType[C.type].addConcreteType[D].addConcreteType[R]
   }
   val genADT: Gen[ADT] = {
     import ADT._
@@ -49,9 +49,8 @@ object PropTests extends TestSuite {
     val gb = Gen.apply3(B)(Gen.char, Gen.long, Gen.char.option)
     val gc = Gen.insert[C.type](C)
     val gd = Gen.insert(D())
-//    lazy val gr: Gen[ADT.R] = g map R
-//    lazy val g: Gen[ADT] = Gen.oneofG(ga, gb, gc, gd, gr)
-    lazy val g: Gen[ADT] = Gen.oneofG(ga, gb, gc, gd)
+    val gr: Gen[ADT.R] = Gen.insert(R(A(0)))
+    lazy val g: Gen[ADT] = Gen.oneofG(ga, gb, gc, gd, gr)
     g
   }
 
