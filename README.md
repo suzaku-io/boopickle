@@ -21,8 +21,17 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 
 ## Getting started
 
-Currently BooPickle is not published into a repository, so you'll have to download the sources from GitHub and publish it locally (`publishLocal` command
-in SBT). Once you have published it, you can include it in your project with the following dependency declaration: `"me.chrons" %%% "boopickle" % "0.1.0"`
+Add following dependency declaration to your Scala project 
+
+```
+"me.chrons" %% "boopickle" % "0.1.0"
+```
+
+On a Scala.js project the dependency looks like this
+
+```
+"me.chrons" %%% "boopickle" % "0.1.0"
+```
 
 To use it in your code, simply import the main package contents.
 
