@@ -180,7 +180,7 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
     }
   }
 
-  @inline implicit def SomePickler[T](implicit p: P[T]): P[Some[T]] = OptionPickler[T].asInstanceOf[P[Some[T]]]
+  @inline implicit def SomePickler[T: P]: P[Some[T]] = OptionPickler[T].asInstanceOf[P[Some[T]]]
 
   implicit def EitherPickler[T: P, S: P]: P[Either[T, S]] = new P[Either[T, S]] {
     override def pickle(obj: Either[T, S])(implicit state: PickleState): Unit = {

@@ -21,7 +21,9 @@ lazy val boopickle = crossProject
       "scm:git:git@github.com:ochrons/boopickle.git",
       Some("scm:git:git@github.com:ochrons/boopickle.git"))),
     publishMavenStyle := true,
+    publishArtifact in Test := false,
     pomExtra :=
+      <url>https://github.com/ochrons/boopickle</url>
       <licenses>
         <license>
           <name>MIT license</name>
@@ -35,7 +37,14 @@ lazy val boopickle = crossProject
             <url>https://github.com/ochrons</url>
           </developer>
         </developers>,
-    pomIncludeRepository := { _ => false }
+    pomIncludeRepository := { _ => false },
+    publishTo := {
+      val nexus = "https://oss.sonatype.org/"
+      if (isSnapshot.value)
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+      else
+        Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    }
   ).jsSettings(
     // use PhantomJS for testing, because we need real browser JS stuff like TypedArrays
     scalaJSStage in Global := FastOptStage,
