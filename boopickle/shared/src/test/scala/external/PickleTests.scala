@@ -1,7 +1,9 @@
-package boopickle
+package external
 
+import java.nio.ByteBuffer
 import java.util.UUID
 
+import boopickle._
 import utest._
 
 import scala.collection.mutable
@@ -369,6 +371,18 @@ object PickleTests extends TestSuite {
         val bb = Pickle.intoBytes(Array(Array(0, 0, 0), Array(1, 1, 1)))
         assert(bb.limit == 1 + 4 + 4)
         assert(Unpickle[Array[Array[Int]]].fromBytes(bb).deep == Array(Array(0, 0, 0), Array(1, 1, 1)).deep)
+      }
+    }
+    'ByteBuffer - {
+      'small {
+        val d = ByteBuffer.allocateDirect(256)
+        (0 until 256).map(b => d.put(b.toByte))
+        d.flip()
+        val bb = Pickle.intoBytes(d)
+        assert(bb.limit == 2 + 256)
+        val r = Unpickle[ByteBuffer].fromBytes(bb)
+        assert(r.remaining() == 256)
+        assert(r.compareTo(d) == 0)
       }
     }
     'IdentityDeduplication - {

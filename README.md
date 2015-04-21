@@ -59,7 +59,7 @@ val helloWorld = Unpickle[Seq[String]].fromBytes(buf)
 BooPickle has built-in support for most of the typical Scala types, including
 
 - primitives: `Boolean`, `Byte`, `Short`, `Char`, `Int`, `Long`, `Float`, `Double` and `String`
-- common types: `Tuple`s, `Option`, `Either`, `Duration` and `UUID`
+- common types: `Tuple`s, `Option`, `Either`, `Duration`, `UUID` and `ByteBuffer`
 - collections, both mutable and immutable, including: `Vector`, `List`, `Set`s, `Map`s and any `Iterable` with a `CanBuildFrom` implementation
 - `case class`es and `case object`s (via a macro)
 - `trait`s as a base for a class hierarchy
@@ -300,6 +300,12 @@ To be documented
 - testing JS code requires PhantomJS
 
 ## Change history
+
+### 0.1.1
+
+- Functions in Un/PickleState were private, so macros did not work outside the boopickle package!
+- TextEncoder produces Uint8Array which needs to be cast to Int8Array for ByteBuffer to work
+- Added pickler for ByteBuffer (mainly to make BooPickle work easily with Autowire)
 
 ### 0.1.0
 

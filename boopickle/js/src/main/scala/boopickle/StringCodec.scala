@@ -19,7 +19,7 @@ class TextDecoder extends js.Object {
  * Facade for native JS engine provided TextEncoder
  */
 class TextEncoder extends js.Object {
-  def encode(str: String): Int8Array = js.native
+  def encode(str: String): Uint8Array = js.native
 }
 
 object StringCodec {
@@ -41,7 +41,7 @@ object StringCodec {
     } else {
       val te = new TextEncoder
       // use native TextEncoder
-      (str: String) => te.encode(str)
+      (str: String) => new Int8Array(te.encode(str))
     }
   }
 

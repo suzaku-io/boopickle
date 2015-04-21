@@ -76,6 +76,10 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
     @inline override def pickle(value: Double)(implicit state: PickleState): Unit = state.enc.writeDouble(value)
   }
 
+  implicit object ByteBufferPickler extends P[ByteBuffer] {
+    @inline override def pickle(bb: ByteBuffer)(implicit state: PickleState): Unit = state.enc.writeByteBuffer(bb)
+  }
+  
   implicit object StringPickler extends P[String] {
     def encodeUUID(str:String, code:Byte)(implicit state: PickleState): Unit = {
       // special coding for lowercase UUID
@@ -296,9 +300,9 @@ final class PickleState(val enc: Encoder) {
   addImmutableRef(null)
   Constants.immutableInitData.foreach(addImmutableRef)
 
-  @inline private[boopickle] def immutableRefFor(obj: AnyRef) = immutableRefs.get(obj)
+  @inline def immutableRefFor(obj: AnyRef) = immutableRefs.get(obj)
 
-  @inline private[boopickle] def addImmutableRef(obj: AnyRef): Unit = {
+  @inline def addImmutableRef(obj: AnyRef): Unit = {
     immutableRefs += obj -> immutableIdx
     immutableIdx += 1
   }
@@ -317,9 +321,9 @@ final class PickleState(val enc: Encoder) {
   addIdentityRef(null)
   Constants.identityInitData.foreach(addIdentityRef)
 
-  @inline private[boopickle] def identityRefFor(obj: AnyRef) = identityRefs.get(Identity(obj))
+  @inline def identityRefFor(obj: AnyRef) = identityRefs.get(Identity(obj))
 
-  @inline private[boopickle] def addIdentityRef(obj: AnyRef): Unit = {
+  @inline def addIdentityRef(obj: AnyRef): Unit = {
     identityRefs += Identity(obj) -> identityIdx
     identityIdx += 1
   }

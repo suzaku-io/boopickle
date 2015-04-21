@@ -81,6 +81,10 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
     @inline override def unpickle(implicit state: UnpickleState): Double = state.dec.readDouble
   }
 
+  implicit object ByteBufferUnpickler extends U[ByteBuffer] {
+    @inline override def unpickle(implicit state: UnpickleState): ByteBuffer = state.dec.readByteBuffer
+  }
+
   implicit object DurationUnpickler extends U[Duration] {
     @inline override def unpickle(implicit state: UnpickleState): Duration = {
       state.dec.readLongCode match {
@@ -298,12 +302,12 @@ final class UnpickleState(val dec: Decoder) {
   addIdentityRef(null)
   Constants.identityInitData.foreach(addIdentityRef)
 
-  @inline private[boopickle] def identityFor[A <: AnyRef](ref: Int): A = {
+  @inline def identityFor[A <: AnyRef](ref: Int): A = {
     assert(ref > 0)
     identityRefs(ref).asInstanceOf[A]
   }
 
-  @inline private[boopickle] def addIdentityRef(obj: AnyRef): Unit = {
+  @inline def addIdentityRef(obj: AnyRef): Unit = {
     identityRefs += obj
   }
 

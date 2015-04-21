@@ -226,6 +226,15 @@ class Decoder(val buf: ByteBuffer) {
   def readString(len:Int): String = {
     StringCodec.decodeUTF8(len, buf)
   }
+
+  def readByteBuffer:ByteBuffer = {
+    val size = readInt
+    if( size < 0 )
+      throw new IllegalArgumentException(s"Invalid size $size for ByteBuffer")
+
+    // create a copy (sharing content)
+    buf.slice()
+  }
 }
 
 class Encoder {
@@ -400,6 +409,19 @@ class Encoder {
    */
   @inline def writeDouble(d: Double): Encoder = {
     alloc(8).putDouble(d)
+    this
+  }
+
+  /**
+   * Encodes a ByteBuffer by writing its length and content
+   *
+   * @param bb ByteBuffer to encode
+   * @return
+   */
+  def writeByteBuffer(bb: ByteBuffer): Encoder = {
+    bb.mark()
+    writeInt(bb.remaining).alloc(bb.remaining).put(bb)
+    bb.reset()
     this
   }
 

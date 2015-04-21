@@ -1,5 +1,7 @@
 package boopickle
 
+import java.nio.ByteBuffer
+
 import utest._
 
 object CodecTests extends TestSuite {
@@ -54,6 +56,18 @@ object CodecTests extends TestSuite {
     'String - {
       val data = Seq[String]("", "A", "叉", "Normal String", "Arabic ڞ", "Complex \uD840\uDC00\uD841\uDDA7")
       runCodec[String](data, (e, x) => e.writeString(x), (d, x) => d.readString == x)
+    }
+
+    'ByteBuffer - {
+      val bb = ByteBuffer.allocateDirect(256)
+      for(i <- 0 until 256) bb.put(i.toByte)
+      bb.flip
+      val e = new Encoder
+      e.writeByteBuffer(bb)
+      val ebb = e.encode
+      val d = new Decoder(ebb)
+      val y = d.readByteBuffer
+      assert(y.compareTo(bb) == 0)
     }
   }
 }

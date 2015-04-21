@@ -1,4 +1,6 @@
-import sbt.Keys._
+import sbt._
+import Keys._
+import com.typesafe.sbt.pgp.PgpKeys._
 
 val commonSettings = Seq(
   organization := "me.chrons",
@@ -12,6 +14,17 @@ val commonSettings = Seq(
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
 )
+
+def preventPublication(p: Project) =
+  p.settings(
+    publish            := (),
+    publishLocal       := (),
+    publishSigned      := (),
+    publishLocalSigned := (),
+    publishArtifact    := false,
+    publishTo          := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
+    packagedArtifacts  := Map.empty)
+
 lazy val boopickle = crossProject
   .settings(commonSettings: _*)
   .settings(
@@ -106,8 +119,6 @@ lazy val perftests = crossProject
   .settings(commonSettings: _*)
   .settings(
     name := "perftests",
-    publish := {},
-    publishLocal := {},
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "upickle" % "0.2.8",
       "com.github.benhutchison" %%% "prickle" % "1.1.4"
@@ -121,13 +132,11 @@ lazy val perftests = crossProject
     )
   )
 
-lazy val perftestsJS = perftests.js.settings(workbenchSettings: _*).dependsOn(boopickleJS)
+lazy val perftestsJS = preventPublication(perftests.js).settings(workbenchSettings: _*)
 
-lazy val perftestsJVM = perftests.jvm.dependsOn(boopickleJVM)
+lazy val perftestsJVM = preventPublication(perftests.jvm).dependsOn(boopickleJVM)
 
-lazy val root = project.in(file("."))
-  .settings(
-    publish := {},
-    publishLocal := {}
-  )
+
+lazy val root = preventPublication(project.in(file(".")))
+  .settings()
   .aggregate(boopickleJS, boopickleJVM, perftestsJS, perftestsJVM)
