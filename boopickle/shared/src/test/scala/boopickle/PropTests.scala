@@ -9,26 +9,11 @@ import utest._
 
 object PropTests extends TestSuite {
 
-  // TODO String tests fail because nyaya produces invalid UTF16 characters
-
   def prop[A: Equal: Pickler: Unpickler] =
     Prop.equalSelf[A]("decode.encode = id",
       a => {
         val b = Pickle.intoBytes(a)
         Unpickle[A].fromBytes(b)
-      })
-
-  def debugStrProp =
-    Prop.equalSelf[String]("decode.encode = id",
-      a => {
-        val a2 = Unpickle[String].fromBytes(Pickle.intoBytes(a))
-        if (a != a2) {
-          println()
-          println("Before: " + a .toCharArray.map(_.toInt).mkString(","))
-          println(" After: " + a2.toCharArray.map(_.toInt).mkString(","))
-          println()
-        }
-        a2
       })
 
   sealed trait ADT
@@ -63,15 +48,15 @@ object PropTests extends TestSuite {
     } yield (a,b,c,d)
 
   override def tests = TestSuite {
-    'boolean - Domain.boolean.mustProve  (prop)
-    'byte    - Domain.byte   .mustProve  (prop)
-    'int     - Gen.int       .mustSatisfy(prop)
-    'long    - Gen.long      .mustSatisfy(prop)
-    'char    - Gen.char      .mustSatisfy(prop)
-    // 'string  - Gen.string    .mustSatisfy(debugStrProp)
-    'float   - Gen.float     .mustSatisfy(prop)
-    'double  - Gen.double    .mustSatisfy(prop)
-    'short   - Gen.short     .mustSatisfy(prop)
+    'boolean - Domain.boolean   .mustProve  (prop)
+    'byte    - Domain.byte      .mustProve  (prop)
+    'int     - Gen.int          .mustSatisfy(prop)
+    'long    - Gen.long         .mustSatisfy(prop)
+    'char    - Gen.char         .mustSatisfy(prop)
+    'string  - Gen.unicodestring.mustSatisfy(prop)
+    'float   - Gen.float        .mustSatisfy(prop)
+    'double  - Gen.double       .mustSatisfy(prop)
+    'short   - Gen.short        .mustSatisfy(prop)
 
     'adt - genADT.mustSatisfy(prop)
 
