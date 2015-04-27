@@ -24,7 +24,7 @@ object TestData {
     Book(idGen, "Rage	Bachman", "Stephen King", 1976),
     Book(idGen, "Shining, The", "Stephen King", 1976),
     Book(idGen, "Last Rung on the Ladder", "Stephen King", 1977),
-    Book(idGen, "Boogeyman", "Stephen King", 1977),
+    Book(idGen, "Böögeyman", "Stephen King", 1977),
     Book(idGen, "Cat from Hell", "Stephen King", 1977),
     Book(idGen, "Man Who Loved Flowers", "Stephen King", 1977)
   )

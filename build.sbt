@@ -121,7 +121,7 @@ lazy val perftests = crossProject
     name := "perftests",
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "upickle" % "0.2.8",
-      "com.github.benhutchison" %%% "prickle" % "1.1.4"
+      "com.github.benhutchison" %%% "prickle" % "1.1.5"
     )
   )
   .jsSettings(
@@ -132,7 +132,7 @@ lazy val perftests = crossProject
     )
   )
 
-lazy val perftestsJS = preventPublication(perftests.js).settings(workbenchSettings: _*)
+lazy val perftestsJS = preventPublication(perftests.js).settings(workbenchSettings: _*).dependsOn(boopickleJS)
 
 lazy val perftestsJVM = preventPublication(perftests.jvm).dependsOn(boopickleJVM)
 

@@ -257,6 +257,10 @@ issues, leaving it far behind the two other libraries when data sizes grow.
 You can define your own tests by modifying the `Tests.scala` and `TestData.scala` source files. Just look at the examples provided
 and model your own data (as realistically as possible) to see which library works best for you.
 
+## Using BooPickle with Ajax
+
+
+
 ## What is it good for?
 
 BooPickle is not a very generic serialization library, so you should think carefully before using it in your application. Typical good and
