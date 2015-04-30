@@ -24,13 +24,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```
-"me.chrons" %% "boopickle" % "0.1.1"
+"me.chrons" %% "boopickle" % "0.1.2"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```
-"me.chrons" %%% "boopickle" % "0.1.1"
+"me.chrons" %%% "boopickle" % "0.1.2"
 ```
 
 To use it in your code, simply import the main package contents.
@@ -232,19 +232,19 @@ switch to `perftestsJS` or `perftestsJVM` project.
 On the JVM you can run the tests simply with the `run` command and the output will be shown in the SBT console. You might want to run the
 test at least twice to ensure JVM has optimized the code properly.
 
-On the JS side, you'll need to use `fullOptJS` to compile the code into JavaScript and then run it in your browser at
+On the JS side, you'll need to use `fullOptJS` and `package` to compile the code into JavaScript and then run it in your browser at
 [http://localhost:12345/perftests/js/target/scala-2.11/classes/index.html](http://localhost:12345/perftests/js/target/scala-2.11/classes/index.html) 
 To ensure good results, run the tests at least twice in the browser.
 
 Both tests provide similar output, although there are small differences in the Gzipped sizes due to the use of different libraries.
 
 ```
-16/16 : Decoding Seq[Book] with numerical IDs
+18/18 : Decoding Seq[Book] with numerical IDs
 =============================================
 Library    ops/s      %          size       %          size.gz    %         
-BooPickle  24846      100.0%     192        100%       187        100%      
-Prickle    1304       5.2%       861        448%       265        142%      
-uPickle    6280       25.3%      678        353%       227        121%      
+BooPickle  42418      100.0%     194        100%       192        100%      
+Prickle    2056       4.8%       863        445%       272        142%      
+uPickle    13740      32.4%      680        351%       233        121%  
 ```
 
 Performance test suite measures how many encode or decode operations the library can do in one second and also checks the size of the raw
@@ -257,9 +257,22 @@ issues, leaving it far behind the two other libraries when data sizes grow.
 You can define your own tests by modifying the `Tests.scala` and `TestData.scala` source files. Just look at the examples provided
 and model your own data (as realistically as possible) to see which library works best for you.
 
+### Tuning performance
+
+By default BooPickle uses direct `ByteBuffer`s that perform much better in the browser environment. On the server JVM, however, heap
+buffers tend to be more efficient in many cases. The `Encoder` constructor takes a `BufferProvider` argument and you can supply your
+own or use one of the two predefined ones: `DirectByteBufferProvider` and `HeapByteBufferProvider`. On the JVM you can expect 10-20% improvement in
+performance with heap buffers.
+
+When serializing large objects, BooPickle encodes them into multiple separate `ByteBuffer`s that are combined (copied) in the call to
+`intoBytes`. If you can handle a sequence of buffers (for example sending them over the network), you can use `intoByteBuffers` instead,
+which will avoid duplicating the serialized data.
+
 ## Using BooPickle with Ajax
 
+To be documented :)
 
+For now, see [SPA tutorial](https://github.com/ochrons/scalajs-spa-tutorial) for example usage.
 
 ## What is it good for?
 
@@ -304,6 +317,14 @@ To be documented
 - testing JS code requires PhantomJS
 
 ## Change history
+
+### 0.1.2
+
+- Support for heap and direct byte buffers (and custom ones, too)
+- Support for returning a sequence of ByteBuffers instead of a combined one
+- Changed to little endian, and updated integer encoding scheme for negative numbers
+- Fixed a bug in unpickling a ByteBuffer
+- Optimized string decoding in case of heap buffer
 
 ### 0.1.1
 
