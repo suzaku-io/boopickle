@@ -47,7 +47,7 @@ abstract class ByteBufferProvider extends BufferProvider {
 
   def alloc(size: Int): ByteBuffer = {
     if (currentBuf.remaining() < size) {
-      val newBuf = allocate(size + initSize).order(ByteOrder.BIG_ENDIAN)
+      val newBuf = allocate(size + initSize * 2)
       buffers.append(newBuf)
       // flip current buffer (prepare for reading and set limit)
       currentBuf.flip()
@@ -77,15 +77,15 @@ abstract class ByteBufferProvider extends BufferProvider {
 
   def reset(): Unit = {
     buffers.clear()
-    buffers += allocate(initSize).order(ByteOrder.BIG_ENDIAN)
+    buffers += allocate(initSize)
     currentBuf = buffers.head
   }
 }
 
 class HeapByteBufferProvider extends ByteBufferProvider {
-  override protected def allocate(size: Int) = ByteBuffer.allocate(size)
+  override protected def allocate(size: Int) = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
 }
 
 class DirectByteBufferProvider extends ByteBufferProvider {
-  override protected def allocate(size: Int) = ByteBuffer.allocateDirect(size)
+  override protected def allocate(size: Int) = ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN)
 }

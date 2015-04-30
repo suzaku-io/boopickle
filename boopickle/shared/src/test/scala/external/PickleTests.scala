@@ -309,7 +309,7 @@ object PickleTests extends TestSuite {
       'longSeq {
         val data = Vector.tabulate[Int](10000)(x => -x)
         val bb = Pickle.intoBytes(data)
-        assert(bb.limit == 25905)
+        assert(bb.limit == 25906)
         val u = Unpickle[Vector[Int]].fromBytes(bb)
         assert(u == data)
       }
@@ -383,6 +383,16 @@ object PickleTests extends TestSuite {
         val r = Unpickle[ByteBuffer].fromBytes(bb)
         assert(r.remaining() == 256)
         assert(r.compareTo(d) == 0)
+      }
+      'complex {
+        val d = ByteBuffer.allocate(256)
+        (0 until 256).map(b => d.put(b.toByte))
+        d.flip()
+        val data:(String, ByteBuffer, String) = ("Hello", d, "World")
+        val bb = Pickle.intoBytes(data)
+        assert(bb.limit == 6 + 2 + 256 + 6)
+        val r = Unpickle[(String, ByteBuffer, String)].fromBytes(bb)
+        assert(r == data)
       }
     }
     'IdentityDeduplication - {

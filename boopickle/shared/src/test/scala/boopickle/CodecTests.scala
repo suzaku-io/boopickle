@@ -28,12 +28,12 @@ object CodecTests extends TestSuite {
     }
 
     'Int - {
-      val data = Seq(0, 1, -1, 4095, -4096, -4097, 4096, 1048575, 1048576, -1048576, -1048577, 268435455, 268435456, -268435456, -268435457, Int.MaxValue, Int.MinValue)
+      val data = Seq(0, 1, -1, 4095, -4096, -4097, -4098, -4099, 4096, 4097, 4098, 4099, 1048575, 1048576, -1048576, -1048577, 268435455, 268435456, -268435456, -268435457, Int.MaxValue, Int.MinValue)
       runCodec[Int](data, (e, x) => e.writeInt(x), (d, x) => d.readInt == x)
     }
 
     'Long - {
-      val data = Seq[Long](0, 1, -1, -4097, 4096, 1048575, 1048576, -1048576, -1048577, Int.MaxValue, Int.MinValue,
+      val data = Seq[Long](0, 1, -1, -4096, -4097, 4096, 1048575, 1048576, -1048576, -1048577, Int.MaxValue, Int.MinValue,
         Int.MaxValue + 1, Int.MinValue - 1, Long.MaxValue, Long.MinValue)
       runCodec[Long](data, (e, x) => e.writeLong(x), (d, x) => d.readLong == x)
     }
@@ -60,7 +60,7 @@ object CodecTests extends TestSuite {
 
     'ByteBuffer - {
       val bb = ByteBuffer.allocateDirect(256)
-      for(i <- 0 until 256) bb.put(i.toByte)
+      for (i <- 0 until 256) bb.put(i.toByte)
       bb.flip
       val e = new Encoder
       e.writeByteBuffer(bb)

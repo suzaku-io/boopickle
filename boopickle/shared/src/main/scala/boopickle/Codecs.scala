@@ -17,15 +17,16 @@ class Decoder(val buf: ByteBuffer) {
    * @return
    */
   def readChar: Char = {
-    val b0 = buf.get.toShort & 0xFF
+    val b0 = buf.get & 0xFF
     if (b0 < 0x80)
       b0.toChar
     else if ((b0 & 0xE0) == 0xC0) {
-      val b1 = buf.get.toShort & 0xFF
-      ((b0 & 0x1F) << 6 | (b1 & 0x3F)).toChar
+      val b1 = buf.get & 0x3F
+      ((b0 & 0x1F) << 6 | b1).toChar
     } else if ((b0 & 0xF0) == 0xE0) {
-      val s0 = buf.getShort
-      ((b0 & 0x0F) << 12 | (s0 & 0x3F00) >> 2 | (s0 & 0x003F)).toChar
+      val s0 = buf.get & 0x3F
+      val s1 = buf.get & 0x3F
+      ((b0 & 0x0F) << 12 | s0 << 6 | s1).toChar
     } else
       throw new CharacterCodingException
   }
@@ -35,11 +36,11 @@ class Decoder(val buf: ByteBuffer) {
    * <pre>
    * 0XXX XXXX                            = 0 to 127
    * 1000 XXXX  b0                        = 128 to 4095
-   * 1001 XXXX  b0                        = -1 to -4096
+   * 1001 XXXX  b0                        = -1 to -4095
    * 1010 XXXX  b0 b1                     = 4096 to 1048575
-   * 1011 XXXX  b0 b1                     = -4097 to -1048576
+   * 1011 XXXX  b0 b1                     = -4096 to -1048575
    * 1100 XXXX  b0 b1 b2                  = 1048576 to 268435455
-   * 1101 XXXX  b0 b1 b2                  = -1048577 to -268435456
+   * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435455
    * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
    * 1111 ????                            = reserved for special codings
    * </pre>
@@ -49,21 +50,23 @@ class Decoder(val buf: ByteBuffer) {
     val b = buf.get & 0xFF
     if ((b & 0x80) != 0) {
       // special coding, expand sign bit
-      val b0 = b & 0xF | (b << 27 >> 27)
+      val sign = if ((b & 0x10) == 0) 1 else -1
+      val b0 = b & 0xF
       b >> 4 match {
         case 0x8 | 0x9 =>
           val b1 = buf.get & 0xFF
-          b0 << 8 | b1
+          sign * (b0 << 8 | b1)
         case 0xA | 0xB =>
-          val b1 = buf.getShort & 0xFFFF
-          b0 << 16 | b1
+          val b1 = buf.get & 0xFF
+          val b2 = buf.get & 0xFF
+          sign * (b0 << 16 | b1 << 8 | b2)
         case 0xC | 0xD =>
-          buf.position(buf.position - 1)
-          val b1 = buf.getInt & 0x00FFFFFF
-          b0 << 24 | b1
+          val b1 = buf.get & 0xFF
+          val b2 = buf.get & 0xFF
+          val b3 = buf.get & 0xFF
+          sign * (b0 << 24 | b1 << 16 | b2 << 8 | b3)
         case 0xE if b == 0xE0 =>
-          val b1 = buf.getInt
-          b1
+          sign * readRawInt
         case _ =>
           throw new IllegalArgumentException("Unknown integer coding")
       }
@@ -72,7 +75,7 @@ class Decoder(val buf: ByteBuffer) {
     }
   }
 
-  def readRawInt:Int = {
+  @inline def readRawInt: Int = {
     buf.getInt
   }
 
@@ -81,11 +84,11 @@ class Decoder(val buf: ByteBuffer) {
    * <pre>
    * 0XXX XXXX                            = 0 to 127
    * 1000 XXXX  b0                        = 128 to 4095
-   * 1001 XXXX  b0                        = -1 to -4096
+   * 1001 XXXX  b0                        = -1 to -4095
    * 1010 XXXX  b0 b1                     = 4096 to 1048575
-   * 1011 XXXX  b0 b1                     = -4097 to -1048576
-   * 1100 XXXX  b0 b1 b2                  = 1048575 to 268435455
-   * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435456
+   * 1011 XXXX  b0 b1                     = -4096 to -1048575
+   * 1100 XXXX  b0 b1 b2                  = 1048576 to 268435455
+   * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435455
    * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
    * 1110 0001  b0 b1 b2 b3 b4 b5 b6 b7   = anything larger
    * 1111 ????                            = reserved for special codings
@@ -94,35 +97,15 @@ class Decoder(val buf: ByteBuffer) {
    */
   def readLong: Long = {
     val b = buf.get & 0xFF
-    if ((b & 0x80) != 0) {
-      // special coding, expand sign bit
-      val b0 = b & 0xF | (b << 27 >> 27)
-      b >> 4 match {
-        case 0x8 | 0x9 =>
-          val b1 = buf.get & 0xFF
-          b0 << 8 | b1
-        case 0xA | 0xB =>
-          val b1 = buf.getShort & 0xFFFF
-          b0 << 16 | b1
-        case 0xC | 0xD =>
-          buf.position(buf.position - 1)
-          val b1 = buf.getInt & 0x00FFFFFF
-          b0 << 24 | b1
-        case 0xE => if (b == 0xE0)
-          buf.getInt
-        else if (b == 0xE1) // TODO, revert to normal case+if once ScalaJS compiler is fixed #1589
-          buf.getLong
-        else
-          throw new IllegalArgumentException("Unknown long coding")
-        case _ =>
-          throw new IllegalArgumentException("Unknown long coding")
-      }
+    if (b != 0xE1) {
+      buf.position(buf.position - 1)
+      readInt
     } else {
-      b
+      readRawLong
     }
   }
 
-  def readRawLong:Long = {
+  @inline def readRawLong: Long = {
     buf.getLong
   }
 
@@ -134,21 +117,23 @@ class Decoder(val buf: ByteBuffer) {
     val b = buf.get & 0xFF
     if ((b & 0x80) != 0) {
       // special coding, expand sign bit
-      val b0 = b & 0xF | (b << 27 >> 27)
+      val sign = if ((b & 0x10) == 0) 1 else -1
+      val b0 = b & 0xF
       b >> 4 match {
         case 0x8 | 0x9 =>
           val b1 = buf.get & 0xFF
-          Right(b0 << 8 | b1)
+          Right(sign * (b0 << 8 | b1))
         case 0xA | 0xB =>
-          val b1 = buf.getShort & 0xFFFF
-          Right(b0 << 16 | b1)
+          val b1 = buf.get & 0xFF
+          val b2 = buf.get & 0xFF
+          Right(sign * (b0 << 16 | b1 << 8 | b2))
         case 0xC | 0xD =>
-          buf.position(buf.position - 1)
-          val b1 = buf.getInt & 0x00FFFFFF
-          Right(b0 << 24 | b1)
+          val b1 = buf.get & 0xFF
+          val b2 = buf.get & 0xFF
+          val b3 = buf.get & 0xFF
+          Right(sign * (b0 << 24 | b1 << 16 | b2 << 8 | b3))
         case 0xE if b == 0xE0 =>
-          val b1 = buf.getInt
-          Right(b1)
+          Right(sign * readRawInt)
         case _ =>
           Left(b.toByte)
       }
@@ -163,32 +148,14 @@ class Decoder(val buf: ByteBuffer) {
    */
   def readLongCode: Either[Byte, Long] = {
     val b = buf.get & 0xFF
-    if ((b & 0x80) != 0) {
-      // special coding, expand sign bit
-      val b0 = b & 0xF | (b << 27 >> 27)
-      b >> 4 match {
-        case 0x8 | 0x9 =>
-          val b1 = buf.get & 0xFF
-          Right(b0 << 8 | b1)
-        case 0xA | 0xB =>
-          val b1 = buf.getShort & 0xFFFF
-          Right(b0 << 16 | b1)
-        case 0xC | 0xD =>
-          buf.position(buf.position - 1)
-          val b1 = buf.getInt & 0x00FFFFFF
-          Right(b0 << 24 | b1)
-        case 0xE => if (b == 0xE0)
-          Right(buf.getInt)
-        else if (b == 0xE1) // TODO, revert to normal case+if once ScalaJS compiler is fixed #1589
-          Right(buf.getLong)
-        else
-          throw new IllegalArgumentException("Unknown long coding")
-        case _ =>
-          Left(b.toByte)
+    if (b != 0xE1) {
+      buf.position(buf.position - 1)
+      readIntCode match {
+        case Left(x) => Left(x)
+        case Right(x) => Right(x.toLong)
       }
-    } else {
-      Right(b)
-    }
+    } else
+      Right(readRawLong)
   }
 
   /**
@@ -223,21 +190,24 @@ class Decoder(val buf: ByteBuffer) {
    * @param len Length of the string (in bytes)
    * @return
    */
-  def readString(len:Int): String = {
+  def readString(len: Int): String = {
     StringCodec.decodeUTF8(len, buf)
   }
 
-  def readByteBuffer:ByteBuffer = {
+  def readByteBuffer: ByteBuffer = {
     val size = readInt
-    if( size < 0 )
+    if (size < 0)
       throw new IllegalArgumentException(s"Invalid size $size for ByteBuffer")
 
     // create a copy (sharing content)
-    buf.slice()
+    val b = buf.slice()
+    buf.position(buf.position + size)
+    b.limit(b.position + size)
+    b
   }
 }
 
-class Encoder(bufferProvider:BufferProvider = new HeapByteBufferProvider) {
+class Encoder(bufferProvider: BufferProvider = new DirectByteBufferProvider) {
 
   @inline private def alloc(size: Int): ByteBuffer = bufferProvider.alloc(size)
 
@@ -261,7 +231,7 @@ class Encoder(bufferProvider:BufferProvider = new HeapByteBufferProvider) {
     if (c < 0x80) {
       alloc(1).put(c.toByte)
     } else if (c < 0x800) {
-      alloc(2).putShort((0xC080 | (c << 2 & 0x1F00) | (c & 0x3F)).toShort)
+      alloc(2).put((0xC0 | (c >>> 6 & 0x3F)).toByte).put((0x80 | (c & 0x3F)).toByte)
     } else {
       alloc(3).put((0xE0 | (c >>> 12)).toByte).put((0x80 | (c >>> 6 & 0x3F)).toByte).put((0x80 | (c & 0x3F)).toByte)
     }
@@ -273,11 +243,11 @@ class Encoder(bufferProvider:BufferProvider = new HeapByteBufferProvider) {
    * <pre>
    * 0XXX XXXX                            = 0 to 127
    * 1000 XXXX  b0                        = 128 to 4095
-   * 1001 XXXX  b0                        = -1 to -4096
+   * 1001 XXXX  b0                        = -1 to -4095
    * 1010 XXXX  b0 b1                     = 4096 to 1048575
-   * 1011 XXXX  b0 b1                     = -4097 to -1048576
+   * 1011 XXXX  b0 b1                     = -4096 to -1048575
    * 1100 XXXX  b0 b1 b2                  = 1048575 to 268435455
-   * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435456
+   * 1101 XXXX  b0 b1 b2                  = -1048575 to -268435455
    * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
    * 1111 ????                            = reserved for special codings
    * </pre>
@@ -285,40 +255,32 @@ class Encoder(bufferProvider:BufferProvider = new HeapByteBufferProvider) {
    */
   def writeInt(i: Int): Encoder = {
     // check for a short number
-    if (i >= 0) {
-      if (i < 128) {
-        alloc(1).put(i.toByte)
-      } else if (i < 4096) {
-        alloc(2).putShort((0x8000 | i).toShort)
-      } else if (i < 1048575) {
-        alloc(3).putShort((0xA000 | (i >> 8)).toShort).put((i & 0xFF).toByte)
-      } else if (i < 268435455) {
-        alloc(4).putInt(0xC0000000 | i)
-      } else {
-        alloc(5).put(0xE0.toByte).putInt(i)
-      }
+    if (i >= 0 && i < 128) {
+      alloc(1).put(i.toByte)
     } else {
-      if (i >= -4096) {
-        alloc(2).putShort((0x9000 | (i & 0x0FFF)).toShort)
-      } else if (i >= -1048576) {
-        alloc(3).putShort((0xB000 | ((i >> 8) & 0x0FFF)).toShort).put((i & 0xFF).toByte)
-      } else if (i >= -268435456) {
-        alloc(4).putInt(0xD0000000 | (i & 0x0FFFFFFF))
+      if (i > -268435456 && i < 268435456) {
+        val mask = i >>> 31 << 4
+        val a = Math.abs(i)
+        if (a < 4096) {
+          alloc(2).put((mask | 0x80 | (a >> 8)).toByte).put((a & 0xFF).toByte)
+        } else if (a < 1048576) {
+          alloc(3).put((mask | 0xA0 | (a >> 16)).toByte).put(((a >> 8) & 0xFF).toByte).put((a & 0xFF).toByte)
+        } else {
+          alloc(4).put((mask | 0xC0 | (a >> 24)).toByte).put(((a >> 16) & 0xFF).toByte).put(((a >> 8) & 0xFF).toByte).put((a & 0xFF).toByte)
+        }
       } else {
         alloc(5).put(0xE0.toByte).putInt(i)
       }
     }
-
     this
   }
-
 
   /**
    * Encodes an integer in 32-bits
    * @param i Integer to encode
    * @return
    */
-  def writeRawInt(i:Int):Encoder = {
+  def writeRawInt(i: Int): Encoder = {
     alloc(4).putInt(i)
     this
   }
@@ -330,9 +292,9 @@ class Encoder(bufferProvider:BufferProvider = new HeapByteBufferProvider) {
    * 1000 XXXX  b0                        = 128 to 4095
    * 1001 XXXX  b0                        = -1 to -4096
    * 1010 XXXX  b0 b1                     = 4096 to 1048575
-   * 1011 XXXX  b0 b1                     = -4097 to -1048576
-   * 1100 XXXX  b0 b1 b2                  = 1048575 to 268435455
-   * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435456
+   * 1011 XXXX  b0 b1                     = -4096 to -1048575
+   * 1100 XXXX  b0 b1 b2                  = 1048576 to 268435455
+   * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435455
    * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
    * 1110 0001  b0 b1 b2 b3 b4 b5 b6 b7   = anything larger
    * 1111 ????                            = reserved for special codings
@@ -353,7 +315,7 @@ class Encoder(bufferProvider:BufferProvider = new HeapByteBufferProvider) {
    * @param l Long to encode
    * @return
    */
-  def writeRawLong(l:Long):Encoder = {
+  def writeRawLong(l: Long): Encoder = {
     alloc(8).putLong(l)
     this
   }
