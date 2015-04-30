@@ -237,29 +237,9 @@ class Decoder(val buf: ByteBuffer) {
   }
 }
 
-class Encoder {
-  private final val initSize = 4032
-  private final val maxIncrement = initSize * 16
-  private var buf = ByteBuffer.allocateDirect(initSize).order(ByteOrder.BIG_ENDIAN)
-  @inline private def utf8 = StandardCharsets.UTF_8
+class Encoder(bufferProvider:BufferProvider = new HeapByteBufferProvider) {
 
-  /**
-   * Makes sure the ByteBuffer has enough space for new data. If not, allocates a new ByteBuffer
-   * and copies data from the old one.
-   *
-   * @param size Number of bytes needed for new data
-   * @return
-   */
-  private def alloc(size: Int): ByteBuffer = {
-    if (buf.remaining() < size) {
-      // resize the buffer
-      val increment = size max (buf.limit min maxIncrement)
-      val newBuf = ByteBuffer.allocateDirect(buf.limit + increment).order(ByteOrder.BIG_ENDIAN)
-      buf.flip()
-      buf = newBuf.put(buf)
-    }
-    buf
-  }
+  @inline private def alloc(size: Int): ByteBuffer = bufferProvider.alloc(size)
 
   /**
    * Encodes a single byte
@@ -429,8 +409,11 @@ class Encoder {
    * Completes the encoding and returns the ByteBuffer
    * @return
    */
-  def encode = {
-    buf.flip()
-    buf
-  }
+  def asByteBuffer = bufferProvider.asByteBuffer
+
+  /**
+   * Completes the encoding and returns a sequence of ByteBuffers
+   * @return
+   */
+  def asByteBuffers = bufferProvider.asByteBuffers
 }

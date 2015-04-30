@@ -46,11 +46,17 @@ object StringCodec {
   }
 
   def decodeUTF8(len: Int, buf: ByteBuffer): String = {
-    // get the underlying Int8Array
-    val ta = buf.typedArray()
-    val s = utf8decoder(ta.subarray(buf.position, buf.position + len))
-    buf.position(buf.position + len)
-    s
+    if (buf.isDirect) {
+      // get the underlying Int8Array
+      val ta = buf.typedArray()
+      val s = utf8decoder(ta.subarray(buf.position, buf.position + len))
+      buf.position(buf.position + len)
+      s
+    } else {
+      val s = new String(buf.array, buf.position, len, StandardCharsets.UTF_8)
+      buf.position(buf.position + len)
+      s
+    }
   }
 
   def encodeUTF8(s: String): ByteBuffer = {

@@ -15,7 +15,11 @@ object Pickle {
   }
 
   def intoBytes[A](value: A)(implicit state: PickleState, p: Pickler[A]): ByteBuffer = {
-    apply(value).bytes
+    apply(value).toByteBuffer
+  }
+
+  def intoByteBuffers[A](value: A)(implicit state: PickleState, p: Pickler[A]): Iterable[ByteBuffer] = {
+    apply(value).toByteBuffers
   }
 }
 
@@ -162,7 +166,7 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
 
   @inline implicit def InfiniteDurationPickler: P[Duration.Infinite] = DurationPickler.asInstanceOf[P[Duration.Infinite]]
 
-  implicit def OptionPickler[T: P] = new P[Option[T]] {
+  implicit def OptionPickler[T: P]:P[Option[T]] = new P[Option[T]] {
     override def pickle(obj: Option[T])(implicit state: PickleState): Unit = {
       obj match {
         case Some(x) =>
@@ -207,9 +211,9 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
     }
   }
 
-  implicit def LeftPickler[T: P, S: P] = EitherPickler[T, S].asInstanceOf[P[Left[T, S]]]
+  implicit def LeftPickler[T: P, S: P]:P[Left[T, S]] = EitherPickler[T, S].asInstanceOf[P[Left[T, S]]]
 
-  implicit def RightPickler[T: P, S: P] = EitherPickler[T, S].asInstanceOf[P[Right[T, S]]]
+  implicit def RightPickler[T: P, S: P]:P[Right[T, S]] = EitherPickler[T, S].asInstanceOf[P[Right[T, S]]]
 
   /**
    * This pickler works on all collections that derive from Iterable (Vector, Set, List, etc)
@@ -217,7 +221,7 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
    * @tparam V type of the collection
    * @return
    */
-  implicit def iterablePickler[T: P, V[_] <: Iterable[_]] = new P[V[T]] {
+  implicit def iterablePickler[T: P, V[_] <: Iterable[_]]:P[V[T]] = new P[V[T]] {
     override def pickle(iterable: V[T])(implicit state: PickleState): Unit = {
       // check if this iterable has been pickled already
       state.identityRefFor(iterable) match {
@@ -239,7 +243,7 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
    * @tparam T Type of values
    * @return
    */
-  implicit def arrayPickler[T: P] = new P[Array[T]] {
+  implicit def arrayPickler[T: P]:P[Array[T]] = new P[Array[T]] {
     override def pickle(array: Array[T])(implicit state: PickleState): Unit = {
       // check if this iterable has been pickled already
       state.identityRefFor(array) match {
@@ -262,7 +266,7 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
    * @tparam S Type of values
    * @return
    */
-  implicit def mapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]] = new P[V[T, S]] {
+  implicit def mapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]]:P[V[T, S]] = new P[V[T, S]] {
     override def pickle(map: V[T, S])(implicit state: PickleState): Unit = {
       // check if this map has been pickled already
       state.identityRefFor(map) match {
@@ -333,7 +337,9 @@ final class PickleState(val enc: Encoder) {
     this
   }
 
-  def bytes = enc.encode
+  def toByteBuffer = enc.asByteBuffer
+  
+  def toByteBuffers = enc.asByteBuffers
 }
 
 object PickleState {

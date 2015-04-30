@@ -397,7 +397,7 @@ object PickleTests extends TestSuite {
     'MultiPickle - {
       'twoStrings {
         val s = Pickle("Hello")
-        val bb = s.pickle("World").bytes
+        val bb = s.pickle("World").toByteBuffer
         assert(bb.limit == 6 + 6)
         val state = UnpickleState(bb)
         assert(Unpickle[String].fromState(state) == "Hello")
@@ -405,11 +405,30 @@ object PickleTests extends TestSuite {
       }
       'stringRef {
         val s = Pickle("Hello")
-        val bb = s.pickle("Hello").bytes
+        val bb = s.pickle("Hello").toByteBuffer
         assert(bb.limit == 6 + 2)
         val state = UnpickleState(bb)
         assert(Unpickle[String].fromState(state) == "Hello")
         assert(Unpickle[String].fromState(state) == "Hello")
+      }
+    }
+    'CustomPickleState - {
+      'HeapBuffer {
+        val state = new PickleState(new Encoder(new HeapByteBufferProvider))
+        val s = state.pickle("Hello")
+        val bb = s.toByteBuffer
+        assert(bb.limit == 6)
+        assert(bb.hasArray)
+        val ba = bb.array
+        assert(ba(0) == 5)
+        assert(Unpickle[String].fromBytes(bb) == "Hello")
+      }
+      'DirectBuffer {
+        val state = new PickleState(new Encoder(new DirectByteBufferProvider))
+        val s = state.pickle("Hello")
+        val bb = s.toByteBuffer
+        assert(bb.limit == 6)
+        assert(bb.isDirect)
       }
     }
   }
