@@ -20,18 +20,44 @@ case class Carambola(weight: Double) extends Fruit {
 }
 
 sealed trait Error
+
 case object InvalidName extends Error
+
 case object Unknown extends Error
+
 case object NotFound extends Error
 
 sealed trait Tree
+
 case object Leaf extends Tree
-case class Node(value: Int, children:Seq[Tree]) extends Tree
+
+case class Node(value: Int, children: Seq[Tree]) extends Tree
 
 object Tree {
   implicit val treePickler = CompositePickler[Tree]
   treePickler.addConcreteType[Node].addConcreteType[Leaf.type]
 }
+
+sealed trait Element
+
+object Element {
+  implicit val documentPickler = CompositePickler[Document]
+  documentPickler.addConcreteType[WordDocument]
+
+  implicit val attributePickler = CompositePickler[Attribute]
+  attributePickler.addConcreteType[OwnerAttribute]
+
+  implicit val elementPickler = CompositePickler[Element]
+  elementPickler.join[Document].join[Attribute]
+}
+
+sealed trait Document extends Element
+
+sealed trait Attribute extends Element
+
+final case class WordDocument(text:String) extends Document
+
+final case class OwnerAttribute(owner: String, parent: Element) extends Attribute
 
 object CompositePickleTests extends TestSuite {
   override def tests = TestSuite {
@@ -45,17 +71,24 @@ object CompositePickleTests extends TestSuite {
     }
     'CaseObjects {
       implicit val errorPickler = CompositePickler[Error].addConcreteType[InvalidName.type].addConcreteType[Unknown.type].addConcreteType[NotFound.type]
-      val errors:Map[Error, String] = Map(InvalidName -> "InvalidName", Unknown -> "Unknown", NotFound -> "Not found" )
+      val errors: Map[Error, String] = Map(InvalidName -> "InvalidName", Unknown -> "Unknown", NotFound -> "Not found")
       val bb = Pickle.intoBytes(errors)
       val u = Unpickle[Map[Error, String]].fromBytes(bb)
       assert(u == errors)
     }
     'Recursive {
       import Tree._
-      val tree:Tree = Node(1, Seq(Node(2, Seq(Leaf, Node(3, Seq(Leaf, Leaf)), Node(5, Seq(Leaf, Leaf))))))
+      val tree: Tree = Node(1, Seq(Node(2, Seq(Leaf, Node(3, Seq(Leaf, Leaf)), Node(5, Seq(Leaf, Leaf))))))
       val bb = Pickle.intoBytes(tree)
       val u = Unpickle[Tree].fromBytes(bb)
       assert(u == tree)
+    }
+    'Complex {
+      val doc = WordDocument("Testing")
+      val q: Element = OwnerAttribute("me", doc)
+      val bb = Pickle.intoBytes(q)
+      val u = Unpickle[Element].fromBytes(bb)
+      assert(u == q)
     }
   }
 }

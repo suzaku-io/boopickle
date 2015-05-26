@@ -77,8 +77,8 @@ abstract class ByteBufferProvider extends BufferProvider {
 
   def reset(): Unit = {
     buffers.clear()
-    buffers += allocate(initSize)
-    currentBuf = buffers.head
+    currentBuf = allocate(initSize)
+    buffers += currentBuf
   }
 }
 

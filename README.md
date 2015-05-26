@@ -126,6 +126,42 @@ object Tree {
 
 This is because the compiler must find a pickler for `Tree` when it's building a pickler for `Node`.
 
+### Complex type hierarchies
+
+When you have more complex type hierarchies with multiple levels of traits, you might need picklers for each type level. A simple example to illustrate:
+
+```scala
+sealed trait Element
+
+sealed trait Document extends Element
+
+sealed trait Attribute extends Element
+
+final case class WordDocument(text:String) extends Document
+
+final case class OwnerAttribute(owner: String, parent: Element) extends Attribute
+```
+
+Building a `CompositePickler` for `Element` with the two implementation classes doesn't actually give you a pickler for `Document` nor `Attribute`. So
+you need to define those picklers separately, duplicating the implementation classes. For this purpose `CompositePickler` allows you to join existing
+composite picklers to form a new one.
+
+```scala
+object Element {
+  implicit val documentPickler = CompositePickler[Document]
+  documentPickler.addConcreteType[WordDocument]
+
+  implicit val attributePickler = CompositePickler[Attribute]
+  attributePickler.addConcreteType[OwnerAttribute]
+
+  implicit val elementPickler = CompositePickler[Element]
+  elementPickler.join[Document].join[Attribute]
+}
+```
+
+With these picklers you may now pickle any trait. Note, however, that you must use the same `CompositePickler` when unpickling. You cannot pickle with `Element` 
+and unpickle with `Attribute` even if the actual class was `OwnerAttribute` because internal indexes are different for each composite pickler.
+
 ## References
 
 If your data contains the same object multiple times, BooPickle will encode it only once and use a reference for the remaining occurrences. For example
@@ -303,8 +339,9 @@ UTF-8 coding itself. Several browsers provide a `TextDecoder` interface to do th
 other browsers, BooPickle relies on Scala.js' implementation for coding UTF-8.
 
 Under Scala.js BooPickle depends indirectly on [typed arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays) 
-because direct ByteBuffers are implemented with typed arrays. These may not be available on all JS platforms (most notably Node.js, which has its 
-own Buffers, and IE versions 9 and below).
+because direct `ByteBuffer`s are implemented with typed arrays. These may not be available on all JS platforms (most notably Node.js, which has its 
+own Buffers, and IE versions 9 and below). When testing code that uses BooPickle (and direct `ByteBuffer`s), make sure your tests are run
+under PhantomJS, because neither Node.js nor Rhino support typed arrays. Alternatively make sure your tests only use heap `ByteBuffer`s.
  
 ## Internal details
 
@@ -314,9 +351,15 @@ To be documented
 - special encoding of UUID and numeral strings
 - case class pickler generation via macros
 - use of `TextDecoder` and `TextEncoder` when available on JS for efficient UTF-8 decoding/encoding
-- testing JS code requires PhantomJS
 
 ## Change history
+
+### 0.1.3
+
+- Fixed a bug in byte order when unpickling a `ByteBuffer`
+- Enforce byte ordering before unpickling
+- `CompositePickler` supports `join` method to pickle deeper type hierarchies
+- Use heap `ByteBuffers` on JVM by default, direct on JS for optimal performance
 
 ### 0.1.2
 

@@ -1,6 +1,6 @@
 package boopickle
 
-import java.nio.ByteBuffer
+import java.nio.{ByteOrder, ByteBuffer}
 import java.util.UUID
 
 import scala.collection.mutable
@@ -17,9 +17,10 @@ object Unpickle {
 case class UnpickledCurry[A](u: Unpickler[A]) {
   def apply(implicit state: UnpickleState): A = u.unpickle(state)
 
-  def fromBytes(bytes: ByteBuffer): A = u.unpickle(new UnpickleState(new Decoder(bytes)))
+  def fromBytes(bytes: ByteBuffer): A = u.unpickle(new UnpickleState(new Decoder(bytes.order(ByteOrder.LITTLE_ENDIAN))))
 
-  def tryFromBytes(bytes: ByteBuffer): Try[A] = Try {u.unpickle(new UnpickleState(new Decoder(bytes)))}
+  def tryFromBytes(bytes: ByteBuffer): Try[A] = Try(fromBytes(bytes))
+
   def fromState(state: UnpickleState): A = u.unpickle(state)
 }
 

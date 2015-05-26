@@ -199,15 +199,15 @@ class Decoder(val buf: ByteBuffer) {
     if (size < 0)
       throw new IllegalArgumentException(s"Invalid size $size for ByteBuffer")
 
-    // create a copy (sharing content)
-    val b = buf.slice()
+    // create a copy (sharing content), enforce little endian
+    val b = buf.slice().order(ByteOrder.LITTLE_ENDIAN)
     buf.position(buf.position + size)
     b.limit(b.position + size)
     b
   }
 }
 
-class Encoder(bufferProvider: BufferProvider = new DirectByteBufferProvider) {
+class Encoder(bufferProvider: BufferProvider = DefaultByteBufferProvider.provider) {
 
   @inline private def alloc(size: Int): ByteBuffer = bufferProvider.alloc(size)
 

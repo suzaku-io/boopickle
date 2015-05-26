@@ -198,6 +198,11 @@ object PickleTests extends TestSuite {
         assert(bb.limit == 1 + 4)
         assert(Unpickle[String].fromBytes(bb) == "100x")
       }
+      'numericZeros {
+        val bb = Pickle.intoBytes("0100")
+        assert(bb.limit == 1 + 4)
+        assert(Unpickle[String].fromBytes(bb) == "0100")
+      }
       'uuid {
         val uuidStr = UUID.randomUUID().toString
         val bb = Pickle.intoBytes(uuidStr)
@@ -342,6 +347,11 @@ object PickleTests extends TestSuite {
         }
         val bb = Pickle.intoBytes(largeStringIntMap)
         assert(Unpickle[Map[String, Int]].fromBytes(bb) == largeStringIntMap)
+      }
+      'complex {
+        val testMap = Map[String, Map[String, Int]]("test" -> Map[String, Int]("test2" -> 5))
+        val bb = Pickle.intoBytes(testMap)
+        assert(Unpickle[Map[String, Map[String, Int]]].fromBytes(bb) == testMap)
       }
     }
     'Set - {
