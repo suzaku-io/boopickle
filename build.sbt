@@ -121,7 +121,7 @@ lazy val perftests = crossProject
     name := "perftests",
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "upickle" % "0.2.8",
-      "com.github.benhutchison" %%% "prickle" % "1.1.5"
+      "com.github.benhutchison" %%% "prickle" % "1.1.6"
     )
   )
   .jsSettings(
