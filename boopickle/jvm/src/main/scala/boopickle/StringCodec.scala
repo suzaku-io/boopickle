@@ -4,19 +4,15 @@ import java.nio.{CharBuffer, ByteBuffer}
 import java.nio.charset.{CharsetEncoder, StandardCharsets}
 
 object StringCodec {
-  def decodeUTF8(len:Int, buf:ByteBuffer):String = {
-    if(buf.hasArray) {
-      val s = new String(buf.array, buf.position + buf.arrayOffset, len, "UTF-8")
-      buf.position(buf.position + len)
-      s
-    } else {
-      val strBytes = new Array[Byte](len)
-      buf.get(strBytes)
-      new String(strBytes, "UTF-8")
-    }
+  def decodeUTF8(len: Int, buf: ByteBuffer): String = {
+    val bb = buf.slice()
+    bb.limit(len)
+    val s = StandardCharsets.UTF_8.decode(bb).toString
+    buf.position(buf.position + len)
+    s
   }
 
-  def encodeUTF8(str:String):ByteBuffer = {
+  def encodeUTF8(str: String): ByteBuffer = {
     ByteBuffer.wrap(str.getBytes(StandardCharsets.UTF_8))
   }
 }

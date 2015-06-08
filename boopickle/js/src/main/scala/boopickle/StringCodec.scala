@@ -53,7 +53,9 @@ object StringCodec {
       buf.position(buf.position + len)
       s
     } else {
-      val s = new String(buf.array, buf.position, len, StandardCharsets.UTF_8)
+      val bb = buf.slice()
+      bb.limit(len)
+      val s = StandardCharsets.UTF_8.decode(bb).toString
       buf.position(buf.position + len)
       s
     }

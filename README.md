@@ -295,10 +295,9 @@ and model your own data (as realistically as possible) to see which library work
 
 ### Tuning performance
 
-By default BooPickle uses direct `ByteBuffer`s that perform much better in the browser environment. On the server JVM, however, heap
-buffers tend to be more efficient in many cases. The `Encoder` constructor takes a `BufferProvider` argument and you can supply your
-own or use one of the two predefined ones: `DirectByteBufferProvider` and `HeapByteBufferProvider`. On the JVM you can expect 10-20% improvement in
-performance with heap buffers.
+In the browser BooPickle uses direct `ByteBuffer`s by default, as they perform much better. On the server JVM, however, heap buffers tend to be more 
+efficient in many cases and are used by default. The `Encoder` constructor takes a `BufferProvider` argument and you can supply your
+own or use one of the two predefined ones: `DirectByteBufferProvider` and `HeapByteBufferProvider`. 
 
 When serializing large objects, BooPickle encodes them into multiple separate `ByteBuffer`s that are combined (copied) in the call to
 `intoBytes`. If you can handle a sequence of buffers (for example sending them over the network), you can use `intoByteBuffers` instead,
@@ -315,7 +314,7 @@ For now, see [SPA tutorial](https://github.com/ochrons/scalajs-spa-tutorial) for
 BooPickle is not a very generic serialization library, so you should think carefully before using it in your application. Typical good and
 bad use cases are listed below.
 
-:thumbsup: Good :thumbsup: | :thumbsdown: Bad :thumbsdown:
+ Good           | Bad 
 ----------------|-----------------------------------------
 Mobile client/server communication | Public API for your service
 Data transfer over Websocket binary protocol | Data storage (you will lose it if something changes!)
@@ -345,6 +344,23 @@ under PhantomJS, because neither Node.js nor Rhino support typed arrays. Alterna
  
 ## Internal details
 
+### Efficient coding
+
+BooPickle makes assumptions of what kind of data it needs to encode, to reach high efficiency in typical scenarios. For example an `Int` (which takes
+32-bits or 4 bytes) is encoded in 1-5 bytes depending on the value. The most common values (0-127) take only a single byte, whereas larger values
+require more bytes. Because very large integers take 5 bytes, if you know your data consists mainly of such values, you could specifically code them
+using `raw` format that always takes 32-bits. Similarly `Long`s are also coded in 1-9 bytes depending on the value.
+
+In many situations there is a need to encode a length (of String, Seq, Map, etc.) and the efficient Int coding is used. But because a length/size is always
+non-negative, we can use negative integers to indicate other things. BooPickle supports coding multiple instances of the same object reference by using
+a reference value. The length value is reused to encode the reference by just flipping it into a negative value.
+
+In addition to reusing negative values, the multi-byte integer format also allows for special codings. These are used to indicate special values such as
+UUID and numeral strings. For example a UUID as a string takes 36 bytes of space, although it only represents a 128-bit (or 16 byte) value. By recognizing
+these specific patterns, they can be represented in a more optimal way, saving up to 20 bytes. Of course inspecting string content when encoding makes
+it a bit slower, but it's small price to pay for savings in data size.
+
+
 To be documented
 - efficient coding of `Int` and `Long`
 - super-position encoding of length, reference index and special codes
@@ -353,6 +369,10 @@ To be documented
 - use of `TextDecoder` and `TextEncoder` when available on JS for efficient UTF-8 decoding/encoding
 
 ## Change history
+
+### 0.1.4
+
+- Fixed a bug in decoding strings from a `ByteBuffer` with an array offset
 
 ### 0.1.3
 
