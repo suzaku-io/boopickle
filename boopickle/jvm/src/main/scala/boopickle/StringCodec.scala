@@ -6,7 +6,7 @@ import java.nio.charset.{CharsetEncoder, StandardCharsets}
 object StringCodec {
   def decodeUTF8(len:Int, buf:ByteBuffer):String = {
     if(buf.hasArray) {
-      val s = new String(buf.array, buf.position, len, "UTF-8")
+      val s = new String(buf.array, buf.position + buf.arrayOffset, len, "UTF-8")
       buf.position(buf.position + len)
       s
     } else {

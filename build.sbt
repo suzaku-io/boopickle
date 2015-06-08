@@ -127,7 +127,7 @@ lazy val perftests = crossProject
   .jsSettings(
     bootSnippet := "BooApp().main();",
     libraryDependencies ++= Seq(
-    "org.scala-js" %%% "scalajs-dom" % "0.8.0",
+    "org.scala-js" %%% "scalajs-dom" % "0.8.1",
     "com.lihaoyi" %%% "scalatags" % "0.4.6"
     )
   )
