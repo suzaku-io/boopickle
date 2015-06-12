@@ -263,6 +263,8 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
   }
 
   implicit def toUnpickler[A <: AnyRef](implicit pair: PicklerPair[A]): Unpickler[A] = pair.unpickler
+
+  implicit def toTransformUnpickler[A <: AnyRef, B](implicit transform: TransformPickler[A, B]): Unpickler[A] = transform.unpickler
 }
 
 final class UnpickleState(val dec: Decoder) {

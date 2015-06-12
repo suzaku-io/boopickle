@@ -284,6 +284,8 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
   }
 
   implicit def toPickler[A <: AnyRef](implicit pair: PicklerPair[A]): Pickler[A] = pair.pickler
+
+  implicit def toTransformPickler[A <: AnyRef, B](implicit transform: TransformPickler[A, B]): Pickler[A] = transform.pickler
 }
 
 final class PickleState(val enc: Encoder) {

@@ -10,6 +10,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 - Supports both Scala and Scala.js (no reflection!)
 - Serialization support for all primitives, collections, options, tuples and case classes (including class hierarchies)
 - User-definable custom serializers
+- Transforming serializers to simplify serializing custom classes
 - Handles [references and deduplication of identical objects](#references)
 - Very fast
 - Very efficient coding
@@ -24,13 +25,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"me.chrons" %% "boopickle" % "0.1.3"
+"me.chrons" %% "boopickle" % "0.1.4"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```scala
-"me.chrons" %%% "boopickle" % "0.1.3"
+"me.chrons" %%% "boopickle" % "0.1.4"
 ```
 
 To use it in your code, simply import the main package contents.
@@ -53,6 +54,18 @@ so you *must* use the same types when pickling and unpickling.
 ```scala
 val helloWorld = Unpickle[Seq[String]].fromBytes(buf)
 ```
+
+### Common issues with ByteBuffers
+
+As many BooPickle users have run into issues with `ByteBuffers`, here is a bit of advice on how to work with them. If you need to get data out of a 
+`ByteBuffer`, for example into an `Array[Byte]` the safest way is to use the `get(array: Array[Byte])` method. Even when the `ByteBuffer` is
+backed with an `Array[Byte]` and you could access that directly with `array()`, it's very easy to make mistakes with positions, array offsets and limits.
+
+Reading values from a `ByteBuffer` commonly changes its internal state (the `position`), so you cannot treat it as identical to the original
+`ByteBuffer`. Similarly writing to one also changes its state. For example if you write data to a `ByteBuffer` and pass it as such to an unpickler, 
+it will not work. You need to call `flip()` first to reset its `position`.
+
+For more information, please refer to the [JDK documentation on ByteBuffers](http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html).
 
 ## Supported types
 
@@ -92,7 +105,10 @@ As this is such a common situation, BooPickle provides a helper class `Composite
 above, all you need to do is to define an implicit pickler like this:
 
 ```scala
-implicit val fruitPickler = CompositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
+implicit val fruitPickler = CompositePickler[Fruit].
+  addConcreteType[Banana].
+  addConcreteType[Kiwi].
+  addConcreteType[Carambola]
 ```
 
 Now you can freely pickle any `Fruit` and when unpickling, BooPickle will know what type to decode.
@@ -193,6 +209,19 @@ If you need to pickle non-case classes or for example Java classes, you can defi
 use an `implicit object` and for generic types use `implicit def`. See `Pickler.scala` and `Unpickler.scala` for more detailed examples such
 as `Either[T, S]` below.
 
+In most cases, however, you can use the `TransformPickler` to create a custom pickler for a type by transforming it into another type that
+already has pickler support. For example you can transform a `java.util.Date` into a `Long` and back. More complex classes can be transformed
+to a suitable `Tuple`. 
+
+```scala
+implicit val datePickler = TransformPickler[java.util.Date, Long](_.getTime, t => new java.util.Date(t))
+```
+
+Note that transformation breaks reference equality, so multiple instances of the same reference will be pickled
+separately. Transforming picklers can also be used in `CompositePickler` with the `addTransform` method.
+
+For a full pickler/unpickler you need to do as in the example below.
+
 ```scala
 type P[A] = Pickler[A]
 
@@ -259,6 +288,23 @@ On the unpickling side you'll need to do following:
 
 Again, if you are using immutable refs in pickling, make sure to use them when unpickling as well. These are two different indexes.
 
+## Exception picklers
+
+BooPickle has special helpers to simplify pickling most common exception types. A call to `ExceptionPickler.base` gives you a pickler
+that supports all the typical Java/Scala exceptions and you can then add your own custom exceptions with `addException`. The exception pickler
+is a `CompositePickler[Throwable]` so your exceptions should be presented as `Throwable` to pickling functions.
+
+```scala
+implicit val exPickler = ExceptionPickler.base.addException[MyException](m => new MyException(m))
+
+val ex: Throwable = new IllegalArgumentException("No, no, no!"
+val bb = Pickle.intoBytes(ex)
+```
+
+Note that the basic `addException` mechanism only pickles the exception message, not any other fields. If you wish to pickle more
+fields, create transform picklers described above with the `addTransform` function. The same `CompositePickler` can contain both regular
+exception picklers and transform picklers.
+ 
 ## Performance
 
 As one of the main design goals of BooPickle was performance (both in execution speed as in data size), the project includes a sub-project
@@ -274,6 +320,7 @@ To ensure good results, run the tests at least twice in the browser.
 
 Both tests provide similar output, although there are small differences in the Gzipped sizes due to the use of different libraries.
 
+In the browser:
 ```
 18/18 : Decoding Seq[Book] with numerical IDs
 =============================================
@@ -283,10 +330,19 @@ Prickle    2056       4.8%       863        445%       272        142%
 uPickle    13740      32.4%      680        351%       233        121%  
 ```
 
+Under JVM:
+```
+18/18 : Decoding Seq[Book] with numerical IDs
+=============================================
+Library    ops/s      %          size       %          size.gz    %
+BooPickle  562824     100.0%     194        100%       187        100%
+Prickle    11876      2.1%       879        453%       276        148%
+uPickle    110466     19.6%      680        351%       234        125%
+```
+
 Performance test suite measures how many encode or decode operations the library can do in one second and also checks the size of the raw
 and gzipped output. Relative speed and size are shown as percentages (bigger is better for speed, smaller is better for size). Typically
-BooPickle is 4 to 10 times faster than uPickle in decoding and 2 to 5 times faster in encoding. Prickle seems to suffer from scalability
-issues, leaving it far behind the two other libraries when data sizes grow.
+BooPickle is 4 to 10 times faster than uPickle/Prickle in decoding and 2 to 5 times faster in encoding.
 
 ### Custom tests
 
@@ -362,9 +418,6 @@ it a bit slower, but it's small price to pay for savings in data size.
 
 
 To be documented
-- efficient coding of `Int` and `Long`
-- super-position encoding of length, reference index and special codes
-- special encoding of UUID and numeral strings
 - case class pickler generation via macros
 - use of `TextDecoder` and `TextEncoder` when available on JS for efficient UTF-8 decoding/encoding
 
@@ -373,6 +426,8 @@ To be documented
 ### 0.1.4
 
 - Fixed a bug in decoding strings from a `ByteBuffer` with an array offset
+- Added transformation picklers to help creating custom picklers
+- Added special support for pickling Exceptions
 
 ### 0.1.3
 
@@ -401,7 +456,7 @@ To be documented
 
 ## Contributors
 
-BooPickle was created and is maintained by [Otto Chrons](https://github.com/ochrons) (otto@chrons.me).
+BooPickle was created and is maintained by [Otto Chrons](https://github.com/ochrons) - otto@chrons.me - [@ochrons](https://twitter.com/ochrons).
 
 Special thanks to Li Haoyi and Ben Hutchison for their pickling libraries, which provided more than inspiration to BooPickle.
 

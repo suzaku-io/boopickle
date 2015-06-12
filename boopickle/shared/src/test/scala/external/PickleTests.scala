@@ -400,7 +400,10 @@ object PickleTests extends TestSuite {
         val bb = Pickle.intoBytes(data)
         assert(bb.limit == 6 + 9 + 6)
         val r = Unpickle[(String, ByteBuffer, String)].fromBytes(bb)
-        assert(r == data)
+        val rd = Unpickle[String].fromBytes(r._2)
+        assert(r._1 == data._1)
+        assert(r._3 == data._3)
+        assert(rd == "Testing")
       }
     }
     'IdentityDeduplication - {

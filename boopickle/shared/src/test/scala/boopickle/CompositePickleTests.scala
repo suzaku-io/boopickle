@@ -55,7 +55,7 @@ sealed trait Document extends Element
 
 sealed trait Attribute extends Element
 
-final case class WordDocument(text:String) extends Document
+final case class WordDocument(text: String) extends Document
 
 final case class OwnerAttribute(owner: String, parent: Element) extends Attribute
 
@@ -89,6 +89,25 @@ object CompositePickleTests extends TestSuite {
       val bb = Pickle.intoBytes(q)
       val u = Unpickle[Element].fromBytes(bb)
       assert(u == q)
+    }
+    'Transformers {
+      implicit val datePickler = TransformPickler[java.util.Date, Long](_.getTime, t => new java.util.Date(t))
+      val date = new java.util.Date()
+      val bb = Pickle.intoBytes(date)
+      val d = Unpickle[java.util.Date].fromBytes(bb)
+      assert(d == date)
+    }
+    'Exceptions {
+      implicit val exPickler = ExceptionPickler.base
+
+      val exs:Seq[Throwable] = Seq(
+        new NullPointerException("Noooo!"),
+        new IllegalArgumentException("Your argument is not valid"),
+        new ArrayIndexOutOfBoundsException("There's no such index as 42 here!")
+      )
+      val bb = Pickle.intoBytes(exs)
+      val e = Unpickle[Seq[Throwable]].fromBytes(bb)
+      assert(e.zip(exs).forall(x => x._1.getMessage == x._2.getMessage && x._1.getClass == x._2.getClass))
     }
   }
 }
