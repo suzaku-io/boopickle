@@ -17,7 +17,13 @@ object Unpickle {
 case class UnpickledCurry[A](u: Unpickler[A]) {
   def apply(implicit state: UnpickleState): A = u.unpickle(state)
 
-  def fromBytes(bytes: ByteBuffer): A = u.unpickle(new UnpickleState(new Decoder(bytes.order(ByteOrder.LITTLE_ENDIAN))))
+  def fromBytes(bytes: ByteBuffer): A = {
+    // keep original byte order
+    val origByteOrder = bytes.order()
+    val result = u.unpickle(new UnpickleState(new Decoder(bytes.order(ByteOrder.LITTLE_ENDIAN))))
+    bytes.order(origByteOrder)
+    result
+  }
 
   def tryFromBytes(bytes: ByteBuffer): Try[A] = Try(fromBytes(bytes))
 
@@ -314,7 +320,7 @@ final class UnpickleState(val dec: Decoder) {
     identityRefs += obj
   }
 
-  @inline def unpickle[A](implicit state: UnpickleState, u: Unpickler[A]): A = u.unpickle
+  @inline def unpickle[A](implicit u: Unpickler[A]): A = u.unpickle(this)
 }
 
 object UnpickleState {

@@ -195,12 +195,14 @@ class Decoder(val buf: ByteBuffer) {
   }
 
   def readByteBuffer: ByteBuffer = {
-    val size = readInt
-    if (size < 0)
-      throw new IllegalArgumentException(s"Invalid size $size for ByteBuffer")
-
-    // create a copy (sharing content), enforce little endian
-    val b = buf.slice().order(ByteOrder.LITTLE_ENDIAN)
+    // length and byte order are encoded into same integer
+    val sizeBO = readInt
+    if (sizeBO < 0)
+      throw new IllegalArgumentException(s"Invalid size $sizeBO for ByteBuffer")
+    val size = sizeBO >> 1
+    val byteOrder = if((sizeBO & 1) == 1) ByteOrder.BIG_ENDIAN else ByteOrder.LITTLE_ENDIAN
+    // create a copy (sharing content), set correct byte order
+    val b = buf.slice().order(byteOrder)
     buf.position(buf.position + size)
     b.limit(b.position + size)
     b
@@ -362,7 +364,9 @@ class Encoder(bufferProvider: BufferProvider = DefaultByteBufferProvider.provide
    */
   def writeByteBuffer(bb: ByteBuffer): Encoder = {
     bb.mark()
-    writeInt(bb.remaining).alloc(bb.remaining).put(bb)
+    val byteOrder = if(bb.order() == ByteOrder.BIG_ENDIAN) 1 else 0
+    // encode byte order as bit 0 in the length
+    writeInt(bb.remaining * 2 | byteOrder ).alloc(bb.remaining).put(bb)
     bb.reset()
     this
   }

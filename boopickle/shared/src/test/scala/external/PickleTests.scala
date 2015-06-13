@@ -1,6 +1,6 @@
 package external
 
-import java.nio.ByteBuffer
+import java.nio.{ByteOrder, ByteBuffer}
 import java.util.UUID
 
 import boopickle._
@@ -385,22 +385,24 @@ object PickleTests extends TestSuite {
     }
     'ByteBuffer - {
       'small {
-        val d = ByteBuffer.allocateDirect(256)
+        val d = ByteBuffer.allocateDirect(256) // default byte order is Big Endian
         (0 until 256).map(b => d.put(b.toByte))
         d.flip()
         val bb = Pickle.intoBytes(d)
         assert(bb.limit == 2 + 256)
         val r = Unpickle[ByteBuffer].fromBytes(bb)
+        assert(r.order() == ByteOrder.BIG_ENDIAN) // check byte order
         assert(r.remaining() == 256)
         assert(r.compareTo(d) == 0)
       }
       'complex {
-        val d = Pickle.intoBytes("Testing")
+        val d = Pickle.intoBytes("Testing") // BooPickle output is Little Endian
         val data:(String, ByteBuffer, String) = ("Hello", d, "World")
         val bb = Pickle.intoBytes(data)
         assert(bb.limit == 6 + 9 + 6)
         val r = Unpickle[(String, ByteBuffer, String)].fromBytes(bb)
         val rd = Unpickle[String].fromBytes(r._2)
+        assert(r._2.order() == ByteOrder.LITTLE_ENDIAN) // check byte order
         assert(r._1 == data._1)
         assert(r._3 == data._3)
         assert(rd == "Testing")
