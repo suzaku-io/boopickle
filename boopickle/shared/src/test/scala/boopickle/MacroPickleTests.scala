@@ -21,7 +21,7 @@ object MacroPickleTests extends TestSuite {
   class TT3(val i: Int, val s: String) extends DeepTrait {
     // a normal class requires an equals method to work properly
     override def equals(obj: scala.Any): Boolean = obj match {
-      case t:TT3 => i == t.i && s == t.s
+      case t: TT3 => i == t.i && s == t.s
       case _ => false
     }
   }
@@ -31,12 +31,12 @@ object MacroPickleTests extends TestSuite {
     implicit val pickler = TransformPickler[TT3, (Int, String)]((t) => (t.i, t.s), (t) => new TT3(t._1, t._2))
   }
 
-  override def tests = TestSuite {
-/*
-    implicit val pickler = Pickler.materializePickler[MyTrait]
-    implicit val unpickler = Unpickler.materializeUnpickler[MyTrait]
-*/
+  object MyTrait {
+    implicit val pickler: Pickler[MyTrait] = Pickler.materializePickler[MyTrait]
+    implicit val unpickler: Unpickler[MyTrait] = Unpickler.materializeUnpickler[MyTrait]
+  }
 
+  override def tests = TestSuite {
     'CaseClasses - {
       'Case1 {
         val bb = Pickle.intoBytes(Test1(5, "Hello!"))
@@ -72,7 +72,7 @@ object MacroPickleTests extends TestSuite {
         assert(u == t)
       }
       'TraitToo {
-        // again the same test code, to check that additional .class files are generated for the pickler
+        // the same test code twice, to check that additional .class files are not generated for the MyTrait pickler
         val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
         val bb = Pickle.intoBytes(t)
         val u = Unpickle[Seq[MyTrait]].fromBytes(bb)

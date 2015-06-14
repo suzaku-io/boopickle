@@ -156,10 +156,9 @@ will be generated. And not just for the top level trait, but for all implementin
 rather quickly! Below you can see the results of pickling a trait twice in the code.
 
 ``` 
+ Size   Name
  2,650  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitUnpickler$macro$28$2$CCUnpickler$macro$29$2$.class
  2,650  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitUnpickler$macro$36$2$CCUnpickler$macro$37$2$.class
- 2,713  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$2$CCPickler$macro$1$2$.class
- 2,713  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$5$CCPickler$macro$7$2$.class
  2,798  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitPickler$macro$25$2$CCPickler$macro$26$2$.class
  2,798  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitPickler$macro$33$2$CCPickler$macro$34$2$.class
  3,409  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitUnpickler$macro$28$2$CCUnpickler$macro$30$2$.class
@@ -172,11 +171,14 @@ rather quickly! Below you can see the results of pickling a trait twice in the c
  4,863  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitUnpickler$macro$36$2$.class
 ``` 
 
-If this becomes an issue, you can avoid it by storing implicit picklers somewhere and making sure the compiler sees them.
+If this becomes an issue, you can avoid it by storing implicit picklers in the companion object of the trait. This way the code is generated only once
+and used whenever you need a pickler for your `Fruit`.
 
 ```scala
-implicit val pickler = Pickler.materializePickler[Fruit]
-implicit val unpickler = Unpickler.materializeUnpickler[Fruit]
+object Fruit {
+  implicit val pickler: Pickler[Fruit] = Pickler.materializePickler[Fruit]
+  implicit val unpickler: Unpickler[Fruit] = Unpickler.materializeUnpickler[Fruit]
+}
 ```
 
 ### Recursive composite types
@@ -197,7 +199,6 @@ object Tree {
 
 This is because the compiler must find a pickler for `Tree` when it's building a pickler for `Node`.
 
-Alternatively you can 
 ### Complex type hierarchies
 
 When you have more complex type hierarchies with multiple levels of traits, you might need picklers for each type level. A simple example to illustrate:

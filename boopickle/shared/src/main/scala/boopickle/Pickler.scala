@@ -83,9 +83,9 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
   implicit object ByteBufferPickler extends P[ByteBuffer] {
     @inline override def pickle(bb: ByteBuffer)(implicit state: PickleState): Unit = state.enc.writeByteBuffer(bb)
   }
-  
+
   implicit object StringPickler extends P[String] {
-    def encodeUUID(str:String, code:Byte)(implicit state: PickleState): Unit = {
+    def encodeUUID(str: String, code: Byte)(implicit state: PickleState): Unit = {
       // special coding for lowercase UUID
       val uuid = UUID.fromString(str)
       state.enc.writeByte(code)
@@ -104,7 +104,7 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
           // encode index as negative "length"
           state.enc.writeInt(-idx)
         case None =>
-          if(s.length > 1 && s.length < 21 && (s(0).isDigit || s(0) == '-') && numRE.pattern.matcher(s).matches()) {
+          if (s.length > 1 && s.length < 21 && (s(0).isDigit || s(0) == '-') && numRE.pattern.matcher(s).matches()) {
             // string represents an integer/long
             try {
               val l = java.lang.Long.parseLong(s)
@@ -118,17 +118,17 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
                 state.enc.writeInt(l.toInt)
               }
             } catch {
-              case e:NumberFormatException =>
+              case e: NumberFormatException =>
                 // probably too big for Long even with all the precautions taken above
                 state.addImmutableRef(s)
                 state.enc.writeString(s)
             }
           } else if (s.length == 36 && uuidRE.pattern.matcher(s).matches()) {
             // lower-case UUID
-            encodeUUID(s, specialCode(StringUUID) )
+            encodeUUID(s, specialCode(StringUUID))
           } else if (s.length == 36 && UUIDRE.pattern.matcher(s).matches()) {
             // upper-case UUID
-            encodeUUID(s, specialCode(StringUUIDUpper) )
+            encodeUUID(s, specialCode(StringUUIDUpper))
           } else {
             // normal string
             if (s.nonEmpty)
@@ -166,7 +166,7 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
 
   @inline implicit def InfiniteDurationPickler: P[Duration.Infinite] = DurationPickler.asInstanceOf[P[Duration.Infinite]]
 
-  implicit def OptionPickler[T: P]:P[Option[T]] = new P[Option[T]] {
+  implicit def OptionPickler[T: P]: P[Option[T]] = new P[Option[T]] {
     override def pickle(obj: Option[T])(implicit state: PickleState): Unit = {
       obj match {
         case Some(x) =>
@@ -211,9 +211,9 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
     }
   }
 
-  implicit def LeftPickler[T: P, S: P]:P[Left[T, S]] = EitherPickler[T, S].asInstanceOf[P[Left[T, S]]]
+  implicit def LeftPickler[T: P, S: P]: P[Left[T, S]] = EitherPickler[T, S].asInstanceOf[P[Left[T, S]]]
 
-  implicit def RightPickler[T: P, S: P]:P[Right[T, S]] = EitherPickler[T, S].asInstanceOf[P[Right[T, S]]]
+  implicit def RightPickler[T: P, S: P]: P[Right[T, S]] = EitherPickler[T, S].asInstanceOf[P[Right[T, S]]]
 
   /**
    * This pickler works on all collections that derive from Iterable (Vector, Set, List, etc)
@@ -221,7 +221,7 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
    * @tparam V type of the collection
    * @return
    */
-  implicit def iterablePickler[T: P, V[_] <: Iterable[_]]:P[V[T]] = new P[V[T]] {
+  implicit def iterablePickler[T: P, V[_] <: Iterable[_]]: P[V[T]] = new P[V[T]] {
     override def pickle(iterable: V[T])(implicit state: PickleState): Unit = {
       // check if this iterable has been pickled already
       state.identityRefFor(iterable) match {
@@ -243,7 +243,7 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
    * @tparam T Type of values
    * @return
    */
-  implicit def arrayPickler[T: P]:P[Array[T]] = new P[Array[T]] {
+  implicit def arrayPickler[T: P]: P[Array[T]] = new P[Array[T]] {
     override def pickle(array: Array[T])(implicit state: PickleState): Unit = {
       // check if this iterable has been pickled already
       state.identityRefFor(array) match {
@@ -266,7 +266,7 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
    * @tparam S Type of values
    * @return
    */
-  implicit def mapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]]:P[V[T, S]] = new P[V[T, S]] {
+  implicit def mapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]]: P[V[T, S]] = new P[V[T, S]] {
     override def pickle(map: V[T, S])(implicit state: PickleState): Unit = {
       // check if this map has been pickled already
       state.identityRefFor(map) match {
@@ -340,7 +340,7 @@ final class PickleState(val enc: Encoder) {
   }
 
   def toByteBuffer = enc.asByteBuffer
-  
+
   def toByteBuffers = enc.asByteBuffers
 }
 
@@ -357,6 +357,7 @@ object PickleState {
     override def hashCode(): Int =
       System.identityHashCode(obj)
   }
+
 }
 
 trait MaterializePicklerFallback {
