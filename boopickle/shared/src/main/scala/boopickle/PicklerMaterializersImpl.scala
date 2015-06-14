@@ -1,9 +1,71 @@
 package boopickle
 
 import scala.language.experimental.macros
-import scala.reflect.macros.blackbox
+import scala.reflect.api.Symbols
+import scala.reflect.macros.{Universe, blackbox}
 
 object PicklerMaterializersImpl {
+
+  def pickleSealedTrait(c: blackbox.Context)(tpe: c.universe.Type): c.universe.Tree = {
+    import c.universe._
+
+    val concreteTypes = findConcreteTypes(c)(tpe)
+    val name = TermName(c.freshName("TraitPickler"))
+
+    q"""
+      implicit object $name extends boopickle.CompositePickler[$tpe] {
+        ..$concreteTypes
+      }
+      $name
+    """
+  }
+
+  def unpickleSealedTrait(c: blackbox.Context)(tpe: c.universe.Type): c.universe.Tree = {
+    import c.universe._
+
+    val concreteTypes = findConcreteTypes(c)(tpe)
+    val name = TermName(c.freshName("TraitUnpickler"))
+
+    q"""
+      implicit object $name extends boopickle.CompositeUnpickler[$tpe] {
+        ..$concreteTypes
+      }
+      $name
+    """
+  }
+
+  def findConcreteTypes(c: blackbox.Context)(tpe: c.universe.Type): Set[c.universe.Tree] = {
+    import c.universe._
+
+    val sym = tpe.typeSymbol.asClass
+    // must be a sealed trait
+    if (!sym.isSealed) {
+      val msg = s"The referenced trait [[${sym.name}]] must be sealed. For non-sealed traits, create a pickler " +
+      "with boopickle.CompositePickler. You may also get this error if a pickler for a class in your type hierarchy cannot be found."
+      c.abort(c.enclosingPosition, msg)
+    }
+
+    if (sym.knownDirectSubclasses.isEmpty) {
+      val msg = s"The referenced trait [[${sym.name}]] does not have any sub-classes. This may " +
+        "happen due to a limitation of scalac (SI-7046) given that the trait is " +
+        "not in the same package. If this is the case, the pickler may be " +
+        "defined using boopickle.CompositePickler directly."
+      c.abort(c.enclosingPosition, msg)
+    }
+
+    // find all implementation classes in the trait hierarchy
+    def findSubClasses(p: c.universe.ClassSymbol): Set[c.universe.ClassSymbol] = {
+      p.knownDirectSubclasses.flatMap { sub =>
+        val subClass = sub.asClass
+        if (subClass.isTrait)
+          findSubClasses(subClass)
+        else
+          Set(subClass) ++ findSubClasses(subClass)
+      }
+    }
+    findSubClasses(sym).map(s => q"""addConcreteType[$s]""")
+  }
+
   def materializePickler[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[Pickler[T]] = {
     import c.universe._
 
@@ -13,6 +75,11 @@ object PicklerMaterializersImpl {
       throw new RuntimeException(s"Enclosure: ${c.enclosingPosition.toString}, type = $tpe")
 
     val sym = tpe.typeSymbol.asClass
+
+    // special handling of sealed traits
+    if (sym.isTrait) {
+      return c.Expr[Pickler[T]](pickleSealedTrait(c)(tpe))
+    }
 
     if (!sym.isCaseClass) {
       c.error(c.enclosingPosition,
@@ -31,7 +98,7 @@ object PicklerMaterializersImpl {
       val pickleFields = for {
         accessor <- accessors
       } yield
-          q"""state.pickle(value.${accessor.name})"""
+        q"""state.pickle(value.${accessor.name})"""
 
       q"""
           state.identityRefFor(value) match {
@@ -44,7 +111,7 @@ object PicklerMaterializersImpl {
           }
         """
     }
-    val name = TermName(c.freshName("GenPickler"))
+    val name = TermName(c.freshName("CCPickler"))
 
     val result = q"""
       implicit object $name extends boopickle.Pickler[$tpe] {
@@ -62,6 +129,11 @@ object PicklerMaterializersImpl {
 
     val tpe = weakTypeOf[T]
     val sym = tpe.typeSymbol.asClass
+
+    // special handling of sealed traits
+    if (sym.isTrait) {
+      return c.Expr[Unpickler[T]](unpickleSealedTrait(c)(tpe))
+    }
 
     if (!sym.isCaseClass) {
       c.error(c.enclosingPosition,
@@ -96,7 +168,7 @@ object PicklerMaterializersImpl {
         """
     }
 
-    val name = TermName(c.freshName("GenUnpickler"))
+    val name = TermName(c.freshName("CCUnpickler"))
 
     val result = q"""
       implicit object $name extends boopickle.Unpickler[$tpe] {

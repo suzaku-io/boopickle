@@ -10,7 +10,33 @@ object MacroPickleTests extends TestSuite {
 
   case object TestO
 
+  sealed trait MyTrait
+
+  case class TT1(i: Int) extends MyTrait
+
+  sealed trait DeepTrait extends MyTrait
+
+  case class TT2(s: String, next: MyTrait) extends DeepTrait
+
+  class TT3(val i: Int, val s: String) extends DeepTrait {
+    // a normal class requires an equals method to work properly
+    override def equals(obj: scala.Any): Boolean = obj match {
+      case t:TT3 => i == t.i && s == t.s
+      case _ => false
+    }
+  }
+
+  object TT3 {
+    // a piclker for non-case classes cannot be automatically generated, so use the transform pickler
+    implicit val pickler = TransformPickler[TT3, (Int, String)]((t) => (t.i, t.s), (t) => new TT3(t._1, t._2))
+  }
+
   override def tests = TestSuite {
+/*
+    implicit val pickler = Pickler.materializePickler[MyTrait]
+    implicit val unpickler = Unpickler.materializeUnpickler[MyTrait]
+*/
+
     'CaseClasses - {
       'Case1 {
         val bb = Pickle.intoBytes(Test1(5, "Hello!"))
@@ -38,6 +64,19 @@ object MacroPickleTests extends TestSuite {
         assert(bb.limit == 0)
         val u = Unpickle[TestO.type].fromBytes(bb)
         assert(u == TestO)
+      }
+      'Trait {
+        val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
+        val bb = Pickle.intoBytes(t)
+        val u = Unpickle[Seq[MyTrait]].fromBytes(bb)
+        assert(u == t)
+      }
+      'TraitToo {
+        // again the same test code, to check that additional .class files are generated for the pickler
+        val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
+        val bb = Pickle.intoBytes(t)
+        val u = Unpickle[Seq[MyTrait]].fromBytes(bb)
+        assert(u == t)
       }
     }
   }

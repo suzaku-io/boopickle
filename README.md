@@ -124,6 +124,61 @@ assert(u == fruits)
 
 Note that internally `CompositePickler` encodes types using indices, so they must be specified in the same order on both sides!
 
+### Automatic generation of hierarchy picklers
+
+If your type hierarchy is `sealed` then you can take advantage of the automatic pickler generation feature of BooPickle. A macro automatically generates
+the required `CompositePickler` for you, as long as the trait is `sealed`. For example lets change the `Fruit` trait to be sealed, so that compiler
+knows all its descendants will be defined in the same file and the macro can find them.
+
+```scala
+sealed trait Fruit {
+  val weight: Double
+  def color: String
+}
+```
+
+Now you can directly pickle your fruits without manually defining a `CompositePickler`.
+
+```scala
+val fruits: Seq[Fruit] = Seq(Kiwi(0.5), Kiwi(0.6), Carambola(5.0), Banana(1.2))
+val bb = Pickle.intoBytes(fruits)
+.
+.
+val u = Unpickle[Seq[Fruit]].fromBytes(bb)
+assert(u == fruits)
+```
+
+Note that for some hierarchies the automatic generation may not work (due to Scala compiler limitations), but you can always fall back to the
+manually defined `CompositePickler`.
+
+Also note that due to the way macros generate picklers, each time you need an implicit instance of the pickler, new classes (and `.class` files)
+will be generated. And not just for the top level trait, but for all implementing classes as well. If you have a large class hierarchy, this adds up
+rather quickly! Below you can see the results of pickling a trait twice in the code.
+
+``` 
+ 2,650  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitUnpickler$macro$28$2$CCUnpickler$macro$29$2$.class
+ 2,650  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitUnpickler$macro$36$2$CCUnpickler$macro$37$2$.class
+ 2,713  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$2$CCPickler$macro$1$2$.class
+ 2,713  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$5$CCPickler$macro$7$2$.class
+ 2,798  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitPickler$macro$25$2$CCPickler$macro$26$2$.class
+ 2,798  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitPickler$macro$33$2$CCPickler$macro$34$2$.class
+ 3,409  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitUnpickler$macro$28$2$CCUnpickler$macro$30$2$.class
+ 3,409  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitUnpickler$macro$36$2$CCUnpickler$macro$38$2$.class
+ 3,498  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitPickler$macro$25$2$CCPickler$macro$27$2$.class
+ 3,498  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitPickler$macro$33$2$CCPickler$macro$35$2$.class
+ 4,789  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitPickler$macro$25$2$.class
+ 4,789  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitPickler$macro$33$2$.class
+ 4,863  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitUnpickler$macro$28$2$.class
+ 4,863  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitUnpickler$macro$36$2$.class
+``` 
+
+If this becomes an issue, you can avoid it by storing implicit picklers somewhere and making sure the compiler sees them.
+
+```scala
+implicit val pickler = Pickler.materializePickler[Fruit]
+implicit val unpickler = Unpickler.materializeUnpickler[Fruit]
+```
+
 ### Recursive composite types
 
 If you have a recursive composite type (a sub type has a reference to the super type), you need to build the `CompositePickler` in two steps,
@@ -142,6 +197,7 @@ object Tree {
 
 This is because the compiler must find a pickler for `Tree` when it's building a pickler for `Node`.
 
+Alternatively you can 
 ### Complex type hierarchies
 
 When you have more complex type hierarchies with multiple levels of traits, you might need picklers for each type level. A simple example to illustrate:
@@ -422,6 +478,11 @@ To be documented
 - use of `TextDecoder` and `TextEncoder` when available on JS for efficient UTF-8 decoding/encoding
 
 ## Change history
+
+### 0.1.5-SNAPSHOT
+
+- Support for auto-generation of `CompositePickler` for sealed trait class hierarchies
+- When a `ByteBuffer` is pickled, it now retains its byte order when unpickled
 
 ### 0.1.4
 
