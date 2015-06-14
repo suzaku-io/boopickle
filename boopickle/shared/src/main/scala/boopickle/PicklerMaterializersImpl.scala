@@ -6,7 +6,7 @@ import scala.reflect.macros.{Universe, blackbox}
 
 object PicklerMaterializersImpl {
 
-  def pickleSealedTrait(c: blackbox.Context)(tpe: c.universe.Type): c.universe.Tree = {
+  private def pickleSealedTrait(c: blackbox.Context)(tpe: c.universe.Type): c.universe.Tree = {
     import c.universe._
 
     val concreteTypes = findConcreteTypes(c)(tpe)
@@ -20,7 +20,7 @@ object PicklerMaterializersImpl {
     """
   }
 
-  def unpickleSealedTrait(c: blackbox.Context)(tpe: c.universe.Type): c.universe.Tree = {
+  private def unpickleSealedTrait(c: blackbox.Context)(tpe: c.universe.Type): c.universe.Tree = {
     import c.universe._
 
     val concreteTypes = findConcreteTypes(c)(tpe)
@@ -34,7 +34,7 @@ object PicklerMaterializersImpl {
     """
   }
 
-  def findConcreteTypes(c: blackbox.Context)(tpe: c.universe.Type): Set[c.universe.Tree] = {
+  private def findConcreteTypes(c: blackbox.Context)(tpe: c.universe.Type): Seq[c.universe.Tree] = {
     import c.universe._
 
     val sym = tpe.typeSymbol.asClass
@@ -63,7 +63,8 @@ object PicklerMaterializersImpl {
           Set(subClass) ++ findSubClasses(subClass)
       }
     }
-    findSubClasses(sym).map(s => q"""addConcreteType[$s]""")
+    // sort class names to make sure they are always in the same order
+    findSubClasses(sym).toSeq.sortBy(_.name.toString).map(s => q"""addConcreteType[$s]""")
   }
 
   def materializePickler[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[Pickler[T]] = {

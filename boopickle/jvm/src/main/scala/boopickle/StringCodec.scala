@@ -13,6 +13,6 @@ object StringCodec {
   }
 
   def encodeUTF8(str: String): ByteBuffer = {
-    ByteBuffer.wrap(str.getBytes(StandardCharsets.UTF_8))
+    StandardCharsets.UTF_8.encode(str)
   }
 }
