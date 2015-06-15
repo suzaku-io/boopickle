@@ -10,7 +10,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 - Supports both Scala and Scala.js (no reflection!)
 - Serialization support for all primitives, collections, options, tuples and case classes (including class hierarchies)
 - User-definable custom serializers
-- Transforming serializers to simplify serializing custom classes
+- Transforming serializers to simplify serializing non-case classes
 - Handles [references and deduplication of identical objects](#references)
 - Very fast
 - Very efficient coding
@@ -25,13 +25,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"me.chrons" %% "boopickle" % "0.1.4"
+"me.chrons" %% "boopickle" % "1.0.0"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```scala
-"me.chrons" %%% "boopickle" % "0.1.4"
+"me.chrons" %%% "boopickle" % "1.0.0"
 ```
 
 To use it in your code, simply import the main package contents.
@@ -506,13 +506,13 @@ implicit object PersonUnpickler extends Unpickler[Person] {
 }
 ```
 
-This would be very tedious, which is practically all serialization libraries use either reflection or macros to automate this task. Because BooPickle
-is fully compatible with Scala.js, reflection is not possible, leaving macros. Programming macros in Scala is quite difficult, because it's a very
-recent addition to Scala compiler and the documentation tends to be terse and somewhat cryptic. Also many examples found in the net are already
-obsolete or wrong if you use Scala 2.11. Best course of action is typically to look at existing macro code and try to deduce that's going on. Both
+This would be very tedious, which is why practically all serialization libraries use either reflection or macros to automate this task. BooPickle
+being fully compatible with Scala.js, reflection is not an option, so macros it is. Programming macros in Scala is quite difficult, because it's a very
+recent addition to the Scala compiler and the documentation tends to be terse and somewhat cryptic. Also many examples found in the net are already
+obsolete or wrong if you use Scala 2.11. Best course of action is to look at existing macro code and try to deduce what's going on. Both
 uPickle and Prickle provided good base for BooPickle's macros.
 
-The macro-generated picklers are provided by a separate trait to make sure it's the last resort compiler turns to.
+The macro-generated picklers are provided by a separate trait to make sure they are the last resort the compiler turns to.
 
 ```scala
 object Pickler extends TuplePicklers with MaterializePicklerFallback { ... }
@@ -522,7 +522,7 @@ trait MaterializePicklerFallback {
 }
 ```
 
-If no other implicit pickler can be found, the compiler will call the `materializePickler` macro function in the hopes of generating one.
+If no other implicit pickler can be found, the compiler will call the `materializePickler` macro function in the hope of generating a suitable one.
 
 The [macro code](https://github.com/ochrons/boopickle/blob/master/boopickle/shared/src/main/scala/boopickle/PicklerMaterializersImpl.scala) starts
 by checking that the given type is valid for pickling (a sealed trait or a case class). Next step is building the code for pickling individual fields
@@ -540,19 +540,22 @@ val pickleFields = for {
 ```
 
 Because there might be more than one instance of the case class in the structure we are pickling, additional code is generated to check for that
-and to store just a reference instead, if needed.
+and to store just a reference instead, if needed. For case objects, nothing(!) needs to be stored as they are identified by their type directly.
+
 
 ```scala
-q"""
-  state.identityRefFor(value) match {
-    case Some(idx) =>
-      state.enc.writeInt(-idx)
-    case None =>
-      state.enc.writeInt(0)
-      ..$pickleFields
-      state.addIdentityRef(value)
-  }
-"""
+val pickleLogic = if (sym.isModuleClass) 
+    q"""()""" 
+  else q"""
+    state.identityRefFor(value) match {
+      case Some(idx) =>
+        state.enc.writeInt(-idx)
+      case None =>
+        state.enc.writeInt(0)
+        ..$pickleFields
+        state.addIdentityRef(value)
+    }
+  """
 ```
 
 Finally an `implicit object` is generated to provide the `Pickler` instance.
@@ -569,7 +572,7 @@ val result = q"""
 
 That's it for generating a pickler for a case class! Unpickler generation is pretty much the same, check out the code for details.
 
-BooPickle also supports automatic pickler generation for sealed class hierarchies and that functionality is also implemented by a macro. When the macro
+BooPickle also supports automatic pickler generation for sealed class hierarchies and that functionality is also implemented by the macro. When the macro
 first checks if it's a trait, it will continue under a different code path than for case classes. Goal of the macro is to create a `CompositePickler`
 for the given trait so that all implementing classes are included.
 
@@ -624,10 +627,11 @@ def encodeUTF8(s: String): ByteBuffer = {
 
 ## Change history
 
-### 0.1.5-SNAPSHOT
+### 1.0.0
 
 - Support for auto-generation of `CompositePickler` for sealed trait class hierarchies
 - When a `ByteBuffer` is pickled, it now retains its byte order when unpickled
+- Refactored String coding in Scala.js
 
 ### 0.1.4
 
