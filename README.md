@@ -354,7 +354,7 @@ is a `CompositePickler[Throwable]` so your exceptions should be presented as `Th
 ```scala
 implicit val exPickler = ExceptionPickler.base.addException[MyException](m => new MyException(m))
 
-val ex: Throwable = new IllegalArgumentException("No, no, no!"
+val ex: Throwable = new IllegalArgumentException("No, no, no!")
 val bb = Pickle.intoBytes(ex)
 ```
 
@@ -626,6 +626,10 @@ def encodeUTF8(s: String): ByteBuffer = {
 ```
 
 ## Change history
+
+### 1.0.1-SNAPSHOT
+
+- BooPickle generated macros are now compatible with *-Xstrict-inference* compiler option
 
 ### 1.0.0
 

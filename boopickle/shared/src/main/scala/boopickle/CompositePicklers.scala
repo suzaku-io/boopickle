@@ -1,6 +1,7 @@
 package boopickle
 
 import scala.reflect.ClassTag
+import scala.language.experimental.macros
 
 /**
  * Encodes a class belonging to a type hierarchy. Type is identified by the index in the `picklers` sequence, so care

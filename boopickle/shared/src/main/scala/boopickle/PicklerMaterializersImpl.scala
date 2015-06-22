@@ -102,13 +102,13 @@ object PicklerMaterializersImpl {
         q"""state.pickle(value.${accessor.name})"""
 
       q"""
-          state.identityRefFor(value) match {
-            case Some(idx) =>
-              state.enc.writeInt(-idx)
-            case None =>
-              state.enc.writeInt(0)
-              ..$pickleFields
-              state.addIdentityRef(value)
+          val ref = state.identityRefFor(value)
+          if(ref.isDefined) {
+            state.enc.writeInt(-ref.get)
+          } else {
+            state.enc.writeInt(0)
+            ..$pickleFields
+            state.addIdentityRef(value)
           }
         """
     }
@@ -156,14 +156,14 @@ object PicklerMaterializersImpl {
           q"""state.unpickle[$fieldTpe]"""
         }
       q"""
-          state.dec.readIntCode match {
-            case Right(0) =>
+          val ic = state.dec.readIntCode
+          if(ic.isRight && ic.right.get == 0) {
               val value = new $tpe(..$unpickledFields)
               state.addIdentityRef(value)
               value
-            case Right(idx) if idx < 0 =>
-              state.identityFor[$tpe](-idx)
-            case _ =>
+          } else if(ic.isRight && ic.right.get < 0) {
+              state.identityFor[$tpe](-ic.right.get)
+          } else {
               throw new IllegalArgumentException("Unknown object coding")
           }
         """

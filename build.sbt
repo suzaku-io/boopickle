@@ -17,13 +17,13 @@ val commonSettings = Seq(
 
 def preventPublication(p: Project) =
   p.settings(
-    publish            := (),
-    publishLocal       := (),
-    publishSigned      := (),
-    publishLocalSigned := (),
-    publishArtifact    := false,
-    publishTo          := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
-    packagedArtifacts  := Map.empty)
+    publish :=(),
+    publishLocal :=(),
+    publishSigned :=(),
+    publishLocalSigned :=(),
+    publishArtifact := false,
+    publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
+    packagedArtifacts := Map.empty)
 
 lazy val boopickle = crossProject
   .settings(commonSettings: _*)
@@ -37,12 +37,12 @@ lazy val boopickle = crossProject
     publishArtifact in Test := false,
     pomExtra :=
       <url>https://github.com/ochrons/boopickle</url>
-      <licenses>
-        <license>
-          <name>MIT license</name>
-          <url>http://www.opensource.org/licenses/mit-license.php</url>
-        </license>
-      </licenses>
+        <licenses>
+          <license>
+            <name>MIT license</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+          </license>
+        </licenses>
         <developers>
           <developer>
             <id>ochrons</id>
@@ -56,7 +56,7 @@ lazy val boopickle = crossProject
       if (isSnapshot.value)
         Some("snapshots" at nexus + "content/repositories/snapshots")
       else
-        Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+        Some("releases" at nexus + "service/local/staging/deploy/maven2")
     }
   ).jsSettings(
     // use PhantomJS for testing, because we need real browser JS stuff like TypedArrays
@@ -90,7 +90,7 @@ generateTuples := {
     val writes = commaSeparated(j => s"write[T$j](x._$j)", "; ")
     val reads = commaSeparated(j => s"read[T$j]")
 
-    ( s"""
+    (s"""
   implicit def Tuple${i}Pickler[$picklerTypes] = new P[$typeTuple] {
     override def pickle(x: $typeTuple)(implicit state: PickleState): Unit = { $writes }
   }""",
@@ -119,6 +119,7 @@ lazy val perftests = crossProject
   .settings(commonSettings: _*)
   .settings(
     name := "perftests",
+    scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "upickle" % "0.2.8",
       "com.github.benhutchison" %%% "prickle" % "1.1.6"
@@ -127,8 +128,8 @@ lazy val perftests = crossProject
   .jsSettings(
     bootSnippet := "BooApp().main();",
     libraryDependencies ++= Seq(
-    "org.scala-js" %%% "scalajs-dom" % "0.8.1",
-    "com.lihaoyi" %%% "scalatags" % "0.4.6"
+      "org.scala-js" %%% "scalajs-dom" % "0.8.1",
+      "com.lihaoyi" %%% "scalatags" % "0.4.6"
     )
   )
 
