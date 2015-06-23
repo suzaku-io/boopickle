@@ -99,7 +99,7 @@ object PicklerMaterializersImpl {
       val pickleFields = for {
         accessor <- accessors
       } yield {
-          val fieldTpe = accessor.returnType
+          val fieldTpe = accessor.typeSignatureIn(tpe).finalResultType
           q"""state.pickle[$fieldTpe](value.${accessor.name})"""
         }
 
@@ -153,7 +153,7 @@ object PicklerMaterializersImpl {
       val unpickledFields = for {
         accessor <- accessors
       } yield {
-          val fieldTpe = accessor.returnType
+          val fieldTpe = accessor.typeSignatureIn(tpe).finalResultType
           q"""state.unpickle[$fieldTpe]"""
         }
       q"""
@@ -178,7 +178,6 @@ object PicklerMaterializersImpl {
       }
       $name
     """
-
     c.Expr[Unpickler[T]](result)
   }
 }
