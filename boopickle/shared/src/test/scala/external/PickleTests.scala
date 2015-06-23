@@ -323,6 +323,12 @@ object PickleTests extends TestSuite {
         val bb = Pickle.intoBytes(data)
         assert(Unpickle[Seq[Seq[String]]].fromBytes(bb) == data)
       }
+      'tuples {
+        val data: List[(String, String)] = List(("A", "B"), ("B", "C"))
+        val bb = Pickle.intoBytes(data)
+        val u = Unpickle[List[(String, String)]].fromBytes(bb)
+        assert(u == data)
+      }
     }
     'Map - {
       'empty {

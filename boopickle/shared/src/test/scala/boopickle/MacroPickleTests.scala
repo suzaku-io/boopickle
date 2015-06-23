@@ -6,7 +6,7 @@ object MacroPickleTests extends TestSuite {
 
   case class Test1(i: Int, x: String)
 
-  case class Test2(i: Int, next: Option[Test2])
+  case class Test2(i: Int, next: Option[Test2], l: Map[String, String] = Map.empty)
 
   case object TestO
 
@@ -36,6 +36,10 @@ object MacroPickleTests extends TestSuite {
     implicit val unpickler: Unpickler[MyTrait] = Unpickler.materializeUnpickler[MyTrait]
   }
 
+  case class A(fills: List[B])
+
+  case class B(stops: List[(Double, Double)])
+
   override def tests = TestSuite {
     'CaseClasses - {
       'Case1 {
@@ -52,10 +56,10 @@ object MacroPickleTests extends TestSuite {
         assert(u == s)
       }
       'Recursive {
-        val t = Test2(1, Some(Test2(2, Some(Test2(3, None)))))
+        val t = List(Test2(1, Some(Test2(2, Some(Test2(3, None))))))
         val bb = Pickle.intoBytes(t)
-        assert(bb.limit == 10)
-        val u = Unpickle[Test2].fromBytes(bb)
+        assert(bb.limit == 16)
+        val u = Unpickle[List[Test2]].fromBytes(bb)
         assert(u == t)
       }
       'CaseObject {
@@ -77,6 +81,27 @@ object MacroPickleTests extends TestSuite {
         val bb = Pickle.intoBytes(t)
         val u = Unpickle[Seq[MyTrait]].fromBytes(bb)
         assert(u == t)
+      }
+      'CaseTupleList {
+        // this won't compile due to "diverging implicits"
+        // val x = A(List(B(List(Tuple2(2.0, 1.0)))))
+        // val bb = Pickle.intoBytes(x)
+        // val u = Unpickle[A].fromBytes(bb)
+        // assert(x == u)
+      }
+      'CaseTupleList2 {
+        implicit val bPickler = Pickler.materializePickler[B]
+        implicit val bUnpickler = Unpickler.materializeUnpickler[B]
+        val x = A(List(B(List((2.0, 3.0)))))
+        val bb = Pickle.intoBytes(x)
+        val u = Unpickle[A].fromBytes(bb)
+        assert(x == u)
+      }
+      'CaseTupleList3 {
+        val x = List(B(List((2.0, 3.0))))
+        val bb = Pickle.intoBytes(x)
+        val u = Unpickle[List[B]].fromBytes(bb)
+        assert(x == u)
       }
     }
   }
