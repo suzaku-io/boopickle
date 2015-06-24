@@ -40,6 +40,9 @@ object MacroPickleTests extends TestSuite {
 
   case class B(stops: List[(Double, Double)])
 
+  sealed trait A1Trait[T]
+  case class A1[T](i: Double) extends A1Trait[T]
+
   override def tests = TestSuite {
     'CaseClasses - {
       'Case1 {
@@ -101,6 +104,12 @@ object MacroPickleTests extends TestSuite {
         val x = List(B(List((2.0, 3.0))))
         val bb = Pickle.intoBytes(x)
         val u = Unpickle[List[B]].fromBytes(bb)
+        assert(x == u)
+      }
+      'CaseGenericTraitAndCaseclass {
+        val x: A1Trait[Int] = A1[Int](2.0)
+        val bb = Pickle.intoBytes(x)
+        val u = Unpickle[A1Trait[Int]].fromBytes(bb)
         assert(x == u)
       }
     }
