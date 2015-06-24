@@ -64,7 +64,14 @@ object PicklerMaterializersImpl {
       }
     }
     // sort class names to make sure they are always in the same order
-    findSubClasses(sym).toSeq.sortBy(_.name.toString).map(s => q"""addConcreteType[$s]""")
+    findSubClasses(sym).toSeq.sortBy(_.name.toString).map { s =>
+      if (s.typeParams.isEmpty) {
+        q"""addConcreteType[$s]"""
+      } else {
+        val t = unifyCaseClassWithTrait(c)(tpe, s)
+        q"""addConcreteType[$t]"""
+      }
+    }
   }
 
   def materializePickler[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[Pickler[T]] = {
@@ -179,5 +186,26 @@ object PicklerMaterializersImpl {
       $name
     """
     c.Expr[Unpickler[T]](result)
+  }
+
+  def unifyCaseClassWithTrait(c: blackbox.Context)(ttrait: c.universe.Type, caseclass: c.universe.ClassSymbol) = {
+    import c.universe._
+
+    val companion = caseclass.companion
+
+    val apply = companion.typeSignature .member(newTermName("apply"))
+
+    if (apply == NoSymbol) {
+      c.abort(
+        c.enclosingPosition,
+        s"Don't know how to pickle $ttrait; it's generic and it's companion has no `apply` method"
+      )
+    }
+
+    val matchArgs = apply.asMethod.paramLists.flatten.map { arg => pq"_" }
+
+    val name = TermName(c.freshName("x"))
+
+    c.typecheck(q"""(??? : $ttrait) match {case $name@$companion(..$matchArgs) => $name }""").tpe
   }
 }
