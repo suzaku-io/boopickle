@@ -118,6 +118,7 @@ object PicklerMaterializersImpl {
 
     val result = q"""
       implicit object $name extends boopickle.Pickler[$tpe] {
+        import boopickle._
         override def pickle(value: $tpe)(implicit state: PickleState): Unit = $pickleLogic
       }
       $name
@@ -174,7 +175,8 @@ object PicklerMaterializersImpl {
 
     val result = q"""
       implicit object $name extends boopickle.Unpickler[$tpe] {
-        override def unpickle(implicit state: UnpickleState): $tpe = { $unpickleLogic }
+       import boopickle._
+       override def unpickle(implicit state: UnpickleState): $tpe = { $unpickleLogic }
       }
       $name
     """
