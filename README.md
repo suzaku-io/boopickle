@@ -65,6 +65,8 @@ Reading values from a `ByteBuffer` commonly changes its internal state (the `pos
 `ByteBuffer`. Similarly writing to one also changes its state. For example if you write data to a `ByteBuffer` and pass it as such to an unpickler, 
 it will not work. You need to call `flip()` first to reset its `position`.
 
+In BooPickle `ByteBuffer`s use little-endian ordering, which is not the default in the JVM, but is the native ordering in majority of target platforms.
+
 For more information, please refer to the [JDK documentation on ByteBuffers](http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html).
 
 ## Supported types
@@ -410,7 +412,8 @@ and model your own data (as realistically as possible) to see which library work
 
 In the browser BooPickle uses direct `ByteBuffer`s by default, as they perform much better. On the server JVM, however, heap buffers tend to be more 
 efficient in many cases and are used by default. The `Encoder` constructor takes a `BufferProvider` argument and you can supply your
-own or use one of the two predefined ones: `DirectByteBufferProvider` and `HeapByteBufferProvider`. 
+own or use one of the two predefined ones: `DirectByteBufferProvider` and `HeapByteBufferProvider`. The `ByteBuffer`s *must* use
+little-endian ordering.
 
 When serializing large objects, BooPickle encodes them into multiple separate `ByteBuffer`s that are combined (copied) in the call to
 `intoBytes`. If you can handle a sequence of buffers (for example sending them over the network), you can use `intoByteBuffers` instead,
@@ -630,6 +633,8 @@ def encodeUTF8(s: String): ByteBuffer = {
 ### 1.0.1-SNAPSHOT
 
 - BooPickle generated macros are now compatible with *-Xstrict-inference* compiler option
+- Trait hierarchies with type parameters can now be pickled automatically (by @FlorianKirmaier)
+- Improved error messages
 
 ### 1.0.0
 
@@ -670,11 +675,11 @@ def encodeUTF8(s: String): ByteBuffer = {
 
 ## Contributors
 
-BooPickle was created and is maintained by [Otto Chrons](https://github.com/ochrons) - otto@chrons.me - [@ochrons](https://twitter.com/ochrons).
+BooPickle was created and is maintained by [Otto Chrons](https://github.com/ochrons) - otto@chrons.me - Twitter: [@ochrons](https://twitter.com/ochrons).
 
 Special thanks to Li Haoyi and Ben Hutchison for their pickling libraries, which provided more than inspiration to BooPickle.
 
-Contributors: @japgolly
+Contributors: @japgolly, @FlorianKirmaier
 
 ## MIT License
 

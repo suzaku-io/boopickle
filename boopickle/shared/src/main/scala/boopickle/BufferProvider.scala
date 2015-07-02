@@ -7,7 +7,7 @@ import scala.collection.mutable
 trait BufferProvider {
   /**
    * Makes sure the ByteBuffer has enough space for new data. If not, allocates a new ByteBuffer
-   * and returns it.
+   * and returns it. The returned ByteBuffer must have little-endian ordering.
    *
    * @param size Number of bytes needed for new data
    * @return
@@ -72,7 +72,7 @@ abstract class ByteBufferProvider extends BufferProvider {
 
   def asByteBuffers = {
     currentBuf.flip()
-    buffers
+    buffers.toVector
   }
 
   def reset(): Unit = {

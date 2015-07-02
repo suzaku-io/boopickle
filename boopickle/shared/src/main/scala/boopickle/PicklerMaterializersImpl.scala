@@ -195,12 +195,12 @@ object PicklerMaterializersImpl {
 
     val companion = caseclass.companion
 
-    val apply = companion.typeSignature .member(newTermName("apply"))
+    val apply = companion.typeSignature.member(TermName("apply"))
 
     if (apply == NoSymbol) {
       c.abort(
         c.enclosingPosition,
-        s"Don't know how to pickle $ttrait; it's generic and it's companion has no `apply` method"
+        s"Don't know how to pickle case class $caseclass in trait $ttrait; it's generic and its companion has no `apply` method"
       )
     }
 
