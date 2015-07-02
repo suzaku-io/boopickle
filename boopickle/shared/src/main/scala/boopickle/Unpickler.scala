@@ -10,26 +10,6 @@ import scala.language.higherKinds
 import scala.reflect.ClassTag
 import scala.util.Try
 
-object Unpickle {
-  def apply[A](implicit u: Unpickler[A]) = UnpickledCurry(u)
-}
-
-case class UnpickledCurry[A](u: Unpickler[A]) {
-  def apply(implicit state: UnpickleState): A = u.unpickle(state)
-
-  def fromBytes(bytes: ByteBuffer): A = {
-    // keep original byte order
-    val origByteOrder = bytes.order()
-    val result = u.unpickle(new UnpickleState(new Decoder(bytes.order(ByteOrder.LITTLE_ENDIAN))))
-    bytes.order(origByteOrder)
-    result
-  }
-
-  def tryFromBytes(bytes: ByteBuffer): Try[A] = Try(fromBytes(bytes))
-
-  def fromState(state: UnpickleState): A = u.unpickle(state)
-}
-
 trait Unpickler[A] {
   def unpickle(implicit state: UnpickleState): A
 }
@@ -42,15 +22,15 @@ trait UnpicklerHelper {
   def read[A](implicit state: UnpickleState, u: U[A]): A = u.unpickle
 }
 
-object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
+object BasicUnpicklers extends UnpicklerHelper {
 
   import Constants._
 
-  implicit object UnitUnpickler extends U[Unit] {
+  object UnitUnpickler extends U[Unit] {
     @inline override def unpickle(implicit state: UnpickleState): Unit = { /* do nothing */ }
   }
 
-  implicit object BooleanUnpickler extends U[Boolean] {
+  object BooleanUnpickler extends U[Boolean] {
     @inline override def unpickle(implicit state: UnpickleState): Boolean = {
       state.dec.readByte match {
         case 1 => true
@@ -60,39 +40,39 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
     }
   }
 
-  implicit object ByteUnpickler extends U[Byte] {
+  object ByteUnpickler extends U[Byte] {
     @inline override def unpickle(implicit state: UnpickleState): Byte = state.dec.readByte
   }
 
-  implicit object ShortUnpickler extends U[Short] {
+  object ShortUnpickler extends U[Short] {
     @inline override def unpickle(implicit state: UnpickleState): Short = state.dec.readInt.toShort
   }
 
-  implicit object CharUnpickler extends U[Char] {
+  object CharUnpickler extends U[Char] {
     @inline override def unpickle(implicit state: UnpickleState): Char = state.dec.readChar
   }
 
-  implicit object IntUnpickler extends U[Int] {
+  object IntUnpickler extends U[Int] {
     @inline override def unpickle(implicit state: UnpickleState): Int = state.dec.readInt
   }
 
-  implicit object LongUnpickler extends U[Long] {
+  object LongUnpickler extends U[Long] {
     @inline override def unpickle(implicit state: UnpickleState): Long = state.dec.readLong
   }
 
-  implicit object FloatUnpickler extends U[Float] {
+  object FloatUnpickler extends U[Float] {
     @inline override def unpickle(implicit state: UnpickleState): Float = state.dec.readFloat
   }
 
-  implicit object DoubleUnpickler extends U[Double] {
+  object DoubleUnpickler extends U[Double] {
     @inline override def unpickle(implicit state: UnpickleState): Double = state.dec.readDouble
   }
 
-  implicit object ByteBufferUnpickler extends U[ByteBuffer] {
+  object ByteBufferUnpickler extends U[ByteBuffer] {
     @inline override def unpickle(implicit state: UnpickleState): ByteBuffer = state.dec.readByteBuffer
   }
 
-  implicit object DurationUnpickler extends U[Duration] {
+  object DurationUnpickler extends U[Duration] {
     @inline override def unpickle(implicit state: UnpickleState): Duration = {
       state.dec.readLongCode match {
         case Left(c) if c == specialCode(DurationInf) =>
@@ -107,7 +87,7 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
     }
   }
 
-  implicit object StringUnpickler extends U[String] {
+  object StringUnpickler extends U[String] {
     override def unpickle(implicit state: UnpickleState): String = {
       state.dec.readIntCode match {
         // handle special codings
@@ -137,13 +117,13 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
     }
   }
 
-  implicit object UUIDUnpickler extends U[UUID] {
+  object UUIDUnpickler extends U[UUID] {
     @inline override def unpickle(implicit state: UnpickleState): UUID = {
       new UUID(state.dec.readRawLong, state.dec.readRawLong)
     }
   }
 
-  implicit def OptionUnpickler[T: U]: U[Option[T]] = new U[Option[T]] {
+  def OptionUnpickler[T: U]: U[Option[T]] = new U[Option[T]] {
     override def unpickle(implicit state: UnpickleState): Option[T] = {
       state.dec.readIntCode match {
         case Right(OptionSome) =>
@@ -158,7 +138,7 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
     }
   }
 
-  implicit def EitherUnpickler[T: U, S: U]: U[Either[T, S]] = new U[Either[T, S]] {
+  def EitherUnpickler[T: U, S: U]: U[Either[T, S]] = new U[Either[T, S]] {
     override def unpickle(implicit state: UnpickleState): Either[T, S] = {
       state.dec.readIntCode match {
         case Right(EitherLeft) =>
@@ -182,7 +162,7 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
    * @tparam V Type of the iterable
    * @return
    */
-  implicit def IterableUnpickler[T: U, V[_] <: Iterable[_]]
+  def IterableUnpickler[T: U, V[_] <: Iterable[_]]
   (implicit cbf: CanBuildFrom[Nothing, T, V[T]]): U[V[T]] = new U[V[T]] {
     override def unpickle(implicit state: UnpickleState): V[T] = {
       state.dec.readIntCode match {
@@ -213,7 +193,7 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
    * @tparam T Type of the values
    * @return
    */
-  implicit def ArrayUnpickler[T: U : ClassTag]: U[Array[T]] = new U[Array[T]] {
+  def ArrayUnpickler[T: U : ClassTag]: U[Array[T]] = new U[Array[T]] {
     override def unpickle(implicit state: UnpickleState): Array[T] = {
       state.dec.readIntCode match {
         case Left(code) =>
@@ -243,7 +223,7 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
    * @tparam V Type of the map
    * @return
    */
-  implicit def MapUnpickler[T: U, S: U, V[_, _] <: scala.collection.Map[T, S]]
+  def MapUnpickler[T: U, S: U, V[_, _] <: scala.collection.Map[T, S]]
   (implicit cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): U[V[T, S]] = new U[V[T, S]] {
     override def unpickle(implicit state: UnpickleState): V[T, S] = {
       state.dec.readIntCode match {
@@ -268,9 +248,9 @@ object Unpickler extends TupleUnpicklers with MaterializeUnpicklerFallback {
     }
   }
 
-  implicit def toUnpickler[A <: AnyRef](implicit pair: PicklerPair[A]): Unpickler[A] = pair.unpickler
+  def toUnpickler[A <: AnyRef](implicit pair: PicklerPair[A]): Unpickler[A] = pair.unpickler
 
-  implicit def toTransformUnpickler[A <: AnyRef, B](implicit transform: TransformPickler[A, B]): Unpickler[A] = transform.unpickler
+  def toTransformUnpickler[A <: AnyRef, B](implicit transform: TransformPickler[A, B]): Unpickler[A] = transform.unpickler
 }
 
 final class UnpickleState(val dec: Decoder) {
@@ -325,8 +305,4 @@ final class UnpickleState(val dec: Decoder) {
 
 object UnpickleState {
   def apply(bytes: ByteBuffer) = new UnpickleState(new Decoder(bytes))
-}
-
-trait MaterializeUnpicklerFallback {
-  implicit def materializeUnpickler[T]: Unpickler[T] = macro PicklerMaterializersImpl.materializeUnpickler[T]
 }

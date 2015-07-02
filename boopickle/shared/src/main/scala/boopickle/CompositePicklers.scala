@@ -1,7 +1,7 @@
 package boopickle
 
-import scala.reflect.ClassTag
 import scala.language.experimental.macros
+import scala.reflect.ClassTag
 
 /**
  * Encodes a class belonging to a type hierarchy. Type is identified by the index in the `picklers` sequence, so care
@@ -10,6 +10,7 @@ import scala.language.experimental.macros
 case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_])] = Vector()) extends Pickler[A] {
 
   import Constants._
+  import Default.StringPickler
 
   override def pickle(obj: A)(implicit state: PickleState): Unit = {
     if (obj == null) {
@@ -61,6 +62,7 @@ case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_
 case class CompositeUnpickler[A <: AnyRef](var unpicklers: Vector[(String, Unpickler[_])] = Vector()) extends Unpickler[A] {
 
   import Constants._
+  import Default.StringUnpickler
 
   override def unpickle(implicit state: UnpickleState): A = {
     val idx = state.dec.readInt

@@ -1,6 +1,7 @@
 package boopickle
 
 import utest._
+import Default._
 
 object MacroPickleTests extends TestSuite {
 
@@ -32,8 +33,8 @@ object MacroPickleTests extends TestSuite {
   }
 
   object MyTrait {
-    implicit val pickler: Pickler[MyTrait] = Pickler.materializePickler[MyTrait]
-    implicit val unpickler: Unpickler[MyTrait] = Unpickler.materializeUnpickler[MyTrait]
+    implicit val pickler: Pickler[MyTrait] = Default.materializePickler[MyTrait]
+    implicit val unpickler: Unpickler[MyTrait] = Default.materializeUnpickler[MyTrait]
   }
 
   case class A(fills: List[B])
@@ -93,8 +94,8 @@ object MacroPickleTests extends TestSuite {
         // assert(x == u)
       }
       'CaseTupleList2 {
-        implicit val bPickler = Pickler.materializePickler[B]
-        implicit val bUnpickler = Unpickler.materializeUnpickler[B]
+        implicit val bPickler = Default.materializePickler[B]
+        implicit val bUnpickler = Default.materializeUnpickler[B]
         val x = A(List(B(List((2.0, 3.0)))))
         val bb = Pickle.intoBytes(x)
         val u = Unpickle[A].fromBytes(bb)

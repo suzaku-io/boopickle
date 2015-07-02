@@ -1,6 +1,7 @@
 package boopickle
 
 import utest._
+import Default._
 
 trait Fruit {
   val weight: Double

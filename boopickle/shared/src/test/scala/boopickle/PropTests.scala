@@ -6,6 +6,7 @@ import japgolly.nyaya.test.PropTest._
 import scalaz.Equal
 import scalaz.std.AllInstances._
 import utest._
+import Default._
 
 object PropTests extends TestSuite {
 

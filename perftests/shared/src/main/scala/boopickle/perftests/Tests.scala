@@ -1,5 +1,7 @@
 package boopickle.perftests
 
+import boopickle.Default._
+
 object Tests {
   val tree = TestData.genTree(5, 3)
   val suites = Seq(
