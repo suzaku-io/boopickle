@@ -5,7 +5,6 @@ import java.util.UUID
 
 import boopickle.Default._
 import boopickle._
-//import boopickle.{DirectByteBufferProvider, HeapByteBufferProvider, Encoder}
 import utest._
 
 import scala.collection.mutable

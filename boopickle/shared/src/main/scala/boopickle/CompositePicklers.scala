@@ -1,6 +1,5 @@
 package boopickle
 
-import scala.language.experimental.macros
 import scala.reflect.ClassTag
 
 /**
@@ -10,7 +9,7 @@ import scala.reflect.ClassTag
 case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_])] = Vector()) extends Pickler[A] {
 
   import Constants._
-  import Default.StringPickler
+  import Default.stringPickler
 
   override def pickle(obj: A)(implicit state: PickleState): Unit = {
     if (obj == null) {
@@ -31,7 +30,7 @@ case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_
       null.asInstanceOf[A]
     else {
       if (idx < 0 || idx > picklers.length)
-        throw new IllegalStateException(s"Index $idx is not defined in this CompositeUnpickler")
+        throw new IllegalStateException(s"Index $idx is not defined in this CompositePickler")
       picklers(idx - 1)._2.asInstanceOf[Pickler[A]].unpickle
     }
   }
@@ -42,15 +41,15 @@ case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_
   }
 
   def addTransform[B <: A, C](transformTo: (B) => C, transformFrom: (C) => B)(implicit p: Pickler[C], tag: ClassTag[B]) = {
-    val pickler = p.map(transformFrom)(transformTo)
+    val pickler = p.map(transformTo)(transformFrom)
     picklers :+= (tag.runtimeClass.getName -> pickler)
     this
   }
 
-  def addException[B <: Exception](ctor: (String) => B)(implicit tag: ClassTag[B]) = {
+  def addException[B <: A with Throwable](ctor: (String) => B)(implicit tag: ClassTag[B]) = {
     val pickler = new Pickler[B] {
-      override def pickle(obj: B)(implicit state: PickleState): Unit = {
-        state.pickle(obj.getMessage)
+      override def pickle(ex: B)(implicit state: PickleState): Unit = {
+        state.pickle(ex.getMessage)
       }
       override def unpickle(implicit state: UnpickleState): B = {
         ctor(state.unpickle[String])
@@ -98,23 +97,3 @@ object ExceptionPickler {
   def base = CompositePickler[Throwable](basePicklers.picklers)
 }
 
-/**
- * Create a transforming pickler that takes an object of type `A` and transforms it into `B`, which is then pickled.
- * Similarly a `B` is unpickled and then transformed back into `A`.
- *
- * This allows for easy creation of picklers for (relatively) simple classes. For example
- * {{{
- *   // transform Date into Long and back
- *   implicit val datePickler = TransformPickler[java.util.Date, Long](
- *     _.getTime,
- *     t => new java.util.Date(t))
- * }}}
- *
- * @param transformTo Function that takes `A` and transforms it into `B`
- * @param transformFrom Function that takes `B` and transforms it into `A`
- * @tparam A Type of the original object
- * @tparam B Type for the object used in pickling
- */
-case class TransformPickler[A <: AnyRef, B](transformTo: (A) => B, transformFrom: (B) => A)(implicit p: Pickler[B]) {
-  val pickler = p.map(transformFrom)(transformTo)
-}

@@ -12,7 +12,7 @@ trait Pickler[A] {
   def pickle(obj: A)(implicit state: PickleState)
   def unpickle(implicit state: UnpickleState): A
 
-  def map[B](ab: A => B)(ba: B => A): Pickler[B] = {
+  def map[B](ba: B => A)(ab: A => B): Pickler[B] = {
     val self = this
     new Pickler[B] {
       override def unpickle(implicit state: UnpickleState): B = {
@@ -26,17 +26,17 @@ trait Pickler[A] {
 }
 
 trait PicklerHelper {
-  type P[A] = Pickler[A]
+  protected type P[A] = Pickler[A]
 
   /**
    * Helper function to write pickled types
    */
-  def write[A](value: A)(implicit state: PickleState, p: P[A]): Unit = p.pickle(value)(state)
+  protected def write[A](value: A)(implicit state: PickleState, p: P[A]): Unit = p.pickle(value)(state)
 
   /**
    * Helper function to unpickle a type
    */
-  def read[A](implicit state: UnpickleState, u: P[A]): A = u.unpickle
+  protected def read[A](implicit state: UnpickleState, u: P[A]): A = u.unpickle
 }
 
 object BasicPicklers extends PicklerHelper {
@@ -432,8 +432,6 @@ object BasicPicklers extends PicklerHelper {
       }
     }
   }
-
-  def toTransformPickler[A <: AnyRef, B](implicit transform: TransformPickler[A, B]): Pickler[A] = transform.pickler
 }
 
 final class PickleState(val enc: Encoder) {

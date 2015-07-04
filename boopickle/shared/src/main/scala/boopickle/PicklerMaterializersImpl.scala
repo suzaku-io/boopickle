@@ -20,20 +20,6 @@ object PicklerMaterializersImpl {
     """
   }
 
-  private def unpickleSealedTrait(c: blackbox.Context)(tpe: c.universe.Type): c.universe.Tree = {
-    import c.universe._
-
-    val concreteTypes = findConcreteTypes(c)(tpe)
-    val name = TermName(c.freshName("TraitUnpickler"))
-
-    q"""
-      implicit object $name extends boopickle.CompositeUnpickler[$tpe] {
-        ..$concreteTypes
-      }
-      $name
-    """
-  }
-
   private def findConcreteTypes(c: blackbox.Context)(tpe: c.universe.Type): Seq[c.universe.Tree] = {
     import c.universe._
 
@@ -64,7 +50,7 @@ object PicklerMaterializersImpl {
       }
     }
     // sort class names to make sure they are always in the same order
-    findSubClasses(sym).toSeq.sortBy(_.name.toString).map { s =>
+    val result = findSubClasses(sym).toSeq.sortBy(_.name.toString).map { s =>
       if (s.typeParams.isEmpty) {
         q"""addConcreteType[$s]"""
       } else {
@@ -72,12 +58,14 @@ object PicklerMaterializersImpl {
         q"""addConcreteType[$t]"""
       }
     }
+    result
   }
 
   def materializePickler[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[Pickler[T]] = {
     import c.universe._
 
     val tpe = weakTypeOf[T]
+    // println(s"Generating for $tpe")
 
     if (!tpe.typeSymbol.isClass)
       throw new RuntimeException(s"Enclosure: ${c.enclosingPosition.toString}, type = $tpe")
@@ -149,13 +137,12 @@ object PicklerMaterializersImpl {
         """
     }
 
-    val name = TermName(c.freshName("CCPickler"))
+    val name = TermName(c.freshName("Pickler"))
 
     val result = q"""
       implicit object $name extends boopickle.Pickler[$tpe] {
-        import boopickle._
-        override def pickle(value: $tpe)(implicit state: PickleState): Unit = $pickleLogic
-        override def unpickle(implicit state: UnpickleState): $tpe = $unpickleLogic
+        override def pickle(value: $tpe)(implicit state: boopickle.PickleState): Unit = $pickleLogic
+        override def unpickle(implicit state: boopickle.UnpickleState): $tpe = $unpickleLogic
       }
       $name
     """
