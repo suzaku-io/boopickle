@@ -1,5 +1,5 @@
 package boopickle
 
-object DefaultByteBufferProvider {
-   def provider = new HeapByteBufferProvider
- }
+object DefaultByteBufferProvider extends DefaultByteBufferProviderFuncs {
+  override def provider = new HeapByteBufferProvider
+}

@@ -330,6 +330,10 @@ final class PickleState(val enc: Encoder) {
 
 object PickleState {
 
+  /**
+   * Provides a default PickleState if none is available implicitly
+   * @return
+   */
   implicit def Default: PickleState = new PickleState(new Encoder)
 
   private case class Identity[+A <: AnyRef](obj: A) {

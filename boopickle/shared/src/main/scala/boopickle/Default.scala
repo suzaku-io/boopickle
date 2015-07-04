@@ -53,7 +53,7 @@ trait BasicImplicitPicklers extends PicklerHelper with UnpicklerHelper {
   implicit def EitherUnpickler[T: U, S: U] = BasicUnpicklers.EitherUnpickler[T, S]
   implicit def IterableUnpickler[T: U, V[_] <: Iterable[_]](implicit cbf: CanBuildFrom[Nothing, T, V[T]]) = BasicUnpicklers.IterableUnpickler[T, V]
   implicit def ArrayUnpickler[T: U : ClassTag] = BasicUnpicklers.ArrayUnpickler[T]
-  implicit def MapUnpickler[T: U, S: U, V[_, _] <: scala.collection.Map[T, S]](implicit
+  implicit def MapUnpickler[T: U, S: U, V[_, _] <: scala.collection.Map[_, _]](implicit
                                                                                cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]) = BasicUnpicklers.MapUnpickler[T, S, V]
 }
 
@@ -75,38 +75,23 @@ trait MaterializeUnpicklerFallback {
   implicit def materializeUnpickler[T]: Unpickler[T] = macro PicklerMaterializersImpl.materializeUnpickler[T]
 }
 
-object Default extends
-BasicImplicitPicklers with
-PairPicklers with
-TransformPicklers with
-TuplePicklers with
-TupleUnpicklers with
-MaterializePicklerFallback with
-MaterializeUnpicklerFallback {
-  type Pickler[A] = _root_.boopickle.Pickler[A]
-
-  object Pickle {
-    def apply[A](value: A)(implicit state: PickleState, p: Pickler[A]): PickleState = {
-      p.pickle(value)(state)
-      state
-    }
-
-    def intoBytes[A](value: A)(implicit state: PickleState, p: Pickler[A]): ByteBuffer = {
-      apply(value).toByteBuffer
-    }
-
-    def intoByteBuffers[A](value: A)(implicit state: PickleState, p: Pickler[A]): Iterable[ByteBuffer] = {
-      apply(value).toByteBuffers
-    }
+object PickleImpl {
+  def apply[A](value: A)(implicit state: PickleState, p: Pickler[A]): PickleState = {
+    p.pickle(value)(state)
+    state
   }
 
-  type PickleState = _root_.boopickle.PickleState
-
-  type Unpickler[A] = _root_.boopickle.Unpickler[A]
-
-  object Unpickle {
-    def apply[A](implicit u: Unpickler[A]) = UnpickledCurry(u)
+  def intoBytes[A](value: A)(implicit state: PickleState, p: Pickler[A]): ByteBuffer = {
+    apply(value).toByteBuffer
   }
+
+  def intoByteBuffers[A](value: A)(implicit state: PickleState, p: Pickler[A]): Iterable[ByteBuffer] = {
+    apply(value).toByteBuffers
+  }
+}
+
+object UnpickleImpl {
+  def apply[A](implicit u: Unpickler[A]) = UnpickledCurry(u)
 
   case class UnpickledCurry[A](u: Unpickler[A]) {
     def apply(implicit state: UnpickleState): A = u.unpickle(state)
@@ -125,5 +110,37 @@ MaterializeUnpicklerFallback {
     def fromState(state: UnpickleState): A = u.unpickle(state)
   }
 
+}
+
+trait Base {
+  type Pickler[A] = _root_.boopickle.Pickler[A]
+  val Pickle = _root_.boopickle.PickleImpl
+  type PickleState = _root_.boopickle.PickleState
+
+  type Unpickler[A] = _root_.boopickle.Unpickler[A]
+  val Unpickle = _root_.boopickle.UnpickleImpl
+
   type UnpickleState = _root_.boopickle.UnpickleState
 }
+
+/**
+ * Provides basic implicit picklers including macro support for case classes
+ */
+object Default extends Base with
+BasicImplicitPicklers with
+PairPicklers with
+TransformPicklers with
+TuplePicklers with
+TupleUnpicklers with
+MaterializePicklerFallback with
+MaterializeUnpicklerFallback
+
+/**
+ * Provides basic implicit picklers without macro support for case classes
+ */
+object DefaultBasic extends Base with
+BasicImplicitPicklers with
+PairPicklers with
+TransformPicklers with
+TuplePicklers with
+TupleUnpicklers

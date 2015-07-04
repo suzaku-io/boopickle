@@ -223,7 +223,7 @@ object BasicUnpicklers extends UnpicklerHelper {
    * @tparam V Type of the map
    * @return
    */
-  def MapUnpickler[T: U, S: U, V[_, _] <: scala.collection.Map[T, S]]
+  def MapUnpickler[T: U, S: U, V[_, _] <: scala.collection.Map[_, _]]
   (implicit cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): U[V[T, S]] = new U[V[T, S]] {
     override def unpickle(implicit state: UnpickleState): V[T, S] = {
       state.dec.readIntCode match {

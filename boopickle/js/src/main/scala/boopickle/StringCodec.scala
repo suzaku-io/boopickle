@@ -4,7 +4,6 @@ import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
 import scala.scalajs.js
-import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.typedarray.TypedArrayBufferOps._
 import scala.scalajs.js.typedarray._
 
@@ -22,7 +21,7 @@ class TextEncoder extends js.Object {
   def encode(str: String): Uint8Array = js.native
 }
 
-object StringCodec {
+object StringCodec extends StringCodecFuncs {
   private lazy val utf8decoder: (Int8Array) => String = {
     val td = new TextDecoder
     // use native TextDecoder
@@ -35,7 +34,7 @@ object StringCodec {
     (str: String) => new Int8Array(te.encode(str))
   }
 
-  def decodeUTF8(len: Int, buf: ByteBuffer): String = {
+  override def decodeUTF8(len: Int, buf: ByteBuffer): String = {
     if (buf.isDirect && !js.isUndefined(js.Dynamic.global.TextDecoder)) {
       // get the underlying Int8Array
       val ta = buf.typedArray()
@@ -51,7 +50,7 @@ object StringCodec {
     }
   }
 
-  def encodeUTF8(s: String): ByteBuffer = {
+  override def encodeUTF8(s: String): ByteBuffer = {
     if (js.isUndefined(js.Dynamic.global.TextEncoder)) {
       StandardCharsets.UTF_8.encode(s)
     } else {

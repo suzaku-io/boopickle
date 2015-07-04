@@ -89,3 +89,7 @@ class HeapByteBufferProvider extends ByteBufferProvider {
 class DirectByteBufferProvider extends ByteBufferProvider {
   override protected def allocate(size: Int) = ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN)
 }
+
+trait DefaultByteBufferProviderFuncs {
+  def provider: ByteBufferProvider
+}
