@@ -9,6 +9,15 @@ import scala.language.higherKinds
 
 trait Pickler[A] {
   def pickle(obj: A)(implicit state: PickleState)
+
+  def cmap[B](ba: B => A): Pickler[B] = {
+    val self = this
+    new Pickler[B] {
+      override def pickle(obj: B)(implicit state: PickleState): Unit = {
+        self.pickle(ba(obj))
+      }
+    }
+  }
 }
 
 trait PicklerHelper {

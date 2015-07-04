@@ -31,11 +31,7 @@ case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_
   }
 
   def addTransform[B <: A, C](transformTo: (B) => C)(implicit p: Pickler[C], tag: ClassTag[B]) = {
-    val pickler = new Pickler[B] {
-      override def pickle(obj: B)(implicit state: PickleState): Unit = {
-        p.pickle(transformTo(obj))
-      }
-    }
+    val pickler = p.cmap(transformTo)
     picklers :+= (tag.runtimeClass.getName -> pickler)
     this
   }
@@ -81,11 +77,7 @@ case class CompositeUnpickler[A <: AnyRef](var unpicklers: Vector[(String, Unpic
   }
 
   def addTransform[B <: A, C](transformFrom: (C) => B)(implicit up: Unpickler[C], tag: ClassTag[B]) = {
-    val unpickler = new Unpickler[B] {
-      override def unpickle(implicit state: UnpickleState): B = {
-        transformFrom(up.unpickle(state))
-      }
-    }
+    val unpickler = up.map(transformFrom)
     unpicklers :+= (tag.runtimeClass.getName -> unpickler)
     this
   }
@@ -190,14 +182,6 @@ case class PicklerPair[A <: AnyRef](pickler: CompositePickler[A] = new Composite
  * @tparam B Type for the object used in pickling
  */
 case class TransformPickler[A <: AnyRef, B](transformTo: (A) => B, transformFrom: (B) => A)(implicit p: Pickler[B], up: Unpickler[B]) {
-  val pickler = new Pickler[A] {
-    override def pickle(obj: A)(implicit state: PickleState): Unit = {
-      p.pickle(transformTo(obj))
-    }
-  }
-  val unpickler = new Unpickler[A] {
-    override def unpickle(implicit state: UnpickleState): A = {
-      transformFrom(up.unpickle(state))
-    }
-  }
+  val pickler = p.cmap(transformTo)
+  val unpickler = up.map(transformFrom)
 }
