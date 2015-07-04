@@ -10,7 +10,7 @@ abstract class BooRunner[A](data: A) extends TestRunner[A](data) {
 
 object BooPickleRunners {
 
-  def encodeRunner[A](data: A)(implicit p: Pickler[A], u: Unpickler[A]): BooRunner[A] = new BooRunner[A](data) {
+  def encodeRunner[A](data: A)(implicit p: Pickler[A]): BooRunner[A] = new BooRunner[A](data) {
     var testData: A = _
 
     override def initialize = {
@@ -26,7 +26,7 @@ object BooPickleRunners {
     }
   }
 
-  def decodeRunner[A](data: A)(implicit p: Pickler[A], u: Unpickler[A]): BooRunner[A] = new BooRunner[A](data) {
+  def decodeRunner[A](data: A)(implicit p: Pickler[A]): BooRunner[A] = new BooRunner[A](data) {
     var testData: A = _
     var bb: ByteBuffer = _
 

@@ -10,7 +10,7 @@ import Default._
 
 object PropTests extends TestSuite {
 
-  def prop[A: Equal: Pickler: Unpickler] =
+  def prop[A: Equal: Pickler] =
     Prop.equalSelf[A]("decode.encode = id",
       a => {
         val b = Pickle.intoBytes(a)

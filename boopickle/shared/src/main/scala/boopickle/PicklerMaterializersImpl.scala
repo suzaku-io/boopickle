@@ -121,35 +121,6 @@ object PicklerMaterializersImpl {
           }
         """
     }
-    val name = TermName(c.freshName("CCPickler"))
-
-    val result = q"""
-      implicit object $name extends boopickle.Pickler[$tpe] {
-        import boopickle._
-        override def pickle(value: $tpe)(implicit state: PickleState): Unit = $pickleLogic
-      }
-      $name
-    """
-
-    c.Expr[Pickler[T]](result)
-  }
-
-  def materializeUnpickler[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[Unpickler[T]] = {
-    import c.universe._
-
-    val tpe = weakTypeOf[T]
-    val sym = tpe.typeSymbol.asClass
-
-    // special handling of sealed traits
-    if (sym.isTrait) {
-      return c.Expr[Unpickler[T]](unpickleSealedTrait(c)(tpe))
-    }
-
-    if (!sym.isCaseClass) {
-      c.error(c.enclosingPosition,
-        s"Cannot materialize unpickler for non-case class: $tpe. If this is a collection, the error can refer to the class inside.")
-      return c.Expr[Unpickler[T]](q"null")
-    }
 
     val unpickleLogic = if (sym.isModuleClass) {
       c.parse(sym.fullName)
@@ -178,16 +149,18 @@ object PicklerMaterializersImpl {
         """
     }
 
-    val name = TermName(c.freshName("CCUnpickler"))
+    val name = TermName(c.freshName("CCPickler"))
 
     val result = q"""
-      implicit object $name extends boopickle.Unpickler[$tpe] {
-       import boopickle._
-       override def unpickle(implicit state: UnpickleState): $tpe = { $unpickleLogic }
+      implicit object $name extends boopickle.Pickler[$tpe] {
+        import boopickle._
+        override def pickle(value: $tpe)(implicit state: PickleState): Unit = $pickleLogic
+        override def unpickle(implicit state: UnpickleState): $tpe = $unpickleLogic
       }
       $name
     """
-    c.Expr[Unpickler[T]](result)
+
+    c.Expr[Pickler[T]](result)
   }
 
   def unifyCaseClassWithTrait(c: blackbox.Context)(ttrait: c.universe.Type, caseclass: c.universe.ClassSymbol) = {

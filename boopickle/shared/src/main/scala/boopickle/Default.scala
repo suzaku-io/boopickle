@@ -8,7 +8,7 @@ import scala.language.higherKinds
 import scala.reflect.ClassTag
 import scala.util.Try
 
-trait BasicImplicitPicklers extends PicklerHelper with UnpicklerHelper {
+trait BasicImplicitPicklers extends PicklerHelper {
   implicit val NothingPickler = BasicPicklers.NothingPickler
   implicit val UnitPickler = BasicPicklers.UnitPickler
   implicit val BooleanPickler = BasicPicklers.BooleanPickler
@@ -31,48 +31,20 @@ trait BasicImplicitPicklers extends PicklerHelper with UnpicklerHelper {
   implicit def EitherPickler[T: P, S: P] = BasicPicklers.EitherPickler[T, S]
   implicit def LeftPickler[T: P, S: P] = BasicPicklers.LeftPickler[T, S]
   implicit def RightPickler[T: P, S: P] = BasicPicklers.RightPickler[T, S]
-  implicit def IterablePickler[T: P, V[_] <: Iterable[_]]: P[V[T]] = BasicPicklers.IterablePickler[T, V]
-  implicit def ArrayPickler[T: P]: P[Array[T]] = BasicPicklers.ArrayPickler[T]
-  implicit def MapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]]: P[V[T, S]] = BasicPicklers.MapPickler[T, S, V]
+  implicit def IterablePickler[T: P, V[_] <: Iterable[_]]
+    (implicit cbf: CanBuildFrom[Nothing, T, V[T]]): P[V[T]] = BasicPicklers.IterablePickler[T, V]
+  implicit def ArrayPickler[T: P : ClassTag]: P[Array[T]] = BasicPicklers.ArrayPickler[T]
+  implicit def MapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]]
+    (implicit cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): P[V[T, S]] = BasicPicklers.MapPickler[T, S, V]
 
-  implicit val UnitUnpickler = BasicUnpicklers.UnitUnpickler
-  implicit val BooleanUnpickler = BasicUnpicklers.BooleanUnpickler
-  implicit val ByteUnpickler = BasicUnpicklers.ByteUnpickler
-  implicit val ShortUnpickler = BasicUnpicklers.ShortUnpickler
-  implicit val CharUnpickler = BasicUnpicklers.CharUnpickler
-  implicit val IntUnpickler = BasicUnpicklers.IntUnpickler
-  implicit val LongUnpickler = BasicUnpicklers.LongUnpickler
-  implicit val FloatUnpickler = BasicUnpicklers.FloatUnpickler
-  implicit val DoubleUnpickler = BasicUnpicklers.DoubleUnpickler
-  implicit val ByteBufferUnpickler = BasicUnpicklers.ByteBufferUnpickler
-  implicit val StringUnpickler = BasicUnpicklers.StringUnpickler
-  implicit val UUIDUnpickler = BasicUnpicklers.UUIDUnpickler
-  implicit val DurationUnpickler = BasicUnpicklers.DurationUnpickler
-
-  implicit def OptionUnpickler[T: U] = BasicUnpicklers.OptionUnpickler[T]
-  implicit def EitherUnpickler[T: U, S: U] = BasicUnpicklers.EitherUnpickler[T, S]
-  implicit def IterableUnpickler[T: U, V[_] <: Iterable[_]](implicit cbf: CanBuildFrom[Nothing, T, V[T]]) = BasicUnpicklers.IterableUnpickler[T, V]
-  implicit def ArrayUnpickler[T: U : ClassTag] = BasicUnpicklers.ArrayUnpickler[T]
-  implicit def MapUnpickler[T: U, S: U, V[_, _] <: scala.collection.Map[_, _]](implicit
-                                                                               cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]) = BasicUnpicklers.MapUnpickler[T, S, V]
-}
-
-trait PairPicklers {
-  implicit def toPickler[A <: AnyRef](implicit pair: PicklerPair[A]): Pickler[A] = BasicPicklers.toPickler[A]
-  implicit def toUnpickler[A <: AnyRef](implicit pair: PicklerPair[A]): Unpickler[A] = BasicUnpicklers.toUnpickler[A]
 }
 
 trait TransformPicklers {
   implicit def toTransformPickler[A <: AnyRef, B](implicit transform: TransformPickler[A, B]): Pickler[A] = BasicPicklers.toTransformPickler[A, B]
-  implicit def toTransformUnpickler[A <: AnyRef, B](implicit transform: TransformPickler[A, B]): Unpickler[A] = BasicUnpicklers.toTransformUnpickler[A, B]
 }
 
 trait MaterializePicklerFallback {
-  implicit def materializePickler[T]: Pickler[T] = macro PicklerMaterializersImpl.materializePickler[T]
-}
-
-trait MaterializeUnpicklerFallback {
-  implicit def materializeUnpickler[T]: Unpickler[T] = macro PicklerMaterializersImpl.materializeUnpickler[T]
+  implicit def generatePickler[T]: Pickler[T] = macro PicklerMaterializersImpl.materializePickler[T]
 }
 
 object PickleImpl {
@@ -91,9 +63,9 @@ object PickleImpl {
 }
 
 object UnpickleImpl {
-  def apply[A](implicit u: Unpickler[A]) = UnpickledCurry(u)
+  def apply[A](implicit u: Pickler[A]) = UnpickledCurry(u)
 
-  case class UnpickledCurry[A](u: Unpickler[A]) {
+  case class UnpickledCurry[A](u: Pickler[A]) {
     def apply(implicit state: UnpickleState): A = u.unpickle(state)
 
     def fromBytes(bytes: ByteBuffer): A = {
@@ -117,7 +89,6 @@ trait Base {
   val Pickle = _root_.boopickle.PickleImpl
   type PickleState = _root_.boopickle.PickleState
 
-  type Unpickler[A] = _root_.boopickle.Unpickler[A]
   val Unpickle = _root_.boopickle.UnpickleImpl
 
   type UnpickleState = _root_.boopickle.UnpickleState
@@ -128,19 +99,14 @@ trait Base {
  */
 object Default extends Base with
 BasicImplicitPicklers with
-PairPicklers with
 TransformPicklers with
 TuplePicklers with
-TupleUnpicklers with
-MaterializePicklerFallback with
-MaterializeUnpicklerFallback
+MaterializePicklerFallback
 
 /**
  * Provides basic implicit picklers without macro support for case classes
  */
 object DefaultBasic extends Base with
 BasicImplicitPicklers with
-PairPicklers with
 TransformPicklers with
-TuplePicklers with
-TupleUnpicklers
+TuplePicklers

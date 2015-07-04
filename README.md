@@ -37,7 +37,7 @@ On a Scala.js project the dependency looks like this
 To use it in your code, simply import the main package contents.
 
 ```scala
-import boopickle._
+import boopickle.Default._
 ```
 
 To serialize (pickle) something, just call `Pickle.intoBytes` with your data. This will produce a binary `ByteBuffer` containing an encoded version
@@ -55,27 +55,13 @@ so you *must* use the same types when pickling and unpickling.
 val helloWorld = Unpickle[Seq[String]].fromBytes(buf)
 ```
 
-### Common issues with ByteBuffers
-
-As many BooPickle users have run into issues with `ByteBuffers`, here is a bit of advice on how to work with them. If you need to get data out of a 
-`ByteBuffer`, for example into an `Array[Byte]` the safest way is to use the `get(array: Array[Byte])` method. Even when the `ByteBuffer` is
-backed with an `Array[Byte]` and you could access that directly with `array()`, it's very easy to make mistakes with positions, array offsets and limits.
-
-Reading values from a `ByteBuffer` commonly changes its internal state (the `position`), so you cannot treat it as identical to the original
-`ByteBuffer`. Similarly writing to one also changes its state. For example if you write data to a `ByteBuffer` and pass it as such to an unpickler, 
-it will not work. You need to call `flip()` first to reset its `position`.
-
-In BooPickle `ByteBuffer`s use little-endian ordering, which is not the default in the JVM, but is the native ordering in majority of target platforms.
-
-For more information, please refer to the [JDK documentation on ByteBuffers](http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html).
-
 ## Supported types
 
 BooPickle has built-in support for most of the typical Scala types, including
 
 - primitives: `Boolean`, `Byte`, `Short`, `Char`, `Int`, `Long`, `Float`, `Double` and `String`
 - common types: `Tuple`s, `Option`, `Either`, `Duration`, `UUID` and `ByteBuffer`
-- collections, both mutable and immutable, including: `Vector`, `List`, `Set`s, `Map`s and any `Iterable` with a `CanBuildFrom` implementation
+- collections, both mutable and immutable, including: `Array`, `Vector`, `List`, `Set`s, `Map`s and any `Iterable` with a `CanBuildFrom` implementation
 - `case class`es and `case object`s (via a macro)
 - `trait`s as a base for a class hierarchy
 
@@ -159,29 +145,27 @@ rather quickly! Below you can see the results of pickling a trait twice in the c
 
 ``` 
  Size   Name
- 2,650  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitUnpickler$macro$28$2$CCUnpickler$macro$29$2$.class
- 2,650  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitUnpickler$macro$36$2$CCUnpickler$macro$37$2$.class
  2,798  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitPickler$macro$25$2$CCPickler$macro$26$2$.class
  2,798  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitPickler$macro$33$2$CCPickler$macro$34$2$.class
- 3,409  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitUnpickler$macro$28$2$CCUnpickler$macro$30$2$.class
- 3,409  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitUnpickler$macro$36$2$CCUnpickler$macro$38$2$.class
  3,498  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitPickler$macro$25$2$CCPickler$macro$27$2$.class
  3,498  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitPickler$macro$33$2$CCPickler$macro$35$2$.class
  4,789  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitPickler$macro$25$2$.class
  4,789  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitPickler$macro$33$2$.class
- 4,863  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitUnpickler$macro$28$2$.class
- 4,863  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitUnpickler$macro$36$2$.class
 ``` 
 
 If this becomes an issue, you can avoid it by storing implicit picklers in the companion object of the trait. This way the code is generated only once
 and used whenever you need a pickler for your `Fruit`.
 
 ```scala
+import boopickle.Default._
 object Fruit {
-  implicit val pickler: Pickler[Fruit] = Pickler.materializePickler[Fruit]
-  implicit val unpickler: Unpickler[Fruit] = Unpickler.materializeUnpickler[Fruit]
+  implicit val pickler: Pickler[Fruit] = generatePickler[Fruit]
 }
 ```
+
+You can also prevent automatic use of the macro to generate picklers for case classes by importing `boopickle.DefaultBasic._` instead of 
+`boopickle.Default._` as this will leave the implicit macro code out. Then you can write code like above to generate your picklers for your 
+case classes or class hierarchies.
 
 ### Recursive composite types
 
@@ -265,7 +249,7 @@ initialization data!
 ## Custom picklers
 
 If you need to pickle non-case classes or for example Java classes, you can define custom picklers for them. If it's a non-generic type,
-use an `implicit object` and for generic types use `implicit def`. See `Pickler.scala` and `Unpickler.scala` for more detailed examples such
+use an `implicit object` and for generic types use `implicit def`. See `Pickler.scala` for more detailed examples such
 as `Either[T, S]` below.
 
 In most cases, however, you can use the `TransformPickler` to create a custom pickler for a type by transforming it into another type that
@@ -279,49 +263,40 @@ implicit val datePickler = TransformPickler[java.util.Date, Long](_.getTime, t =
 Note that transformation breaks reference equality, so multiple instances of the same reference will be pickled
 separately. Transforming picklers can also be used in `CompositePickler` with the `addTransform` method.
 
-For a full pickler/unpickler you need to do as in the example below.
+For a full pickler you need to do as in the example below.
 
 ```scala
-type P[A] = Pickler[A]
-
-def write[A](value: A)(implicit state: PickleState, p: P[A]): Unit = p.pickle(value)(state)
-
-implicit def EitherPickler[T: P, S: P]: P[Either[T, S]] = new P[Either[T, S]] {
-  override def pickle(obj: Either[T, S])(implicit state: PickleState): Unit = {
-    // check if this Either has been pickled already
-    state.identityRefFor(obj) match {
-      case Some(idx) =>
-        // encode index as negative "length"
-        state.enc.writeInt(-idx)
-      case None =>
-        obj match {
-          case Left(l) =>
-            state.enc.writeInt(EitherLeft)
-            write[T](l)
-          case Right(r) =>
-            state.enc.writeInt(EitherRight)
-            write[S](r)
-        }
-        state.addIdentityRef(obj)
+object MyCustomPicklers extends PicklerHelper {
+  implicit def EitherPickler[T: P, S: P]: P[Either[T, S]] = new P[Either[T, S]] {
+    override def pickle(obj: Either[T, S])(implicit state: PickleState): Unit = {
+      // check if this Either has been pickled already
+      state.identityRefFor(obj) match {
+        case Some(idx) =>
+          // encode index as negative "length"
+          state.enc.writeInt(-idx)
+        case None =>
+          obj match {
+            case Left(l) =>
+              state.enc.writeInt(EitherLeft)
+              write[T](l)
+            case Right(r) =>
+              state.enc.writeInt(EitherRight)
+              write[S](r)
+          }
+          state.addIdentityRef(obj)
+      }
     }
-  }
-}
-
-type U[A] = Unpickler[A]
-
-def read[A](implicit state: UnpickleState, u: U[A]): A = u.unpickle
-
-implicit def EitherUnpickler[T: U, S: U]: U[Either[T, S]] = new U[Either[T, S]] {
-  override def unpickle(implicit state: UnpickleState): Either[T, S] = {
-    state.dec.readIntCode match {
-      case Right(EitherLeft) =>
-        Left(read[T])
-      case Right(EitherRight) =>
-        Right(read[S])
-      case Right(idx) if idx < 0 =>
-        state.identityFor[Either[T, S]](-idx)
-      case _ =>
-        throw new IllegalArgumentException("Invalid coding for Either type")
+    override def unpickle(implicit state: UnpickleState): Either[T, S] = {
+      state.dec.readIntCode match {
+        case Right(EitherLeft) =>
+          Left(read[T])
+        case Right(EitherRight) =>
+          Right(read[S])
+        case Right(idx) if idx < 0 =>
+          state.identityFor[Either[T, S]](-idx)
+        case _ =>
+          throw new IllegalArgumentException("Invalid coding for Either type")
+      }
     }
   }
 }
@@ -458,6 +433,20 @@ because direct `ByteBuffer`s are implemented with typed arrays. These may not be
 own Buffers, and IE versions 9 and below). When testing code that uses BooPickle (and direct `ByteBuffer`s), make sure your tests are run
 under PhantomJS, because neither Node.js nor Rhino support typed arrays. Alternatively make sure your tests only use heap `ByteBuffer`s.
  
+## Common issues with ByteBuffers
+
+As many BooPickle users have run into issues with `ByteBuffers`, here is a bit of advice on how to work with them. If you need to get data out of a 
+`ByteBuffer`, for example into an `Array[Byte]` the safest way is to use the `get(array: Array[Byte])` method. Even when the `ByteBuffer` is
+backed with an `Array[Byte]` and you could access that directly with `array()`, it's very easy to make mistakes with positions, array offsets and limits.
+
+Reading values from a `ByteBuffer` commonly changes its internal state (the `position`), so you cannot treat it as identical to the original
+`ByteBuffer`. Similarly writing to one also changes its state. For example if you write data to a `ByteBuffer` and pass it as such to an unpickler, 
+it will not work. You need to call `flip()` first to reset its `position`.
+
+In BooPickle `ByteBuffer`s use little-endian ordering, which is not the default in the JVM, but is the native ordering in majority of target platforms.
+
+For more information, please refer to the [JDK documentation on ByteBuffers](http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html).
+ 
 ## Internal details
 
 ### Efficient coding
@@ -495,9 +484,6 @@ implicit object PersonPickler extends Pickler[Person] {
     state.pickle(value.email)
     state.pickle(value.birthYear)
   }
-}
-
-implicit object PersonUnpickler extends Unpickler[Person] {
   override def unpickle(implicit state: UnpickleState): Person = {
     Person( 
       state.unpickle[String],
@@ -521,7 +507,7 @@ The macro-generated picklers are provided by a separate trait to make sure they 
 object Pickler extends TuplePicklers with MaterializePicklerFallback { ... }
 
 trait MaterializePicklerFallback {
-  implicit def materializePickler[T]: Pickler[T] = macro PicklerMaterializersImpl.materializePickler[T]
+  implicit def generatePickler[T]: Pickler[T] = macro PicklerMaterializersImpl.materializePickler[T]
 }
 ```
 
@@ -568,12 +554,13 @@ val result = q"""
   implicit object $name extends boopickle.Pickler[$tpe] {
     import boopickle._
     override def pickle(value: $tpe)(implicit state: PickleState): Unit = $pickleLogic
+    override def unpickle(implicit state: UnpickleState): $tpe = $unpickleLogic
   }
   $name
 """
 ```
 
-That's it for generating a pickler for a case class! Unpickler generation is pretty much the same, check out the code for details.
+That's it for generating a pickler for a case class! Unpickle logic generation is pretty much the same, check out the code for details.
 
 BooPickle also supports automatic pickler generation for sealed class hierarchies and that functionality is also implemented by the macro. When the macro
 first checks if it's a trait, it will continue under a different code path than for case classes. Goal of the macro is to create a `CompositePickler`
@@ -630,13 +617,13 @@ def encodeUTF8(s: String): ByteBuffer = {
 
 ## Change history
 
-### 1.0.1-SNAPSHOT
+### 1.1.0-SNAPSHOT
 
+- Moved all implicits into `boopickle.Default` to better control what is imported
+- Unpicklers merged into Picklers, so there are no separate Unpicklers anymore
 - BooPickle generated macros are now compatible with *-Xstrict-inference* compiler option
 - Trait hierarchies with type parameters can now be pickled automatically (by @FlorianKirmaier)
 - Improved error messages
-- Add `Pickler[A].cmap(B => A): Pickler[B]`
-- Add `Unpickler[A].map(A => B): Unpickler[B]`
 
 ### 1.0.0
 
