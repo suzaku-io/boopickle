@@ -635,6 +635,8 @@ def encodeUTF8(s: String): ByteBuffer = {
 - BooPickle generated macros are now compatible with *-Xstrict-inference* compiler option
 - Trait hierarchies with type parameters can now be pickled automatically (by @FlorianKirmaier)
 - Improved error messages
+- Add `Pickler[A].cmap(B => A): Pickler[B]`
+- Add `Unpickler[A].map(A => B): Unpickler[B]`
 
 ### 1.0.0
 

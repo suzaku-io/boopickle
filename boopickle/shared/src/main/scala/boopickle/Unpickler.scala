@@ -32,6 +32,15 @@ case class UnpickledCurry[A](u: Unpickler[A]) {
 
 trait Unpickler[A] {
   def unpickle(implicit state: UnpickleState): A
+
+  def map[B](ab: A => B): Unpickler[B] = {
+    val self = this
+    new Unpickler[B] {
+      override def unpickle(implicit state: UnpickleState): B = {
+        ab(self.unpickle(state))
+      }
+    }
+  }
 }
 
 trait UnpicklerHelper {
