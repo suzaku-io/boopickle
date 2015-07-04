@@ -25,13 +25,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"me.chrons" %% "boopickle" % "1.0.0"
+"me.chrons" %% "boopickle" % "1.1.0-SNAPSHOT"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```scala
-"me.chrons" %%% "boopickle" % "1.0.0"
+"me.chrons" %%% "boopickle" % "1.1.0-SNAPSHOT"
 ```
 
 To use it in your code, simply import the main package contents.
