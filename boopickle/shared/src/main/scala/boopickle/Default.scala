@@ -9,7 +9,6 @@ import scala.reflect.ClassTag
 import scala.util.Try
 
 trait BasicImplicitPicklers extends PicklerHelper {
-  implicit val nothingPickler = BasicPicklers.NothingPickler
   implicit val unitPickler = BasicPicklers.UnitPickler
   implicit val booleanPickler = BasicPicklers.BooleanPickler
   implicit val bytePickler = BasicPicklers.BytePickler
