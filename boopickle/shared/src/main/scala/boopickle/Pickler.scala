@@ -527,12 +527,12 @@ final class UnpickleState(val dec: Decoder) {
   addImmutableRef(null)
   Constants.immutableInitData.foreach(addImmutableRef)
 
-  @inline private[boopickle] def immutableFor[A <: AnyRef](ref: Int): A = {
+  @inline def immutableFor[A <: AnyRef](ref: Int): A = {
     assert(ref > 0)
     immutableRefs(ref).asInstanceOf[A]
   }
 
-  @inline private[boopickle] def addImmutableRef(obj: AnyRef): Unit = {
+  @inline def addImmutableRef(obj: AnyRef): Unit = {
     immutableRefs += obj
   }
 
