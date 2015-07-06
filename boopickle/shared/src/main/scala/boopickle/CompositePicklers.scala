@@ -41,7 +41,7 @@ case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_
   }
 
   def addTransform[B <: A, C](transformTo: (B) => C, transformFrom: (C) => B)(implicit p: Pickler[C], tag: ClassTag[B]) = {
-    val pickler = p.map(transformTo)(transformFrom)
+    val pickler = p.xmap(transformFrom)(transformTo)
     picklers :+= (tag.runtimeClass.getName -> pickler)
     this
   }
