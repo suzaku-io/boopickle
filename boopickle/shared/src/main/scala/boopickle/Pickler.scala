@@ -25,6 +25,20 @@ trait Pickler[A] {
   }
 }
 
+object Pickler {
+
+  /**
+   * Wrap a Pickler such that it isn't initialised until it is first used.
+   */
+  def lazily[A](f: => Pickler[A]): Pickler[A] = {
+    lazy val p = f
+    new Pickler[A] {
+      override def pickle(a: A)(implicit state: PickleState): Unit = p.pickle(a)
+      override def unpickle(implicit state: UnpickleState): A = p.unpickle
+    }
+  }
+}
+
 trait PicklerHelper {
   protected type P[A] = Pickler[A]
 
