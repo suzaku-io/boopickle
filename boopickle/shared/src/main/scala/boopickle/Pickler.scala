@@ -43,11 +43,6 @@ object BasicPicklers extends PicklerHelper {
 
   import Constants._
 
-  object NothingPickler extends P[Nothing] {
-    override def pickle(b: Nothing)(implicit state: PickleState): Unit = throw new NotImplementedError("Cannot pickle Nothing!")
-    override def unpickle(implicit state: UnpickleState): Nothing = throw new NotImplementedError("Cannot unpickle Nothing!")
-  }
-
   object UnitPickler extends P[Unit] {
     @inline override def pickle(b: Unit)(implicit state: PickleState): Unit = ()
     @inline override def unpickle(implicit state: UnpickleState): Unit = { /* do nothing */ }
