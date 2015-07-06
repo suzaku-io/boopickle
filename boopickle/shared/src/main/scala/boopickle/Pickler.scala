@@ -25,6 +25,16 @@ trait Pickler[A] {
   }
 }
 
+/**
+ * A Pickler that always returns a constant value.
+ *
+ * Stores nothing in the pickled output.
+ */
+final case class ConstPickler[A](a: A) extends Pickler[A] {
+  @inline override def pickle(x: A)(implicit s: PickleState) = ()
+  @inline override def unpickle(implicit s: UnpickleState) = a
+}
+
 trait PicklerHelper {
   protected type P[A] = Pickler[A]
 
@@ -43,10 +53,7 @@ object BasicPicklers extends PicklerHelper {
 
   import Constants._
 
-  object UnitPickler extends P[Unit] {
-    @inline override def pickle(b: Unit)(implicit state: PickleState): Unit = ()
-    @inline override def unpickle(implicit state: UnpickleState): Unit = { /* do nothing */ }
-  }
+  val UnitPickler = ConstPickler(())
 
   object BooleanPickler extends P[Boolean] {
     @inline override def pickle(value: Boolean)(implicit state: PickleState): Unit = state.enc.writeByte(if (value) 1 else 0)
