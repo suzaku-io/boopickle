@@ -12,7 +12,7 @@ trait Pickler[A] {
   def pickle(obj: A)(implicit state: PickleState)
   def unpickle(implicit state: UnpickleState): A
 
-  def map[B](ba: B => A)(ab: A => B): Pickler[B] = {
+  def xmap[B](ab: A => B)(ba: B => A): Pickler[B] = {
     val self = this
     new Pickler[B] {
       override def unpickle(implicit state: UnpickleState): B = {
