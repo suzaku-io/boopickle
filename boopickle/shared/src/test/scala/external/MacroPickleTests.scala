@@ -1,5 +1,6 @@
-package boopickle
+package external
 
+import boopickle.Default._
 import utest._
 
 object MacroPickleTests extends TestSuite {
@@ -27,13 +28,12 @@ object MacroPickleTests extends TestSuite {
   }
 
   object TT3 {
-    // a piclker for non-case classes cannot be automatically generated, so use the transform pickler
-    implicit val pickler = TransformPickler[TT3, (Int, String)]((t) => (t.i, t.s), (t) => new TT3(t._1, t._2))
   }
 
   object MyTrait {
-    implicit val pickler: Pickler[MyTrait] = Pickler.materializePickler[MyTrait]
-    implicit val unpickler: Unpickler[MyTrait] = Unpickler.materializeUnpickler[MyTrait]
+    // a pickler for non-case classes cannot be automatically generated, so use the transform pickler
+    implicit val pickler3 = transformPickler[TT3, (Int, String)]((t) => (t.i, t.s), (t) => new TT3(t._1, t._2))
+    implicit val pickler = generatePickler[MyTrait]
   }
 
   case class A(fills: List[B])
@@ -44,6 +44,8 @@ object MacroPickleTests extends TestSuite {
   case class A1[T](i: T) extends A1Trait[T]
 
   override def tests = TestSuite {
+    // must import pickler from the companion object, otherwise scalac will try to use a macro to generate it
+    import MyTrait._
     'CaseClasses - {
       'Case1 {
         val bb = Pickle.intoBytes(Test1(5, "Hello!"))
@@ -93,8 +95,7 @@ object MacroPickleTests extends TestSuite {
         // assert(x == u)
       }
       'CaseTupleList2 {
-        implicit val bPickler = Pickler.materializePickler[B]
-        implicit val bUnpickler = Unpickler.materializeUnpickler[B]
+        implicit val bPickler = generatePickler[B]
         val x = A(List(B(List((2.0, 3.0)))))
         val bb = Pickle.intoBytes(x)
         val u = Unpickle[A].fromBytes(bb)

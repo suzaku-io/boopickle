@@ -1,6 +1,7 @@
-package boopickle
+package external
 
 import utest._
+import boopickle.Default._
 
 trait Fruit {
   val weight: Double
@@ -34,20 +35,20 @@ case object Leaf extends Tree
 case class Node(value: Int, children: Seq[Tree]) extends Tree
 
 object Tree {
-  implicit val treePickler = CompositePickler[Tree]
+  implicit val treePickler = compositePickler[Tree]
   treePickler.addConcreteType[Node].addConcreteType[Leaf.type]
 }
 
 sealed trait Element
 
 object Element {
-  implicit val documentPickler = CompositePickler[Document]
+  implicit val documentPickler = compositePickler[Document]
   documentPickler.addConcreteType[WordDocument]
 
-  implicit val attributePickler = CompositePickler[Attribute]
+  implicit val attributePickler = compositePickler[Attribute]
   attributePickler.addConcreteType[OwnerAttribute]
 
-  implicit val elementPickler = CompositePickler[Element]
+  implicit val elementPickler = compositePickler[Element]
   elementPickler.join[Document].join[Attribute]
 }
 
@@ -62,7 +63,7 @@ final case class OwnerAttribute(owner: String, parent: Element) extends Attribut
 object CompositePickleTests extends TestSuite {
   override def tests = TestSuite {
     'CaseClassHierarchy {
-      implicit val fruitPickler = CompositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
+      implicit val fruitPickler = compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
 
       val fruits: Seq[Fruit] = Seq(Kiwi(0.5), Kiwi(0.6), Carambola(5.0), Banana(1.2))
       val bb = Pickle.intoBytes(fruits)
@@ -70,7 +71,7 @@ object CompositePickleTests extends TestSuite {
       assert(u == fruits)
     }
     'CaseObjects {
-      implicit val errorPickler = CompositePickler[Error].addConcreteType[InvalidName.type].addConcreteType[Unknown.type].addConcreteType[NotFound.type]
+      implicit val errorPickler = compositePickler[Error].addConcreteType[InvalidName.type].addConcreteType[Unknown.type].addConcreteType[NotFound.type]
       val errors: Map[Error, String] = Map(InvalidName -> "InvalidName", Unknown -> "Unknown", NotFound -> "Not found")
       val bb = Pickle.intoBytes(errors)
       val u = Unpickle[Map[Error, String]].fromBytes(bb)
@@ -91,14 +92,14 @@ object CompositePickleTests extends TestSuite {
       assert(u == q)
     }
     'Transformers {
-      implicit val datePickler = TransformPickler[java.util.Date, Long](_.getTime, t => new java.util.Date(t))
+      implicit val datePickler = transformPickler[java.util.Date, Long](_.getTime, t => new java.util.Date(t))
       val date = new java.util.Date()
       val bb = Pickle.intoBytes(date)
       val d = Unpickle[java.util.Date].fromBytes(bb)
       assert(d == date)
     }
     'Exceptions {
-      implicit val exPickler = ExceptionPickler.base
+      implicit val exPickler = exceptionPickler
 
       val exs:Seq[Throwable] = Seq(
         new NullPointerException("Noooo!"),

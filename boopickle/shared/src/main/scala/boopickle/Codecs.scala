@@ -3,7 +3,13 @@ package boopickle
 import java.nio.{ByteOrder, ByteBuffer}
 import java.nio.charset.{CharacterCodingException, StandardCharsets}
 
+trait StringCodecFuncs {
+  def decodeUTF8(len: Int, buf: ByteBuffer): String
+  def encodeUTF8(s: String): ByteBuffer
+}
+
 class Decoder(val buf: ByteBuffer) {
+  val stringCodec: StringCodecFuncs = StringCodec
   /**
    * Decodes a single byte
    * @return
@@ -182,7 +188,7 @@ class Decoder(val buf: ByteBuffer) {
   def readString: String = {
     // read string length
     val len = readInt
-    StringCodec.decodeUTF8(len, buf)
+    stringCodec.decodeUTF8(len, buf)
   }
 
   /**
@@ -191,7 +197,7 @@ class Decoder(val buf: ByteBuffer) {
    * @return
    */
   def readString(len: Int): String = {
-    StringCodec.decodeUTF8(len, buf)
+    stringCodec.decodeUTF8(len, buf)
   }
 
   def readByteBuffer: ByteBuffer = {
@@ -210,6 +216,7 @@ class Decoder(val buf: ByteBuffer) {
 }
 
 class Encoder(bufferProvider: BufferProvider = DefaultByteBufferProvider.provider) {
+  val stringCodec: StringCodecFuncs = StringCodec
 
   @inline private def alloc(size: Int): ByteBuffer = bufferProvider.alloc(size)
 
@@ -328,7 +335,7 @@ class Encoder(bufferProvider: BufferProvider = DefaultByteBufferProvider.provide
    * @return
    */
   def writeString(s: String): Encoder = {
-    val strBytes = StringCodec.encodeUTF8(s)
+    val strBytes = stringCodec.encodeUTF8(s)
     writeInt(strBytes.limit)
     alloc(strBytes.limit).put(strBytes)
     this

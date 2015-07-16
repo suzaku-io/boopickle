@@ -82,7 +82,7 @@ Generator for all the 22 Tuple picklers. Resulting source files are written unde
 from where they need to be copied to the `boopickle` source directory.
  */
 generateTuples := {
-  val (picklers, unpicklers) = (1 to 22).map { i =>
+  val picklers = (1 to 22).map { i =>
     def commaSeparated(s: Int => String, sep: String = ", ") = (1 to i).map(s).mkString(sep)
     val picklerTypes = commaSeparated(j => s"T$j: P")
     val unpicklerTypes = commaSeparated(j => s"T$j: U")
@@ -90,27 +90,17 @@ generateTuples := {
     val writes = commaSeparated(j => s"write[T$j](x._$j)", "; ")
     val reads = commaSeparated(j => s"read[T$j]")
 
-    (s"""
+    s"""
   implicit def Tuple${i}Pickler[$picklerTypes] = new P[$typeTuple] {
     override def pickle(x: $typeTuple)(implicit state: PickleState): Unit = { $writes }
-  }""",
-      s"""
-  implicit def Tuple${i}Unpickler[$unpicklerTypes] = new U[$typeTuple] {
     override def unpickle(implicit state: UnpickleState) = ${if (i == 1) s"Tuple1[T1]" else ""}($reads)
-  }""")
-  }.unzip
+  }"""
+  }
   IO.write(baseDirectory.value / "target" / "TuplePicklers.scala",
     s"""package boopickle
 
 trait TuplePicklers extends PicklerHelper {
   ${picklers.mkString("\n")}
-}
-""")
-  IO.write(baseDirectory.value / "target" / "TupleUnpicklers.scala",
-    s"""package boopickle
-
-trait TupleUnpicklers extends UnpicklerHelper {
-  ${unpicklers.mkString("\n")}
 }
 """)
 }
@@ -121,7 +111,7 @@ lazy val perftests = crossProject
     name := "perftests",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "upickle" % "0.2.8",
+      "com.lihaoyi" %%% "upickle" % "0.3.4",
       "com.github.benhutchison" %%% "prickle" % "1.1.6"
     )
   )

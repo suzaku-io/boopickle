@@ -5,30 +5,19 @@ import java.util.UUID
 
 import scala.collection.mutable
 import scala.concurrent.duration.{Duration, FiniteDuration}
-import scala.language.experimental.macros
 import scala.language.higherKinds
-
-object Pickle {
-  def apply[A](value: A)(implicit state: PickleState, p: Pickler[A]): PickleState = {
-    p.pickle(value)(state)
-    state
-  }
-
-  def intoBytes[A](value: A)(implicit state: PickleState, p: Pickler[A]): ByteBuffer = {
-    apply(value).toByteBuffer
-  }
-
-  def intoByteBuffers[A](value: A)(implicit state: PickleState, p: Pickler[A]): Iterable[ByteBuffer] = {
-    apply(value).toByteBuffers
-  }
-}
+import scala.reflect.ClassTag
 
 trait Pickler[A] {
   def pickle(obj: A)(implicit state: PickleState)
+  def unpickle(implicit state: UnpickleState): A
 
-  def cmap[B](ba: B => A): Pickler[B] = {
+  def xmap[B](ab: A => B)(ba: B => A): Pickler[B] = {
     val self = this
     new Pickler[B] {
+      override def unpickle(implicit state: UnpickleState): B = {
+        ab(self.unpickle(state))
+      }
       override def pickle(obj: B)(implicit state: PickleState): Unit = {
         self.pickle(ba(obj))
       }
@@ -36,64 +25,88 @@ trait Pickler[A] {
   }
 }
 
+/**
+ * A Pickler that always returns a constant value.
+ *
+ * Stores nothing in the pickled output.
+ */
+final case class ConstPickler[A](a: A) extends Pickler[A] {
+  @inline override def pickle(x: A)(implicit s: PickleState) = ()
+  @inline override def unpickle(implicit s: UnpickleState) = a
+}
+
 trait PicklerHelper {
-  type P[A] = Pickler[A]
+  protected type P[A] = Pickler[A]
 
   /**
    * Helper function to write pickled types
    */
-  def write[A](value: A)(implicit state: PickleState, p: P[A]): Unit = p.pickle(value)(state)
+  protected def write[A](value: A)(implicit state: PickleState, p: P[A]): Unit = p.pickle(value)(state)
+
+  /**
+   * Helper function to unpickle a type
+   */
+  protected def read[A](implicit state: UnpickleState, u: P[A]): A = u.unpickle
 }
 
-object Pickler extends TuplePicklers with MaterializePicklerFallback {
+object BasicPicklers extends PicklerHelper {
 
   import Constants._
 
-  implicit val NothingPickler = new P[Nothing] {
-    override def pickle(b: Nothing)(implicit state: PickleState): Unit = throw new NotImplementedError("Cannot pickle Nothing!")
-  }
+  val UnitPickler = ConstPickler(())
 
-  implicit val UnitPickler = new P[Unit] {
-    @inline override def pickle(b: Unit)(implicit state: PickleState): Unit = ()
-  }
-
-  implicit object BooleanPickler extends P[Boolean] {
+  object BooleanPickler extends P[Boolean] {
     @inline override def pickle(value: Boolean)(implicit state: PickleState): Unit = state.enc.writeByte(if (value) 1 else 0)
+    @inline override def unpickle(implicit state: UnpickleState): Boolean = {
+      state.dec.readByte match {
+        case 1 => true
+        case 0 => false
+        case x => throw new IllegalArgumentException(s"Invalid value $x for Boolean")
+      }
+    }
   }
 
-  implicit object BytePickler extends P[Byte] {
+  object BytePickler extends P[Byte] {
     @inline override def pickle(value: Byte)(implicit state: PickleState): Unit = state.enc.writeByte(value)
+    @inline override def unpickle(implicit state: UnpickleState): Byte = state.dec.readByte
   }
 
-  implicit object ShortPickler extends P[Short] {
+  object ShortPickler extends P[Short] {
     @inline override def pickle(value: Short)(implicit state: PickleState): Unit = state.enc.writeInt(value)
+    @inline override def unpickle(implicit state: UnpickleState): Short = state.dec.readInt.toShort
   }
 
-  implicit object CharPickler extends P[Char] {
+  object CharPickler extends P[Char] {
     @inline override def pickle(value: Char)(implicit state: PickleState): Unit = state.enc.writeChar(value)
+    @inline override def unpickle(implicit state: UnpickleState): Char = state.dec.readChar
   }
 
-  implicit object IntPickler extends P[Int] {
+  object IntPickler extends P[Int] {
     @inline override def pickle(value: Int)(implicit state: PickleState): Unit = state.enc.writeInt(value)
+    @inline override def unpickle(implicit state: UnpickleState): Int = state.dec.readInt
   }
 
-  implicit object LongPickler extends P[Long] {
+  object LongPickler extends P[Long] {
     @inline override def pickle(value: Long)(implicit state: PickleState): Unit = state.enc.writeLong(value)
+    @inline override def unpickle(implicit state: UnpickleState): Long = state.dec.readLong
   }
 
-  implicit object FloatPickler extends P[Float] {
+  object FloatPickler extends P[Float] {
     @inline override def pickle(value: Float)(implicit state: PickleState): Unit = state.enc.writeFloat(value)
+    @inline override def unpickle(implicit state: UnpickleState): Float = state.dec.readFloat
   }
 
-  implicit object DoublePickler extends P[Double] {
+  object DoublePickler extends P[Double] {
     @inline override def pickle(value: Double)(implicit state: PickleState): Unit = state.enc.writeDouble(value)
+    @inline override def unpickle(implicit state: UnpickleState): Double = state.dec.readDouble
   }
 
-  implicit object ByteBufferPickler extends P[ByteBuffer] {
+  object ByteBufferPickler extends P[ByteBuffer] {
     @inline override def pickle(bb: ByteBuffer)(implicit state: PickleState): Unit = state.enc.writeByteBuffer(bb)
+    @inline override def unpickle(implicit state: UnpickleState): ByteBuffer = state.dec.readByteBuffer
   }
 
-  implicit object StringPickler extends P[String] {
+  object StringPickler extends P[String] {
     def encodeUUID(str: String, code: Byte)(implicit state: PickleState): Unit = {
       // special coding for lowercase UUID
       val uuid = UUID.fromString(str)
@@ -146,16 +159,46 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
           }
       }
     }
+    override def unpickle(implicit state: UnpickleState): String = {
+      state.dec.readIntCode match {
+        // handle special codings
+        case Left(code) if code == specialCode(StringInt) =>
+          val i = state.dec.readInt
+          String.valueOf(i)
+        case Left(code) if code == specialCode(StringLong) =>
+          val l = state.dec.readRawLong
+          String.valueOf(l)
+        case Left(code) if code == specialCode(StringUUID) || code == specialCode(StringUUIDUpper) =>
+          val uuid = new UUID(state.dec.readRawLong, state.dec.readRawLong)
+          val s = uuid.toString
+          if (code == specialCode(StringUUIDUpper))
+            s.toUpperCase
+          else
+            s
+        case Left(_) =>
+          throw new IllegalArgumentException("Unknown string coding")
+        case Right(0) => ""
+        case Right(idx) if idx < 0 =>
+          state.immutableFor[String](-idx)
+        case Right(len) =>
+          val s = state.dec.readString(len)
+          state.addImmutableRef(s)
+          s
+      }
+    }
   }
 
-  implicit object UUIDPickler extends P[UUID] {
+  object UUIDPickler extends P[UUID] {
     override def pickle(s: UUID)(implicit state: PickleState): Unit = {
       state.enc.writeRawLong(s.getMostSignificantBits)
       state.enc.writeRawLong(s.getLeastSignificantBits)
     }
+    @inline override def unpickle(implicit state: UnpickleState): UUID = {
+      new UUID(state.dec.readRawLong, state.dec.readRawLong)
+    }
   }
 
-  implicit object DurationPickler extends P[Duration] {
+  object DurationPickler extends P[Duration] {
     override def pickle(value: Duration)(implicit state: PickleState): Unit = {
       // take care of special Durations
       value match {
@@ -169,13 +212,25 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
           state.enc.writeLong(x.toNanos)
       }
     }
+    @inline override def unpickle(implicit state: UnpickleState): Duration = {
+      state.dec.readLongCode match {
+        case Left(c) if c == specialCode(DurationInf) =>
+          Duration.Inf
+        case Left(c) if c == specialCode(DurationMinusInf) =>
+          Duration.MinusInf
+        case Left(c) if c == specialCode(DurationUndefined) =>
+          Duration.Undefined
+        case Right(value) =>
+          Duration.fromNanos(value)
+      }
+    }
   }
 
-  @inline implicit def FiniteDurationPickler: P[FiniteDuration] = DurationPickler.asInstanceOf[P[FiniteDuration]]
+  def FiniteDurationPickler: P[FiniteDuration] = DurationPickler.asInstanceOf[P[FiniteDuration]]
 
-  @inline implicit def InfiniteDurationPickler: P[Duration.Infinite] = DurationPickler.asInstanceOf[P[Duration.Infinite]]
+  def InfiniteDurationPickler: P[Duration.Infinite] = DurationPickler.asInstanceOf[P[Duration.Infinite]]
 
-  implicit def OptionPickler[T: P]: P[Option[T]] = new P[Option[T]] {
+  def OptionPickler[T: P]: P[Option[T]] = new P[Option[T]] {
     override def pickle(obj: Option[T])(implicit state: PickleState): Unit = {
       obj match {
         case Some(x) =>
@@ -195,11 +250,23 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
           state.enc.writeInt(-idx)
       }
     }
+    override def unpickle(implicit state: UnpickleState): Option[T] = {
+      state.dec.readIntCode match {
+        case Right(OptionSome) =>
+          val o = Some(read[T])
+          state.addIdentityRef(o)
+          o
+        case Right(idx) if idx < 0 =>
+          state.identityFor[Option[T]](-idx)
+        case _ =>
+          throw new IllegalArgumentException("Invalid coding for Option type")
+      }
+    }
   }
 
-  @inline implicit def SomePickler[T: P]: P[Some[T]] = OptionPickler[T].asInstanceOf[P[Some[T]]]
+  def SomePickler[T: P]: P[Some[T]] = OptionPickler[T].asInstanceOf[P[Some[T]]]
 
-  implicit def EitherPickler[T: P, S: P]: P[Either[T, S]] = new P[Either[T, S]] {
+  def EitherPickler[T: P, S: P]: P[Either[T, S]] = new P[Either[T, S]] {
     override def pickle(obj: Either[T, S])(implicit state: PickleState): Unit = {
       // check if this Either has been pickled already
       state.identityRefFor(obj) match {
@@ -218,19 +285,32 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
           state.addIdentityRef(obj)
       }
     }
+    override def unpickle(implicit state: UnpickleState): Either[T, S] = {
+      state.dec.readIntCode match {
+        case Right(EitherLeft) =>
+          Left(read[T])
+        case Right(EitherRight) =>
+          Right(read[S])
+        case Right(idx) if idx < 0 =>
+          state.identityFor[Either[T, S]](-idx)
+        case _ =>
+          throw new IllegalArgumentException("Invalid coding for Either type")
+      }
+    }
   }
 
-  implicit def LeftPickler[T: P, S: P]: P[Left[T, S]] = EitherPickler[T, S].asInstanceOf[P[Left[T, S]]]
+  def LeftPickler[T: P, S: P]: P[Left[T, S]] = EitherPickler[T, S].asInstanceOf[P[Left[T, S]]]
 
-  implicit def RightPickler[T: P, S: P]: P[Right[T, S]] = EitherPickler[T, S].asInstanceOf[P[Right[T, S]]]
+  def RightPickler[T: P, S: P]: P[Right[T, S]] = EitherPickler[T, S].asInstanceOf[P[Right[T, S]]]
 
+  import collection.generic.CanBuildFrom
   /**
    * This pickler works on all collections that derive from Iterable (Vector, Set, List, etc)
    * @tparam T type of the values
    * @tparam V type of the collection
    * @return
    */
-  implicit def iterablePickler[T: P, V[_] <: Iterable[_]]: P[V[T]] = new P[V[T]] {
+  def IterablePickler[T: P, V[_] <: Iterable[_]](implicit cbf: CanBuildFrom[Nothing, T, V[T]]): P[V[T]] = new P[V[T]] {
     override def pickle(iterable: V[T])(implicit state: PickleState): Unit = {
       // check if this iterable has been pickled already
       state.identityRefFor(iterable) match {
@@ -245,6 +325,27 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
           state.addIdentityRef(iterable)
       }
     }
+    override def unpickle(implicit state: UnpickleState): V[T] = {
+      state.dec.readIntCode match {
+        case Left(code) =>
+          throw new IllegalArgumentException("Unknown sequence length coding")
+        case Right(0) =>
+          // empty sequence
+          val res = cbf().result()
+          state.addIdentityRef(res)
+          res
+        case Right(idx) if idx < 0 =>
+          state.identityFor[V[T]](-idx)
+        case Right(len) =>
+          val b = cbf()
+          for (i <- 0 until len) {
+            b += read[T]
+          }
+          val res = b.result()
+          state.addIdentityRef(res)
+          res
+      }
+    }
   }
 
   /**
@@ -252,7 +353,7 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
    * @tparam T Type of values
    * @return
    */
-  implicit def arrayPickler[T: P]: P[Array[T]] = new P[Array[T]] {
+  def ArrayPickler[T: P : ClassTag]: P[Array[T]] = new P[Array[T]] {
     override def pickle(array: Array[T])(implicit state: PickleState): Unit = {
       // check if this iterable has been pickled already
       state.identityRefFor(array) match {
@@ -267,6 +368,26 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
           state.addIdentityRef(array)
       }
     }
+    override def unpickle(implicit state: UnpickleState): Array[T] = {
+      state.dec.readIntCode match {
+        case Left(code) =>
+          throw new IllegalArgumentException("Unknown sequence length coding")
+        case Right(0) =>
+          // empty Array
+          val a = Array.empty[T]
+          state.addIdentityRef(a)
+          a
+        case Right(idx) if idx < 0 =>
+          state.identityFor[Array[T]](-idx)
+        case Right(len) =>
+          val a = new Array[T](len)
+          for (i <- 0 until len) {
+            a(i) = read[T]
+          }
+          state.addIdentityRef(a)
+          a
+      }
+    }
   }
   /**
    * Maps require a specific pickler as they have two type parameters.
@@ -275,7 +396,8 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
    * @tparam S Type of values
    * @return
    */
-  implicit def mapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]]: P[V[T, S]] = new P[V[T, S]] {
+  def MapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]]
+  (implicit cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): P[V[T, S]] = new P[V[T, S]] {
     override def pickle(map: V[T, S])(implicit state: PickleState): Unit = {
       // check if this map has been pickled already
       state.identityRefFor(map) match {
@@ -290,11 +412,28 @@ object Pickler extends TuplePicklers with MaterializePicklerFallback {
           state.addIdentityRef(map)
       }
     }
+    override def unpickle(implicit state: UnpickleState): V[T, S] = {
+      state.dec.readIntCode match {
+        case Left(code) =>
+          throw new IllegalArgumentException("Unknown sequence length coding")
+        case Right(0) =>
+          // empty map
+          val res = cbf().result()
+          state.addIdentityRef(res)
+          res
+        case Right(idx) if idx < 0 =>
+          state.identityFor[V[T, S]](-idx)
+        case Right(len) =>
+          val b = cbf()
+          for (i <- 0 until len) {
+            b += read[T] -> read[S]
+          }
+          val res = b.result()
+          state.addIdentityRef(res)
+          res
+      }
+    }
   }
-
-  implicit def toPickler[A <: AnyRef](implicit pair: PicklerPair[A]): Pickler[A] = pair.pickler
-
-  implicit def toTransformPickler[A <: AnyRef, B](implicit transform: TransformPickler[A, B]): Pickler[A] = transform.pickler
 }
 
 final class PickleState(val enc: Encoder) {
@@ -355,6 +494,10 @@ final class PickleState(val enc: Encoder) {
 
 object PickleState {
 
+  /**
+   * Provides a default PickleState if none is available implicitly
+   * @return
+   */
   implicit def Default: PickleState = new PickleState(new Encoder)
 
   private case class Identity[+A <: AnyRef](obj: A) {
@@ -369,6 +512,56 @@ object PickleState {
 
 }
 
-trait MaterializePicklerFallback {
-  implicit def materializePickler[T]: Pickler[T] = macro PicklerMaterializersImpl.materializePickler[T]
+final class UnpickleState(val dec: Decoder) {
+  /**
+   * Object reference for pickled immutable objects. Currently only for strings.
+   *
+   * Index 0 is not used
+   * Index 1 = null
+   * Index 2-n, references to pickled immutable objects
+   */
+  private[this] val immutableRefs = new mutable.ArrayBuffer[AnyRef](16)
+
+  // initialize with basic data
+  addImmutableRef(null)
+  addImmutableRef(null)
+  Constants.immutableInitData.foreach(addImmutableRef)
+
+  @inline def immutableFor[A <: AnyRef](ref: Int): A = {
+    assert(ref > 0)
+    immutableRefs(ref).asInstanceOf[A]
+  }
+
+  @inline def addImmutableRef(obj: AnyRef): Unit = {
+    immutableRefs += obj
+  }
+
+  /**
+   * Object reference for pickled objects (use identity for equality comparison)
+   *
+   * Index 0 is not used
+   * Index 1 = null
+   * Index 2-n, references to pickled objects
+   */
+  private[this] val identityRefs = new mutable.ArrayBuffer[AnyRef](16)
+
+  // initialize with basic data
+  addIdentityRef(null)
+  addIdentityRef(null)
+  Constants.identityInitData.foreach(addIdentityRef)
+
+  @inline def identityFor[A <: AnyRef](ref: Int): A = {
+    assert(ref > 0)
+    identityRefs(ref).asInstanceOf[A]
+  }
+
+  @inline def addIdentityRef(obj: AnyRef): Unit = {
+    identityRefs += obj
+  }
+
+  @inline def unpickle[A](implicit u: Pickler[A]): A = u.unpickle(this)
+}
+
+object UnpickleState {
+  def apply(bytes: ByteBuffer) = new UnpickleState(new Decoder(bytes))
 }

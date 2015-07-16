@@ -3,6 +3,7 @@ package external
 import java.nio.{ByteOrder, ByteBuffer}
 import java.util.UUID
 
+import boopickle.Default._
 import boopickle._
 import utest._
 

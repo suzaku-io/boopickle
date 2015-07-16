@@ -2,7 +2,7 @@ package boopickle.perftests
 
 import java.nio.ByteBuffer
 
-import boopickle._
+import boopickle.Default._
 
 abstract class BooRunner[A](data: A) extends TestRunner[A](data) {
   override def name = "BooPickle"
@@ -10,8 +10,8 @@ abstract class BooRunner[A](data: A) extends TestRunner[A](data) {
 
 object BooPickleRunners {
 
-  def encodeRunner[A](data:A)(implicit p:Pickler[A], u:Unpickler[A]):BooRunner[A] = new BooRunner[A](data) {
-    var testData : A = _
+  def encodeRunner[A](data: A)(implicit p: Pickler[A]): BooRunner[A] = new BooRunner[A](data) {
+    var testData: A = _
 
     override def initialize = {
       testData = data
@@ -26,9 +26,9 @@ object BooPickleRunners {
     }
   }
 
-  def decodeRunner[A](data:A)(implicit p:Pickler[A], u:Unpickler[A]):BooRunner[A] = new BooRunner[A](data) {
-    var testData : A = _
-    var bb:ByteBuffer = _
+  def decodeRunner[A](data: A)(implicit p: Pickler[A]): BooRunner[A] = new BooRunner[A](data) {
+    var testData: A = _
+    var bb: ByteBuffer = _
 
     override def initialize = {
       testData = data
