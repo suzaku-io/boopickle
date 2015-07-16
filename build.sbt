@@ -111,7 +111,7 @@ lazy val perftests = crossProject
     name := "perftests",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "upickle" % "0.2.8",
+      "com.lihaoyi" %%% "upickle" % "0.3.4",
       "com.github.benhutchison" %%% "prickle" % "1.1.6"
     )
   )

@@ -25,13 +25,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"me.chrons" %% "boopickle" % "1.1.0-SNAPSHOT"
+"me.chrons" %% "boopickle" % "1.1.0"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```scala
-"me.chrons" %%% "boopickle" % "1.1.0-SNAPSHOT"
+"me.chrons" %%% "boopickle" % "1.1.0"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
@@ -295,7 +295,7 @@ already has pickler support. For example you can transform a `java.util.Date` in
 to a suitable `Tuple`. 
 
 ```scala
-implicit val datePickler = TransformPickler[java.util.Date, Long](_.getTime, t => new java.util.Date(t))
+implicit val datePickler = transformPickler[java.util.Date, Long](_.getTime, t => new java.util.Date(t))
 ```
 
 Note that transformation breaks reference equality, so multiple instances of the same reference will be pickled
@@ -567,7 +567,6 @@ val pickleFields = for {
 Because there might be more than one instance of the case class in the structure we are pickling, additional code is generated to check for that
 and to store just a reference instead, if needed. For case objects, nothing(!) needs to be stored as they are identified by their type directly.
 
-
 ```scala
 val pickleLogic = if (sym.isModuleClass) 
     q"""()""" 
@@ -653,19 +652,20 @@ def encodeUTF8(s: String): ByteBuffer = {
 
 ## Change history
 
-### 1.1.0-SNAPSHOT
+### 1.1.0
 
 This version has several backward-compatibility breaking changes. Most notably you should change your `import boopickle._` into 
-`import boopickle.Default._`, which should be enough for most common cases. If you have done your own picklers, you must merge
+`import boopickle.Default._`, which should be enough for most common cases. If you have written your own picklers, you must merge
 the unpickling functionality into the pickler. There are also changes to how `CompositePickler`, `TransformPickler` and
 `ExceptionPickler` are used.
 
-- Moved all implicits into `boopickle.Default` to better control what is imported
+- Moved all implicits into `boopickle.Default` to better control what implicits are imported
 - Unpicklers merged into Picklers, so there are no separate Unpicklers anymore
 - Added helper functions `compositePickler`, `transformPickler` and `exceptionPickler` in `Default`
 - BooPickle generated macros are now compatible with *-Xstrict-inference* compiler option
 - Trait hierarchies with type parameters can now be pickled automatically (by @FlorianKirmaier)
 - Improved error messages
+- Performance tests now use uPickle 0.3.4
 
 ### 1.0.0
 

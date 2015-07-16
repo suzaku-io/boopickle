@@ -2,7 +2,7 @@ package boopickle.perftests
 
 import java.nio.charset.StandardCharsets
 
-import upickle._
+import upickle.default._
 
 abstract class UPickleRunner[A](data: A) extends TestRunner[A](data) {
   override def name = "uPickle"
