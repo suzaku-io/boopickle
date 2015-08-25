@@ -112,8 +112,10 @@ lazy val perftests = crossProject
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "upickle" % "0.3.4",
-      "com.github.benhutchison" %%% "prickle" % "1.1.6"
-    )
+      "com.github.benhutchison" %%% "prickle" % "1.1.6",
+      "com.github.fomkin" %%% "pushka-json" % "0.2.0"
+    ),
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
   )
   .jsSettings(
     bootSnippet := "BooApp().main();",
