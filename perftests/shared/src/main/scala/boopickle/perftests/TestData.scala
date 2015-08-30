@@ -2,8 +2,14 @@ package boopickle.perftests
 
 import java.util.UUID
 
-import scala.collection.mutable
 import scala.util.Random
+import pushka.annotation._
+
+@pushka
+case class Book(id: String, name: String, author: String, publicationYear: Int)
+
+@pushka
+case class Node(name:String, color:String, children:Seq[Node])
 
 object TestData {
   val uuids = {
@@ -15,8 +21,6 @@ object TestData {
     uuidIdx = (uuidIdx + 1) % uuids.size
     uuids(uuidIdx)
   }
-
-  case class Book(id: String, name: String, author: String, publicationYear: Int)
 
   def books(idGen:  => String): Seq[Book] = Seq(
     Book(idGen, "Carrie", "Stephen King", 1974),
@@ -66,8 +70,6 @@ object TestData {
     val r = new Random(0)
     for(i <- 0 until 1000) yield (r.nextDouble()-0.1)*1e6
   }
-
-  case class Node(name:String, color:String, children:Seq[Node])
 
   val colors = Seq("black", "red", "white", "yellow", "blue")
 
