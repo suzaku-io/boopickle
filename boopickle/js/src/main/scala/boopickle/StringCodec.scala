@@ -10,6 +10,7 @@ import scala.scalajs.js.typedarray._
 /**
  * Facade for native JS engine provided TextDecoder
  */
+@js.native
 class TextDecoder extends js.Object {
   def decode(data: Int8Array): String = js.native
 }
@@ -17,6 +18,7 @@ class TextDecoder extends js.Object {
 /**
  * Facade for native JS engine provided TextEncoder
  */
+@js.native
 class TextEncoder extends js.Object {
   def encode(str: String): Uint8Array = js.native
 }

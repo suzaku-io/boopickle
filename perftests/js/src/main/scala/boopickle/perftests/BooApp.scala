@@ -9,6 +9,7 @@ import scala.scalajs.js.typedarray.Uint8Array
 import scalatags.JsDom.all._
 
 @JSName("Zlib.Gzip")
+@js.native
 class Gzip(data: js.Array[Byte]) extends js.Object {
   def compress(): Uint8Array = js.native
 }
