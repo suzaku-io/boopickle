@@ -106,6 +106,34 @@ object BasicPicklers extends PicklerHelper {
     @inline override def unpickle(implicit state: UnpickleState): ByteBuffer = state.dec.readByteBuffer
   }
 
+  object BigIntPickler extends P[BigInt] {
+    @inline override def pickle(value: BigInt)(implicit state: PickleState): Unit = {
+      val bb = ByteBuffer.wrap(value.toByteArray)
+      state.enc.writeByteBuffer(bb)
+    }
+    @inline override def unpickle(implicit state: UnpickleState): BigInt = {
+      val bb = state.dec.readByteBuffer
+      val arr = Array.ofDim[Byte](bb.limit)
+      bb.get(arr)
+      BigInt(arr)
+    }
+  }
+
+  object BigDecimalPickler extends P[BigDecimal] {
+    @inline override def pickle(value: BigDecimal)(implicit state: PickleState): Unit = {
+      val bb = ByteBuffer.wrap(value.underlying.unscaledValue.toByteArray)
+      state.enc.writeInt(value.scale)
+      state.enc.writeByteBuffer(bb)
+    }
+    @inline override def unpickle(implicit state: UnpickleState): BigDecimal = {
+      val scale = state.dec.readInt
+      val bb = state.dec.readByteBuffer
+      val arr = Array.ofDim[Byte](bb.limit)
+      bb.get(arr)
+      BigDecimal(BigInt(arr), scale)
+    }
+  }
+
   object StringPickler extends P[String] {
     def encodeUUID(str: String, code: Byte)(implicit state: PickleState): Unit = {
       // special coding for lowercase UUID

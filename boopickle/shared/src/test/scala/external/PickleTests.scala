@@ -162,6 +162,61 @@ object PickleTests extends TestSuite {
         assert(Unpickle[Double].fromBytes(bb) == Double.PositiveInfinity)
       }
     }
+    'BigInt - {
+      'zero {
+        val bb = Pickle.intoBytes(BigInt(0))
+        assert(bb.limit == 2)
+        val bi = Unpickle[BigInt].fromBytes(bb)
+        assert(bi == BigInt(0))
+      }
+      'positive {
+        val value = BigInt("3031082301820398102312310273912739712397")
+        val bb = Pickle.intoBytes(value)
+        assert(bb.limit == value.toByteArray.size + 1)
+        assert(Unpickle[BigInt].fromBytes(bb) == value)
+      }
+      'negative {
+        val value = BigInt("-3031082301820398102312310273912739712397")
+        val bb = Pickle.intoBytes(value)
+        assert(bb.limit == value.toByteArray.size + 1)
+        assert(Unpickle[BigInt].fromBytes(bb) == value)
+      }
+    }
+    'BigDecimal - {
+      'zero {
+        val bb = Pickle.intoBytes(BigDecimal(0))
+        assert(bb.limit == 3)
+        assert(Unpickle[BigDecimal].fromBytes(bb) == BigDecimal(0))
+      }
+      'positive {
+        val value = BigDecimal("3031082301820398102312310273912739712397.420348203423429374928374")
+        val bb = Pickle.intoBytes(value)
+        val expectedLimit = value.underlying.unscaledValue.toByteArray.size + 1 + 1
+        assert(bb.limit == expectedLimit)
+        assert(Unpickle[BigDecimal].fromBytes(bb) == value)
+      }
+      'positiveZeroScale {
+        val value = BigDecimal("3031082301820398102312310273912739712397420348203423429374928374")
+        val bb = Pickle.intoBytes(value)
+        val expectedLimit = value.underlying.unscaledValue.toByteArray.size + 1 + 1
+        assert(bb.limit == expectedLimit)
+        assert(Unpickle[BigDecimal].fromBytes(bb) == value)
+      }
+      'negativeScale {
+        val value = BigDecimal("-3031082301820398102312310273912739712397.420348203423429374928374")
+        val bb = Pickle.intoBytes(value)
+        val expectedLimit = value.underlying.unscaledValue.toByteArray.size + 1 + 1
+        assert(bb.limit == expectedLimit)
+        assert(Unpickle[BigDecimal].fromBytes(bb) == value)
+      }
+      'negativeZeroScale {
+        val value = BigDecimal("-3031082301820398102312310273912739712397420348203423429374928374")
+        val bb = Pickle.intoBytes(value)
+        val expectedLimit = value.underlying.unscaledValue.toByteArray.size + 1 + 1
+        assert(bb.limit == expectedLimit)
+        assert(Unpickle[BigDecimal].fromBytes(bb) == value)
+      }
+    }
     'String - {
       'null {
         val str: String = null

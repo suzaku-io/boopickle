@@ -18,6 +18,8 @@ trait BasicImplicitPicklers extends PicklerHelper {
   implicit val longPickler = BasicPicklers.LongPickler
   implicit val floatPickler = BasicPicklers.FloatPickler
   implicit val doublePickler = BasicPicklers.DoublePickler
+  implicit val bigIntPickler = BasicPicklers.BigIntPickler
+  implicit val bigDecimalPickler = BasicPicklers.BigDecimalPickler
   implicit val byteBufferPickler = BasicPicklers.ByteBufferPickler
   implicit val stringPickler = BasicPicklers.StringPickler
   implicit val UUIDPickler = BasicPicklers.UUIDPickler
