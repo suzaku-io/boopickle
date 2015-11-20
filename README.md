@@ -666,6 +666,11 @@ def encodeUTF8(s: String): ByteBuffer = {
 
 ## Change history
 
+### 1.1.1
+
+- Picklers for `BigInt` and `BigDecimal` (by @guersam)
+- Performance tests for Circe 0.2.0
+
 ### 1.1.0
 
 This version has several backward-compatibility breaking changes. Most notably you should change your `import boopickle._` into 
