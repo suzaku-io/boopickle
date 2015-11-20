@@ -9,7 +9,7 @@ import pushka.annotation._
 case class Book(id: String, name: String, author: String, publicationYear: Int)
 
 @pushka
-case class Node(name:String, color:String, children:Seq[Node])
+case class Node(name: String, color: String, children: Seq[Node])
 
 object TestData {
   val uuids = {
@@ -22,7 +22,7 @@ object TestData {
     uuids(uuidIdx)
   }
 
-  def books(idGen:  => String): Seq[Book] = Seq(
+  def books(idGen: => String): Seq[Book] = Seq(
     Book(idGen, "Carrie", "Stephen King", 1974),
     Book(idGen, "'Salem's Lot", "Stephen King", 1975),
     Book(idGen, "Rage	Bachman", "Stephen King", 1976),
@@ -49,32 +49,32 @@ object TestData {
 
   val booksRandomID = books(genRandomId)
 
-  val largeIntSeq:Seq[Int] = {
+  val largeIntSeq: Seq[Int] = {
     val r = new Random(0)
-    for(i <- 0 until 10000) yield (1.0/(1.0 + r.nextDouble()*1e5)*1e7).toInt
+    for (i <- 0 until 10000) yield (1.0 / (1.0 + r.nextDouble() * 1e5) * 1e7).toInt
   }
 
-  val largeStringIntMap:Map[String, Int] = {
+  val largeStringIntMap: Map[String, Int] = {
     val r = new Random(0)
     var map = Map.empty[String, Int]
-    for(i <- 0 until 10000) map += s"ID$i" -> (1.0/(1.0 + r.nextDouble()*1e5)*1e7).toInt
+    for (i <- 0 until 10000) map += s"ID$i" -> (1.0 / (1.0 + r.nextDouble() * 1e5) * 1e7).toInt
     map
   }
 
-  val largeFloatSeq:Seq[Float] = {
+  val largeFloatSeq: Seq[Float] = {
     val r = new Random(0)
-    for(i <- 0 until 1000) yield math.round((r.nextFloat()-0.1f)*1e6f)/1e3f
+    for (i <- 0 until 1000) yield ((r.nextDouble() - 0.1) * 1e6).toFloat
   }
 
-  val largeDoubleSeq:Seq[Double] = {
+  val largeDoubleSeq: Seq[Double] = {
     val r = new Random(0)
-    for(i <- 0 until 1000) yield (r.nextDouble()-0.1)*1e6
+    for (i <- 0 until 1000) yield (r.nextDouble() - 0.1) * 1e6
   }
 
   val colors = Seq("black", "red", "white", "yellow", "blue")
 
-  def genTree(maxChildren:Int, maxDepth:Int, r:Random = new Random(0)):Node = {
+  def genTree(maxChildren: Int, maxDepth: Int, r: Random = new Random(0)): Node = {
     val childrenCount = r.nextInt(maxChildren + maxDepth) max maxDepth min maxChildren
-    Node(genRandomId, colors(r.nextInt(colors.size)), Vector.tabulate(childrenCount)(_ => genTree(maxChildren, maxDepth-1, r)))
+    Node(genRandomId, colors(r.nextInt(colors.size)), Vector.tabulate(childrenCount)(_ => genTree(maxChildren, maxDepth - 1, r)))
   }
 }

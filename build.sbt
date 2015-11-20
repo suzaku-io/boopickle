@@ -113,7 +113,10 @@ lazy val perftests = crossProject
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "upickle" % "0.3.4",
       "com.github.benhutchison" %%% "prickle" % "1.1.6",
-      "com.github.fomkin" %%% "pushka-json" % "0.2.0"
+      "com.github.fomkin" %%% "pushka-json" % "0.2.0",
+      "io.circe" %%% "circe-core" % "0.2.0",
+      "io.circe" %%% "circe-parse" % "0.2.0",
+      "io.circe" %%% "circe-generic" % "0.2.0"
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
   )
@@ -127,7 +130,11 @@ lazy val perftests = crossProject
 
 lazy val perftestsJS = preventPublication(perftests.js).settings(workbenchSettings: _*).dependsOn(boopickleJS)
 
-lazy val perftestsJVM = preventPublication(perftests.jvm).dependsOn(boopickleJVM)
+lazy val perftestsJVM = preventPublication(perftests.jvm)
+  .settings(
+    libraryDependencies += "io.circe" %% "circe-jawn" % "0.2.0"
+  )
+  .dependsOn(boopickleJVM)
 
 
 lazy val root = preventPublication(project.in(file(".")))
