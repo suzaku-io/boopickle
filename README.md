@@ -484,7 +484,21 @@ it will not work. You need to call `flip()` first to reset its `position`.
 In BooPickle `ByteBuffer`s use little-endian ordering, which is not the default in the JVM, but is the native ordering in majority of target platforms.
 
 For more information, please refer to the [JDK documentation on ByteBuffers](http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html).
- 
+
+### Using ByteBuffers in network communication
+
+BooPickle is commonly used in client/server communication, so it is important to be able to use `ByteBuffer`s efficiently in the protocol. On the JVM
+side things are usually quite simple as many communication methods already accept `ByteBuffer` type directly. Sometimes you do need to convert the
+data into an `Array[Byte]` using following piece of code:
+
+```scala
+val data = Array.ofDim[Byte](buffer.remaining())
+buffer.get(data)
+```
+
+Conversion in the other direction is trivial with the help of `ByteBuffer.wrap()` method.
+
+On the JS side things are a bit more complicated. 
 ## Internal details
 
 ### Efficient coding

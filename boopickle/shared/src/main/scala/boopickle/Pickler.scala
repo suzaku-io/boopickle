@@ -107,29 +107,26 @@ object BasicPicklers extends PicklerHelper {
   }
 
   object BigIntPickler extends P[BigInt] {
+    implicit def bp = BytePickler
+
     @inline override def pickle(value: BigInt)(implicit state: PickleState): Unit = {
-      val bb = ByteBuffer.wrap(value.toByteArray)
-      state.enc.writeByteBuffer(bb)
+      ArrayPickler.pickle(value.toByteArray)
     }
     @inline override def unpickle(implicit state: UnpickleState): BigInt = {
-      val bb = state.dec.readByteBuffer
-      val arr = Array.ofDim[Byte](bb.limit)
-      bb.get(arr)
-      BigInt(arr)
+      BigInt(ArrayPickler.unpickle)
     }
   }
 
   object BigDecimalPickler extends P[BigDecimal] {
+    implicit def bp = BytePickler
+
     @inline override def pickle(value: BigDecimal)(implicit state: PickleState): Unit = {
-      val bb = ByteBuffer.wrap(value.underlying.unscaledValue.toByteArray)
       state.enc.writeInt(value.scale)
-      state.enc.writeByteBuffer(bb)
+      ArrayPickler.pickle(value.underlying().unscaledValue.toByteArray)
     }
     @inline override def unpickle(implicit state: UnpickleState): BigDecimal = {
       val scale = state.dec.readInt
-      val bb = state.dec.readByteBuffer
-      val arr = Array.ofDim[Byte](bb.limit)
-      bb.get(arr)
+      val arr = ArrayPickler.unpickle
       BigDecimal(BigInt(arr), scale)
     }
   }
