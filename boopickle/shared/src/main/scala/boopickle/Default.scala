@@ -56,7 +56,7 @@ trait TransformPicklers {
    * @tparam A Type of the original object
    * @tparam B Type for the object used for pickling
    */
-  def transformPickler[A <: AnyRef, B](transformTo: (A) => B, transformFrom: (B) => A)(implicit p: Pickler[B]) = {
+  def transformPickler[A, B](transformTo: (A) => B, transformFrom: (B) => A)(implicit p: Pickler[B]) = {
     p.xmap(transformFrom)(transformTo)
   }
 }
