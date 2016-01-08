@@ -503,7 +503,7 @@ final class PickleState(val enc: Encoder) {
   @inline def identityRefFor(obj: AnyRef) = identityRefs.get(Identity(obj))
 
   @inline def addIdentityRef(obj: AnyRef): Unit = {
-    identityRefs += Identity(obj) -> identityIdx
+    identityRefs += ((Identity(obj), identityIdx))
     identityIdx += 1
   }
 
