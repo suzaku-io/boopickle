@@ -73,7 +73,7 @@ object PicklerMaterializersImpl {
     val sym = tpe.typeSymbol.asClass
 
     // special handling of sealed traits
-    if (sym.isTrait && !sym.fullName.toString.startsWith("scala")) {
+    if ((sym.isTrait || sym.isAbstract) && !sym.fullName.toString.startsWith("scala")) {
       return c.Expr[Pickler[T]](pickleSealedTrait(c)(tpe))
     }
 

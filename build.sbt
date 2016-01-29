@@ -60,7 +60,7 @@ lazy val boopickle = crossProject
     }
   ).jsSettings(
     // use PhantomJS for testing, because we need real browser JS stuff like TypedArrays
-    scalaJSStage in Global := FastOptStage,
+    scalaJSUseRhino in Global := false,
     jsDependencies += RuntimeDOM,
     scalacOptions ++= (if (isSnapshot.value) Seq.empty
     else Seq({
@@ -111,12 +111,12 @@ lazy val perftests = crossProject
     name := "perftests",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "upickle" % "0.3.4",
-      "com.github.benhutchison" %%% "prickle" % "1.1.6",
-      "com.github.fomkin" %%% "pushka-json" % "0.2.0",
-      "io.circe" %%% "circe-core" % "0.2.0",
-      "io.circe" %%% "circe-parse" % "0.2.0",
-      "io.circe" %%% "circe-generic" % "0.2.0"
+      "com.lihaoyi" %%% "upickle" % "0.3.7",
+      "com.github.benhutchison" %%% "prickle" % "1.1.10",
+      "com.github.fomkin" %%% "pushka-json" % "0.4.1",
+      "io.circe" %%% "circe-core" % "0.2.1",
+      "io.circe" %%% "circe-parse" % "0.2.1",
+      "io.circe" %%% "circe-generic" % "0.2.1"
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
   )
@@ -132,7 +132,7 @@ lazy val perftestsJS = preventPublication(perftests.js).settings(workbenchSettin
 
 lazy val perftestsJVM = preventPublication(perftests.jvm)
   .settings(
-    libraryDependencies += "io.circe" %% "circe-jawn" % "0.2.0"
+    libraryDependencies += "io.circe" %% "circe-jawn" % "0.2.1"
   )
   .dependsOn(boopickleJVM)
 

@@ -1,6 +1,7 @@
 # BooPickle
 
-[![Scala.js](http://scala-js.org/assets/badges/scalajs-0.6.5.svg)](http://scala-js.org)
+[![Build Status](https://travis-ci.org/ochrons/boopickle.svg?branch=master)](https://travis-ci.org/ochrons/boopickle)
+[![Scala.js](http://scala-js.org/assets/badges/scalajs-0.6.6.svg)](http://scala-js.org)
 
 BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization (aka pickling) library for Scala 
 and [Scala.js](http://www.scala-js.org). It encodes into a binary format instead of the more customary JSON. A binary format brings efficiency 
@@ -667,6 +668,12 @@ def encodeUTF8(s: String): ByteBuffer = {
 ```
 
 ## Change history
+
+### 1.1.2-SNAPSHOT
+
+- Added support for `sealed abstract class` hierarchies (fix #37)
+- Updated to Scala.js 0.6.6 (due to [#2158](https://github.com/scala-js/scala-js/issues/2158))
+- Updated other pickling libs to latest version in performance tests
 
 ### 1.1.1
 

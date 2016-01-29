@@ -43,6 +43,14 @@ object MacroPickleTests extends TestSuite {
   sealed trait A1Trait[T]
   case class A1[T](i: T) extends A1Trait[T]
 
+  sealed abstract class AClass
+  case class AB(i: Int) extends AClass
+
+  sealed abstract class Version(val number: Int)
+  case object V1 extends Version(1)
+  case object V2 extends Version(2)
+
+
   override def tests = TestSuite {
     // must import pickler from the companion object, otherwise scalac will try to use a macro to generate it
     import MyTrait._
@@ -85,6 +93,18 @@ object MacroPickleTests extends TestSuite {
         val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
         val bb = Pickle.intoBytes(t)
         val u = Unpickle[Seq[MyTrait]].fromBytes(bb)
+        assert(u == t)
+      }
+      'AbstractClass {
+        val t: Seq[AClass] = Seq(AB(5), AB(2))
+        val bb = Pickle.intoBytes(t)
+        val u = Unpickle[Seq[AClass]].fromBytes(bb)
+        assert(u == t)
+      }
+      'AbstractClass2 {
+        val t: Seq[Version] = Seq(V1, V2)
+        val bytes = Pickle.intoBytes(t)
+        val u = Unpickle[Seq[Version]].fromBytes(bytes)
         assert(u == t)
       }
       'CaseTupleList {

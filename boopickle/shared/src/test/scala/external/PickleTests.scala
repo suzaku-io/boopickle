@@ -249,6 +249,11 @@ object PickleTests extends TestSuite {
         assert(bb.limit == 1 + 8)
         assert(Unpickle[String].fromBytes(bb) == "-10000000000")
       }
+      'numeric20 {
+        val bb = Pickle.intoBytes("45248643522829592471")
+        // assert(bb.limit == 1 + 8)
+        assert(Unpickle[String].fromBytes(bb) == "45248643522829592471")
+      }
       'numericStart {
         val bb = Pickle.intoBytes("100x")
         assert(bb.limit == 1 + 4)
