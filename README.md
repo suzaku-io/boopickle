@@ -28,13 +28,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"me.chrons" %% "boopickle" % "1.1.0"
+"me.chrons" %% "boopickle" % "1.1.2"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```scala
-"me.chrons" %%% "boopickle" % "1.1.0"
+"me.chrons" %%% "boopickle" % "1.1.2"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
@@ -669,7 +669,7 @@ def encodeUTF8(s: String): ByteBuffer = {
 
 ## Change history
 
-### 1.1.2-SNAPSHOT
+### 1.1.2
 
 - Added support for `sealed abstract class` hierarchies (fix #37)
 - Updated to Scala.js 0.6.6 (due to [#2158](https://github.com/scala-js/scala-js/issues/2158))
