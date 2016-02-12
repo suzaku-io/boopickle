@@ -151,7 +151,7 @@ object BasicPicklers extends PicklerHelper {
           // encode index as negative "length"
           state.enc.writeInt(-idx)
         case None =>
-          if (s.length > 1 && s.length < 21 && (s(0).isDigit || s(0) == '-') && numRE.pattern.matcher(s).matches()) {
+          if (s.length > 1 && ((s(0).isDigit && s.length < 19) || (s(0) == '-' && s.length < 20)) && numRE.pattern.matcher(s).matches()) {
             // string represents an integer/long
             try {
               val l = java.lang.Long.parseLong(s)
