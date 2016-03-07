@@ -7,11 +7,20 @@ import boopickle.Default._
 import boopickle._
 import utest._
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.util.Random
 
 object PickleTests extends TestSuite {
+  private def nonZeroUuid = {
+    @tailrec
+    def loop(u: UUID = UUID.randomUUID()): UUID = {
+      if (u.getMostSignificantBits != 0 || u.getLeastSignificantBits != 0) u else loop()
+    }
+    loop()
+  }
+
   override def tests = TestSuite {
     'Boolean - {
       'true {
@@ -319,9 +328,28 @@ object PickleTests extends TestSuite {
     }
     'UUID - {
       'random {
-        val uuid = UUID.randomUUID()
+        val uuid = nonZeroUuid
         val bb = Pickle.intoBytes(uuid)
         assert(bb.limit == 16)
+        assert(Unpickle[UUID].fromBytes(bb) == uuid)
+      }
+      'repeated {
+        val uuid = nonZeroUuid
+        val list = List(uuid, new UUID(uuid.getMostSignificantBits, uuid.getLeastSignificantBits))
+        val bb = Pickle.intoBytes(list)
+        assert(bb.limit == 33)
+        assert(Unpickle[List[UUID]].fromBytes(bb) == list)
+      }
+      'null {
+        val uuid: UUID = null
+        val bb = Pickle.intoBytes(uuid)
+        assert(bb.limit == 17)
+        assert(Option(Unpickle[UUID].fromBytes(bb)).isEmpty)
+      }
+      'zero {
+        val uuid = new UUID(0, 0)
+        val bb = Pickle.intoBytes(uuid)
+        assert(bb.limit == 17)
         assert(Unpickle[UUID].fromBytes(bb) == uuid)
       }
     }

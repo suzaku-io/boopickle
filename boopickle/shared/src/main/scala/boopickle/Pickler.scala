@@ -215,11 +215,31 @@ object BasicPicklers extends PicklerHelper {
 
   object UUIDPickler extends P[UUID] {
     override def pickle(s: UUID)(implicit state: PickleState): Unit = {
-      state.enc.writeRawLong(s.getMostSignificantBits)
-      state.enc.writeRawLong(s.getLeastSignificantBits)
+      s match {
+        case null =>
+          state.enc.writeRawLong(0)
+          state.enc.writeRawLong(0)
+          state.enc.writeByte(0)
+
+        case _ if s.getMostSignificantBits == 0 && s.getLeastSignificantBits == 0 =>
+          state.enc.writeRawLong(0)
+          state.enc.writeRawLong(0)
+          state.enc.writeByte(1)
+
+        case _ =>
+          state.enc.writeRawLong(s.getMostSignificantBits)
+          state.enc.writeRawLong(s.getLeastSignificantBits)
+      }
     }
     @inline override def unpickle(implicit state: UnpickleState): UUID = {
-      new UUID(state.dec.readRawLong, state.dec.readRawLong)
+      val msb = state.dec.readRawLong
+      val lsb = state.dec.readRawLong
+
+      if (msb == 0 && lsb == 0) {
+        val actualUuidByte = state.dec.readByte
+        if (actualUuidByte == 0) null else new UUID(0, 0)
+      } else
+        new UUID(msb, lsb)
     }
   }
 
