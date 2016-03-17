@@ -28,13 +28,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"me.chrons" %% "boopickle" % "1.1.2"
+"me.chrons" %% "boopickle" % "1.1.3"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```scala
-"me.chrons" %%% "boopickle" % "1.1.2"
+"me.chrons" %%% "boopickle" % "1.1.3"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
@@ -668,6 +668,10 @@ def encodeUTF8(s: String): ByteBuffer = {
 ```
 
 ## Change history
+
+### 1.1.3
+
+- Support `null` `UUID`s. `UUID`s still take 16 bytes, except for `null` and `00000000-0000-0000-0000-000000000000` which take 17.
 
 ### 1.1.2
 
