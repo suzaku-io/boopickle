@@ -383,7 +383,7 @@ object PickleTests extends TestSuite {
         'tuple2 {
           val bb = Pickle.intoBytes(("Hello", Some("World")))
           assert(bb.limit == 6 + 1 + 6)
-          assert(Unpickle[(String, Option[String])].fromBytes(bb) ==("Hello", Some("World")))
+          assert(Unpickle[(String, Option[String])].fromBytes(bb) == (("Hello", Some("World"))))
         }
       }
       'Seq - {
@@ -922,7 +922,7 @@ object PickleTests extends TestSuite {
         'tuple2 {
           val bb = Pickle.intoBytes(("Hello", Some("World")))
           assert(bb.limit == 4 + 5 * 2 + 4 + 4 + 5 * 2)
-          assert(Unpickle[(String, Option[String])].fromBytes(bb) ==("Hello", Some("World")))
+          assert(Unpickle[(String, Option[String])].fromBytes(bb) == (("Hello", Some("World"))))
         }
       }
       'Seq - {

@@ -20,8 +20,9 @@ object PushkaRunners {
       res.getBytes(StandardCharsets.UTF_8)
     }
 
-    override def run = {
+    override def run(): Unit = {
       write(testData)
+      ()
     }
   }
 
@@ -35,8 +36,9 @@ object PushkaRunners {
       s.getBytes(StandardCharsets.UTF_8)
     }
 
-    override def run = {
+    override def run(): Unit = {
       read[A](s)
+      ()
     }
   }
 }

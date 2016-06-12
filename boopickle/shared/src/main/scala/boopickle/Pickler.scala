@@ -9,7 +9,7 @@ import scala.language.higherKinds
 import scala.reflect.ClassTag
 
 trait Pickler[A] {
-  def pickle(obj: A)(implicit state: PickleState)
+  def pickle(obj: A)(implicit state: PickleState): Unit
   def unpickle(implicit state: UnpickleState): A
 
   def xmap[B](ab: A => B)(ba: B => A): Pickler[B] = {
@@ -177,6 +177,7 @@ object BasicPicklers extends PicklerHelper {
           state.enc.writeRawLong(s.getLeastSignificantBits)
       }
     }
+
     @inline override def unpickle(implicit state: UnpickleState): UUID = {
       val msb = state.dec.readRawLong
       val lsb = state.dec.readRawLong
@@ -203,6 +204,7 @@ object BasicPicklers extends PicklerHelper {
           state.enc.writeLongCode(Right(x.toNanos))
       }
     }
+
     @inline override def unpickle(implicit state: UnpickleState): Duration = {
       state.dec.readLongCode match {
         case Left(c) if c == DurationInf =>
@@ -231,7 +233,7 @@ object BasicPicklers extends PicklerHelper {
               // encode index as negative "length"
               state.enc.writeInt(-idx)
             case None =>
-              state.enc.writeInt(OptionSome)
+              state.enc.writeInt(OptionSome.toInt)
               write[T](x)
               state.addIdentityRef(obj)
           }
@@ -241,6 +243,7 @@ object BasicPicklers extends PicklerHelper {
           state.enc.writeInt(-idx)
       }
     }
+
     override def unpickle(implicit state: UnpickleState): Option[T] = {
       state.dec.readInt match {
         case OptionSome =>
@@ -267,15 +270,16 @@ object BasicPicklers extends PicklerHelper {
         case None =>
           obj match {
             case Left(l) =>
-              state.enc.writeInt(EitherLeft)
+              state.enc.writeInt(EitherLeft.toInt)
               write[T](l)
             case Right(r) =>
-              state.enc.writeInt(EitherRight)
+              state.enc.writeInt(EitherRight.toInt)
               write[S](r)
           }
           state.addIdentityRef(obj)
       }
     }
+
     override def unpickle(implicit state: UnpickleState): Either[T, S] = {
       state.dec.readInt match {
         case EitherLeft =>
@@ -317,6 +321,7 @@ object BasicPicklers extends PicklerHelper {
           state.addIdentityRef(iterable)
       }
     }
+
     override def unpickle(implicit state: UnpickleState): V[T] = {
       state.dec.readInt match {
         case 0 =>
@@ -374,6 +379,7 @@ object BasicPicklers extends PicklerHelper {
           }
       }
     }
+
     override def unpickle(implicit state: UnpickleState): Array[T] = {
       state.dec.readInt match {
         case 0 =>
@@ -405,7 +411,7 @@ object BasicPicklers extends PicklerHelper {
       }
     }
   }
-  
+
   /**
     * Maps require a specific pickler as they have two type parameters.
     *
@@ -429,6 +435,7 @@ object BasicPicklers extends PicklerHelper {
           state.addIdentityRef(map)
       }
     }
+
     override def unpickle(implicit state: UnpickleState): V[T, S] = {
       state.dec.readInt match {
         case 0 =>
@@ -548,9 +555,8 @@ final class UnpickleState(val dec: Decoder) {
     immutableRefs(ref).asInstanceOf[A]
   }
 
-  @inline def addImmutableRef(obj: AnyRef): Unit = {
+  @inline def addImmutableRef(obj: AnyRef): Unit =
     immutableRefs += obj
-  }
 
   /**
     * Object reference for pickled objects (use identity for equality comparison)
@@ -571,9 +577,8 @@ final class UnpickleState(val dec: Decoder) {
     identityRefs(ref).asInstanceOf[A]
   }
 
-  @inline def addIdentityRef(obj: AnyRef): Unit = {
+  @inline def addIdentityRef(obj: AnyRef): Unit =
     identityRefs += obj
-  }
 
   @inline def unpickle[A](implicit u: Pickler[A]): A = u.unpickle(this)
 }

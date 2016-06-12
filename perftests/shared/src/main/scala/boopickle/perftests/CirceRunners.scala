@@ -21,8 +21,9 @@ object CirceRunners {
       res.getBytes(StandardCharsets.UTF_8)
     }
 
-    override def run = {
+    override def run(): Unit = {
       testData.asJson.noSpaces
+      ()
     }
   }
 
@@ -36,8 +37,9 @@ object CirceRunners {
       s.getBytes(StandardCharsets.UTF_8)
     }
 
-    override def run = {
+    override def run(): Unit = {
       u.decodeJson(parse.parse(s).toOption.get)
+      ()
     }
   }
 }

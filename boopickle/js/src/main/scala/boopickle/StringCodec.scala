@@ -79,7 +79,7 @@ object StringCodec extends StringCodecFuncs {
     val ta = new Uint16Array(s.length)
     var i = 0
     while (i < s.length) {
-      ta(i) = s.charAt(i).toShort
+      ta(i) = s.charAt(i).toInt
       i += 1
     }
     TypedArrayBuffer.wrap(new Int8Array(ta.buffer))

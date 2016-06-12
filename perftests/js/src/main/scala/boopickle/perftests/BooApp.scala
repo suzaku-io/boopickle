@@ -24,7 +24,7 @@ object BooApp extends js.JSApp {
     resultsDiv.innerHTML = ""
     resultsDiv.appendChild(div(cls := "bold", s"Running ${Tests.suites.size} tests").render)
     resultsDiv.appendChild(resView)
-    def runNext(suites: Seq[PerfTestSuite]) {
+    def runNext(suites: Seq[PerfTestSuite]): Unit = {
       val suite = suites.head
       val header = s"${1 + Tests.suites.size - suites.size}/${Tests.suites.size} : ${suite.name}"
       resView.innerHTML = resView.innerHTML +  header + "\n"
@@ -50,6 +50,7 @@ object BooApp extends js.JSApp {
       else {
         resultsDiv.appendChild(h4("Completed!").render)
       }
+      ()
     }
     dom.window.setTimeout(() => runNext(Tests.suites), 10)
   }
@@ -63,5 +64,6 @@ object BooApp extends js.JSApp {
 
     contentRoot.appendChild(div(cls := "row", runButton).render)
     contentRoot.appendChild(results)
+    ()
   }
 }

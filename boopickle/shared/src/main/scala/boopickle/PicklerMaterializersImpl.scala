@@ -94,9 +94,9 @@ object PicklerMaterializersImpl {
       val pickleFields = for {
         accessor <- accessors
       } yield {
-          val fieldTpe = accessor.typeSignatureIn(tpe).finalResultType
-          q"""state.pickle[$fieldTpe](value.${accessor.name})"""
-        }
+        val fieldTpe = accessor.typeSignatureIn(tpe).finalResultType
+        q"""state.pickle[$fieldTpe](value.${accessor.name})"""
+      }
 
       q"""
           val ref = state.identityRefFor(value)
@@ -120,9 +120,9 @@ object PicklerMaterializersImpl {
       val unpickledFields = for {
         accessor <- accessors
       } yield {
-          val fieldTpe = accessor.typeSignatureIn(tpe).finalResultType
-          q"""state.unpickle[$fieldTpe]"""
-        }
+        val fieldTpe = accessor.typeSignatureIn(tpe).finalResultType
+        q"""state.unpickle[$fieldTpe]"""
+      }
       q"""
           val ic = state.dec.readInt
           if(ic == 0) {
@@ -141,7 +141,7 @@ object PicklerMaterializersImpl {
 
     val result = q"""
       implicit object $name extends boopickle.Pickler[$tpe] {
-        override def pickle(value: $tpe)(implicit state: boopickle.PickleState): Unit = $pickleLogic
+        override def pickle(value: $tpe)(implicit state: boopickle.PickleState): Unit = { $pickleLogic; () }
         override def unpickle(implicit state: boopickle.UnpickleState): $tpe = $unpickleLogic
       }
       $name

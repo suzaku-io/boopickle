@@ -21,8 +21,9 @@ object BooPickleRunners {
       ba
     }
 
-    override def run = {
+    override def run(): Unit = {
       Pickle.intoBytes(testData)
+      ()
     }
   }
 
@@ -39,9 +40,10 @@ object BooPickleRunners {
       ba
     }
 
-    override def run = {
+    override def run(): Unit = {
       Unpickle[A].fromBytes(bb)
       bb.rewind()
+      ()
     }
   }
 }
