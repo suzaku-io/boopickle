@@ -1,7 +1,7 @@
 # BooPickle
 
 [![Build Status](https://travis-ci.org/ochrons/boopickle.svg?branch=master)](https://travis-ci.org/ochrons/boopickle)
-[![Scala.js](http://scala-js.org/assets/badges/scalajs-0.6.6.svg)](http://scala-js.org)
+[![Scala.js](http://scala-js.org/assets/badges/scalajs-0.6.7.svg)](http://scala-js.org)
 
 BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization (aka pickling) library for Scala 
 and [Scala.js](http://www.scala-js.org). It encodes into a binary format instead of the more customary JSON. A binary format brings efficiency 
@@ -668,6 +668,14 @@ def encodeUTF8(s: String): ByteBuffer = {
 ```
 
 ## Change history
+
+### 1.2.0-SNAPSHOT
+
+- Extracted common `Encoder` and `Decoder` traits with implementations for size and speed. Default codec is optimized for size.
+  - Added a codec optimized for speed, using simpler encoding. This is intended to be used within an application, for example when communicating between
+    web workers in Scala.js
+  - `Unpickle.fromBytes` now takes an implicit for building an `UnpickleState` for a given `ByteBuffer` to allow selection between different decoders.
+- Removed special encodings for UUID and numeric strings.
 
 ### 1.1.3
 

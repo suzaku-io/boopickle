@@ -56,9 +56,7 @@ object TestData {
 
   val largeStringIntMap: Map[String, Int] = {
     val r = new Random(0)
-    var map = Map.empty[String, Int]
-    for (i <- 0 until 10000) map += s"ID$i" -> (1.0 / (1.0 + r.nextDouble() * 1e5) * 1e7).toInt
-    map
+    (for (i <- 0 until 10000) yield s"ID$i" -> (1.0 / (1.0 + r.nextDouble() * 1e5) * 1e7).toInt).toMap
   }
 
   val largeFloatSeq: Seq[Float] = {

@@ -1,6 +1,6 @@
 package boopickle
 
-import java.nio.ByteBuffer
+import java.nio.{ByteBuffer, ShortBuffer}
 import java.nio.charset.StandardCharsets
 
 import scala.scalajs.js
@@ -58,5 +58,23 @@ object StringCodec extends StringCodecFuncs {
     } else {
       TypedArrayBuffer.wrap(utf8encoder(s))
     }
+  }
+
+  override def decodeUTF16(len: Int, buf: ByteBuffer): String = {
+    val ta = new Uint16Array(buf.typedArray().subarray(buf.position, buf.position + len))
+    buf.position(buf.position + len)
+    js.Dynamic.global.String.fromCharCode.apply(null, ta)
+    new String(ta.toArray)
+  }
+
+  override def encodeUTF16(s: String): ByteBuffer = {
+    val ta = new Uint16Array(s.length)
+    val str = s.asInstanceOf[js.Dynamic]
+    var i = 0
+    while(i < s.length) {
+      ta(i) = str.charCodeAt(i).asInstanceOf[Short]
+      i += 1
+    }
+    TypedArrayBuffer.wrap(new Int8Array(ta))
   }
 }

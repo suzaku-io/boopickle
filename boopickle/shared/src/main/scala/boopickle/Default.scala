@@ -87,11 +87,11 @@ object UnpickleImpl {
   case class UnpickledCurry[A](u: Pickler[A]) {
     def apply(implicit state: UnpickleState): A = u.unpickle(state)
 
-    def fromBytes(bytes: ByteBuffer): A = {
+    def fromBytes(bytes: ByteBuffer)(implicit buildState: ByteBuffer => UnpickleState): A = {
       // keep original byte order
       val origByteOrder = bytes.order()
       // but decode as little-endian
-      val result = u.unpickle(new UnpickleState(new Decoder(bytes.order(ByteOrder.LITTLE_ENDIAN))))
+      val result = u.unpickle(buildState(bytes.order(ByteOrder.LITTLE_ENDIAN)))
       bytes.order(origByteOrder)
       result
     }

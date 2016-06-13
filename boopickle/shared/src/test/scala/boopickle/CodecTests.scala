@@ -14,10 +14,10 @@ object CodecTests extends TestSuite {
    * @tparam T Data type
    */
   def runCodec[T](data: Seq[T], w: (Encoder, T) => Unit, r: (Decoder, T) => Boolean) = {
-    val e = new Encoder
+    val e = new EncoderSize
     data.foreach { x => w(e, x) }
     val bb = e.asByteBuffer
-    val d = new Decoder(bb)
+    val d = new DecoderSize(bb)
     data.foreach { x => assert(r(d, x)) }
   }
 
@@ -62,10 +62,10 @@ object CodecTests extends TestSuite {
       val bb = ByteBuffer.allocateDirect(256)
       for (i <- 0 until 256) bb.put(i.toByte)
       bb.flip
-      val e = new Encoder
+      val e = new EncoderSize
       e.writeByteBuffer(bb)
       val ebb = e.asByteBuffer
-      val d = new Decoder(ebb)
+      val d = new DecoderSize(ebb)
       val y = d.readByteBuffer
       assert(y.compareTo(bb) == 0)
     }
