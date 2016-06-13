@@ -49,9 +49,9 @@ object TestData {
 
   val booksRandomID = books(genRandomId)
 
-  val largeIntSeq: Seq[Int] = {
+  val largeIntSeq: Array[Int] = {
     val r = new Random(0)
-    for (i <- 0 until 10000) yield (1.0 / (1.0 + r.nextDouble() * 1e5) * 1e7).toInt
+    (for (i <- 0 until 10000) yield (1.0 / (1.0 + r.nextDouble() * 1e5) * 1e7).toInt).toArray
   }
 
   val largeStringIntMap: Map[String, Int] = {
@@ -59,14 +59,14 @@ object TestData {
     (for (i <- 0 until 10000) yield s"ID$i" -> (1.0 / (1.0 + r.nextDouble() * 1e5) * 1e7).toInt).toMap
   }
 
-  val largeFloatSeq: Seq[Float] = {
+  val largeFloatSeq: Array[Float] = {
     val r = new Random(0)
-    for (i <- 0 until 1000) yield ((r.nextDouble() - 0.1) * 1e6).toFloat
+    (for (i <- 0 until 8000) yield ((r.nextDouble() - 0.1) * 1e6).toFloat).toArray
   }
 
-  val largeDoubleSeq: Seq[Double] = {
+  val largeDoubleSeq: Array[Double] = {
     val r = new Random(0)
-    for (i <- 0 until 1000) yield (r.nextDouble() - 0.1) * 1e6
+    (for (i <- 0 until 8000) yield (r.nextDouble() - 0.1) * 1e6).toArray
   }
 
   val colors = Seq("black", "red", "white", "yellow", "blue")

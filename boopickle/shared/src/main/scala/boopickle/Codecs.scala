@@ -82,6 +82,30 @@ trait Decoder {
     * Decodes a ByteBuffer
     */
   def readByteBuffer: ByteBuffer
+
+  /**
+    * Decodes an array of Bytes
+    */
+  def readByteArray(): Array[Byte]
+  def readByteArray(len: Int): Array[Byte]
+
+  /**
+    * Decodes an array of Integers
+    */
+  def readIntArray(): Array[Int]
+  def readIntArray(len: Int): Array[Int]
+
+  /**
+    * Decodes an array of Floats
+    */
+  def readFloatArray(): Array[Float]
+  def readFloatArray(len: Int): Array[Float]
+
+  /**
+    * Decodes an array of Doubles
+    */
+  def readDoubleArray(): Array[Double]
+  def readDoubleArray(len: Int): Array[Double]
 }
 
 trait Encoder {
@@ -165,6 +189,26 @@ trait Encoder {
     * @param bb ByteBuffer to encode
     */
   def writeByteBuffer(bb: ByteBuffer): Encoder
+
+  /**
+    * Encodes an array of Bytes
+    */
+  def writeByteArray(ba: Array[Byte]): Encoder
+
+  /**
+    * Encodes an array of Integers
+    */
+  def writeIntArray(ia: Array[Int]): Encoder
+
+  /**
+    * Encodes an array of Floats
+    */
+  def writeFloatArray(fa: Array[Float]): Encoder
+
+  /**
+    * Encodes an array of Doubles
+    */
+  def writeDoubleArray(da: Array[Double]): Encoder
 
   /**
     * Completes the encoding and returns the ByteBuffer

@@ -19,13 +19,12 @@ object StringCodec extends StringCodecFuncs {
   override def decodeUTF16(len: Int, buf: ByteBuffer): String = {
     val bb = buf.slice()
     bb.limit(len)
-    val s = StandardCharsets.UTF_16BE.decode(bb).toString
+    val s = StandardCharsets.UTF_16LE.decode(bb).toString
     buf.position(buf.position + len)
     s
   }
 
-
   override def encodeUTF16(str: String): ByteBuffer = {
-    StandardCharsets.UTF_16BE.encode(str)
+    StandardCharsets.UTF_16LE.encode(str)
   }
 }

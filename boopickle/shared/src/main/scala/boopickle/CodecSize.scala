@@ -215,6 +215,53 @@ class DecoderSize(val buf: ByteBuffer) extends Decoder {
     b.limit(b.position + size)
     b
   }
+
+  /**
+    * Decodes an array of Bytes
+    */
+  def readByteArray(): Array[Byte] = readByteArray(readInt)
+  def readByteArray(len: Int): Array[Byte] = {
+    val array = new Array[Byte](len)
+    buf.get(array)
+    array
+  }
+
+  /**
+    * Decodes an array of Integers
+    */
+  def readIntArray(): Array[Int] = readIntArray(readInt)
+  def readIntArray(len: Int): Array[Int] = {
+    val array = new Array[Int](len)
+    var i = 0
+    while(i < len) {
+      array(i) = readInt
+      i += 1
+    }
+    array
+  }
+
+  /**
+    * Decodes an array of Floats
+    */
+  def readFloatArray(): Array[Float] = readFloatArray(readInt)
+  def readFloatArray(len: Int): Array[Float] = {
+    val array = new Array[Float](len)
+    buf.asFloatBuffer().get(array)
+    buf.position(buf.position + len * 4)
+    array
+  }
+
+  /**
+    * Decodes an array of Doubles
+    */
+  def readDoubleArray(): Array[Double] = readDoubleArray(readInt)
+  def readDoubleArray(len: Int): Array[Double] = {
+    val array = new Array[Double](len)
+    buf.asDoubleBuffer().get(array)
+    buf.position(buf.position + len * 8)
+    array
+  }
+
 }
 
 class EncoderSize(bufferProvider: BufferProvider = DefaultByteBufferProvider.provider) extends Encoder {
@@ -415,6 +462,46 @@ class EncoderSize(bufferProvider: BufferProvider = DefaultByteBufferProvider.pro
     writeInt(bb.remaining * 2 | byteOrder )
     alloc(bb.remaining).put(bb)
     bb.reset()
+    this
+  }
+
+  /**
+    * Encodes an array of Bytes
+    */
+  def writeByteArray(ba: Array[Byte]): Encoder = {
+    writeInt(ba.length)
+    alloc(ba.length).put(ba)
+    this
+  }
+
+  /**
+    * Encodes an array of Integers
+    */
+  def writeIntArray(ia: Array[Int]): Encoder = {
+    writeInt(ia.length)
+    ia.foreach(writeInt)
+    this
+  }
+
+  /**
+    * Encodes an array of Floats
+    */
+  def writeFloatArray(fa: Array[Float]): Encoder = {
+    writeInt(fa.length)
+    val bb = alloc(fa.length*4)
+    bb.asFloatBuffer().put(fa)
+    bb.position(bb.position + fa.length*4)
+    this
+  }
+
+  /**
+    * Encodes an array of Doubles
+    */
+  def writeDoubleArray(da: Array[Double]): Encoder = {
+    writeInt(da.length)
+    val bb = alloc(da.length*8)
+    bb.asDoubleBuffer().put(da)
+    bb.position(bb.position + da.length*8)
     this
   }
 

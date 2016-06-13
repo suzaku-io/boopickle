@@ -61,7 +61,7 @@ lazy val boopickle = crossProject
   ).jsSettings(
     // use PhantomJS for testing, because we need real browser JS stuff like TypedArrays
     scalaJSUseRhino in Global := false,
-    jsDependencies += RuntimeDOM,
+    //jsDependencies += RuntimeDOM,
     scalacOptions ++= (if (isSnapshot.value) Seq.empty
     else Seq({
       val a = baseDirectory.value.toURI.toString.replaceFirst("[^/]+/?$", "")
@@ -85,7 +85,6 @@ generateTuples := {
   val picklers = (1 to 22).map { i =>
     def commaSeparated(s: Int => String, sep: String = ", ") = (1 to i).map(s).mkString(sep)
     val picklerTypes = commaSeparated(j => s"T$j: P")
-    val unpicklerTypes = commaSeparated(j => s"T$j: U")
     val typeTuple = if (i == 1) s"Tuple1[T1]" else s"(${commaSeparated(j => s"T$j")})"
     val writes = commaSeparated(j => s"write[T$j](x._$j)", "; ")
     val reads = commaSeparated(j => s"read[T$j]")
@@ -113,7 +112,7 @@ lazy val perftests = crossProject
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "upickle" % "0.3.7",
       "com.github.benhutchison" %%% "prickle" % "1.1.10",
-      "com.github.fomkin" %%% "pushka-json" % "0.4.1",
+      "com.github.fomkin" %%% "pushka-json" % "0.6.0",
       "io.circe" %%% "circe-core" % "0.2.1",
       "io.circe" %%% "circe-parse" % "0.2.1",
       "io.circe" %%% "circe-generic" % "0.2.1"
@@ -123,8 +122,8 @@ lazy val perftests = crossProject
   .jsSettings(
     bootSnippet := "BooApp().main();",
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "0.8.1",
-      "com.lihaoyi" %%% "scalatags" % "0.4.6"
+      "org.scala-js" %%% "scalajs-dom" % "0.9.0",
+      "com.lihaoyi" %%% "scalatags" % "0.5.5"
     )
   )
 

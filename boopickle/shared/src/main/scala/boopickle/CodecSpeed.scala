@@ -7,6 +7,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
   val stringCodec: StringCodecFuncs = StringCodec
   /**
     * Decodes a single byte
+    *
     * @return
     */
   def readByte: Byte = {
@@ -15,6 +16,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
 
   /**
     * Decodes a character
+    *
     * @return
     */
   def readChar: Char = {
@@ -52,6 +54,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
 
   /**
     * Decodes a 32-bit integer, or a special code
+    *
     * @return
     */
   def readIntCode: Either[Byte, Int] = {
@@ -65,6 +68,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
 
   /**
     * Decodes a 64-bit long, or a special code
+    *
     * @return
     */
   def readLongCode: Either[Byte, Long] = {
@@ -78,6 +82,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
 
   /**
     * Decodes a 32-bit float (4 bytes)
+    *
     * @return
     */
   def readFloat: Float = {
@@ -86,6 +91,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
 
   /**
     * Decodes a 64-bit double (8 bytes)
+    *
     * @return
     */
   def readDouble: Double = {
@@ -105,6 +111,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
 
   /**
     * Decodes a UTF-8 encoded string whose length is already known
+    *
     * @param len Length of the string (in bytes)
     * @return
     */
@@ -118,12 +125,54 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
     if (sizeBO < 0)
       throw new IllegalArgumentException(s"Invalid size $sizeBO for ByteBuffer")
     val size = sizeBO >> 1
-    val byteOrder = if((sizeBO & 1) == 1) ByteOrder.BIG_ENDIAN else ByteOrder.LITTLE_ENDIAN
+    val byteOrder = if ((sizeBO & 1) == 1) ByteOrder.BIG_ENDIAN else ByteOrder.LITTLE_ENDIAN
     // create a copy (sharing content), set correct byte order
     val b = buf.slice().order(byteOrder)
     buf.position(buf.position + size)
     b.limit(b.position + size)
     b
+  }
+  /**
+    * Decodes an array of Bytes
+    */
+  def readByteArray(): Array[Byte] = readByteArray(readInt)
+  def readByteArray(len: Int): Array[Byte] = {
+    val array = new Array[Byte](len)
+    buf.get(array)
+    array
+  }
+
+  /**
+    * Decodes an array of Integers
+    */
+  def readIntArray(): Array[Int] = readIntArray(readInt)
+  def readIntArray(len: Int): Array[Int] = {
+    val array = new Array[Int](len)
+    buf.asIntBuffer().get(array)
+    buf.position(buf.position + len * 4)
+    array
+  }
+
+  /**
+    * Decodes an array of Floats
+    */
+  def readFloatArray(): Array[Float] = readFloatArray(readInt)
+  def readFloatArray(len: Int): Array[Float] = {
+    val array = new Array[Float](len)
+    buf.asFloatBuffer().get(array)
+    buf.position(buf.position + len * 4)
+    array
+  }
+
+  /**
+    * Decodes an array of Doubles
+    */
+  def readDoubleArray(): Array[Double] = readDoubleArray(readInt)
+  def readDoubleArray(len: Int): Array[Double] = {
+    val array = new Array[Double](len)
+    buf.asDoubleBuffer().get(array)
+    buf.position(buf.position + len * 8)
+    array
   }
 }
 
@@ -134,6 +183,7 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
 
   /**
     * Encodes a single byte
+    *
     * @param b Byte to encode
     * @return
     */
@@ -163,6 +213,7 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
 
   /**
     * Encodes an integer
+    *
     * @param i Integer to encode
     */
   def writeInt(i: Int): Encoder = {
@@ -172,6 +223,7 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
 
   /**
     * Encodes an integer in 32-bits
+    *
     * @param i Integer to encode
     * @return
     */
@@ -182,6 +234,7 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
 
   /**
     * Encodes a long
+    *
     * @param l Long to encode
     */
   def writeLong(l: Long): Encoder = {
@@ -191,6 +244,7 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
 
   /**
     * Encodes a long in 64-bits
+    *
     * @param l Long to encode
     * @return
     */
@@ -201,6 +255,7 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
 
   /**
     * Writes either a code byte (0-15) or an Int
+    *
     * @param intCode Integer or a code byte
     */
   def writeIntCode(intCode: Either[Byte, Int]): Encoder = {
@@ -215,6 +270,7 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
 
   /**
     * Writes either a code byte (0-15) or a Long
+    *
     * @param longCode Long or a code byte
     */
   def writeLongCode(longCode: Either[Byte, Long]): Encoder = {
@@ -270,22 +326,66 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
     */
   def writeByteBuffer(bb: ByteBuffer): Encoder = {
     bb.mark()
-    val byteOrder = if(bb.order() == ByteOrder.BIG_ENDIAN) 1 else 0
+    val byteOrder = if (bb.order() == ByteOrder.BIG_ENDIAN) 1 else 0
     // encode byte order as bit 0 in the length
-    writeInt(bb.remaining * 2 | byteOrder )
+    writeInt(bb.remaining * 2 | byteOrder)
     alloc(bb.remaining).put(bb)
     bb.reset()
     this
   }
 
   /**
+    * Encodes an array of Bytes
+    */
+  def writeByteArray(ba: Array[Byte]): Encoder = {
+    writeInt(ba.length)
+    alloc(ba.length).put(ba)
+    this
+  }
+
+  /**
+    * Encodes an array of Integers
+    */
+  def writeIntArray(ia: Array[Int]): Encoder = {
+    writeInt(ia.length)
+    val bb = alloc(ia.length * 4)
+    bb.asIntBuffer().put(ia)
+    bb.position(bb.position + ia.length * 4)
+    this
+  }
+
+  /**
+    * Encodes an array of Floats
+    */
+  def writeFloatArray(fa: Array[Float]): Encoder = {
+    writeInt(fa.length)
+    val bb = alloc(fa.length * 4)
+    bb.asFloatBuffer().put(fa)
+    bb.position(bb.position + fa.length * 4)
+    this
+  }
+
+  /**
+    * Encodes an array of Doubles
+    */
+  def writeDoubleArray(da: Array[Double]): Encoder = {
+    writeInt(da.length)
+    val bb = alloc(da.length * 8)
+    bb.asDoubleBuffer().put(da)
+    bb.position(bb.position + da.length * 8)
+    this
+  }
+
+  /**
     * Completes the encoding and returns the ByteBuffer
+    *
     * @return
     */
   def asByteBuffer = bufferProvider.asByteBuffer
 
   /**
     * Completes the encoding and returns a sequence of ByteBuffers
+    *
     * @return
     */
   def asByteBuffers = bufferProvider.asByteBuffers

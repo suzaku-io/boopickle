@@ -186,13 +186,13 @@ object PickleTests extends TestSuite {
         'positive {
           val value = BigInt("3031082301820398102312310273912739712397")
           val bb = Pickle.intoBytes(value)
-          assert(bb.limit == value.toByteArray.size + 1)
+          assert(bb.limit == value.toByteArray.length + 1)
           assert(Unpickle[BigInt].fromBytes(bb) == value)
         }
         'negative {
           val value = BigInt("-3031082301820398102312310273912739712397")
           val bb = Pickle.intoBytes(value)
-          assert(bb.limit == value.toByteArray.size + 1)
+          assert(bb.limit == value.toByteArray.length + 1)
           assert(Unpickle[BigInt].fromBytes(bb) == value)
         }
       }
@@ -205,28 +205,28 @@ object PickleTests extends TestSuite {
         'positive {
           val value = BigDecimal("3031082301820398102312310273912739712397.420348203423429374928374")
           val bb = Pickle.intoBytes(value)
-          val expectedLimit = value.underlying.unscaledValue.toByteArray.size + 1 + 1
+          val expectedLimit = value.underlying.unscaledValue.toByteArray.length + 1 + 1
           assert(bb.limit == expectedLimit)
           assert(Unpickle[BigDecimal].fromBytes(bb) == value)
         }
         'positiveZeroScale {
           val value = BigDecimal("3031082301820398102312310273912739712397420348203423429374928374")
           val bb = Pickle.intoBytes(value)
-          val expectedLimit = value.underlying.unscaledValue.toByteArray.size + 1 + 1
+          val expectedLimit = value.underlying.unscaledValue.toByteArray.length + 1 + 1
           assert(bb.limit == expectedLimit)
           assert(Unpickle[BigDecimal].fromBytes(bb) == value)
         }
         'negativeScale {
           val value = BigDecimal("-3031082301820398102312310273912739712397.420348203423429374928374")
           val bb = Pickle.intoBytes(value)
-          val expectedLimit = value.underlying.unscaledValue.toByteArray.size + 1 + 1
+          val expectedLimit = value.underlying.unscaledValue.toByteArray.length + 1 + 1
           assert(bb.limit == expectedLimit)
           assert(Unpickle[BigDecimal].fromBytes(bb) == value)
         }
         'negativeZeroScale {
           val value = BigDecimal("-3031082301820398102312310273912739712397420348203423429374928374")
           val bb = Pickle.intoBytes(value)
-          val expectedLimit = value.underlying.unscaledValue.toByteArray.size + 1 + 1
+          val expectedLimit = value.underlying.unscaledValue.toByteArray.length + 1 + 1
           assert(bb.limit == expectedLimit)
           assert(Unpickle[BigDecimal].fromBytes(bb) == value)
         }
@@ -246,7 +246,14 @@ object PickleTests extends TestSuite {
         'normal {
           val bb = Pickle.intoBytes("normal")
           assert(bb.limit == 1 + 6)
-          assert(Unpickle[String].fromBytes(bb) == "normal")
+          val s = Unpickle[String].fromBytes(bb)
+          assert(s == "normal")
+        }
+        'unicode {
+          val bb = Pickle.intoBytes("\uD834\uDF06泡菜")
+          assert(bb.limit == 4 + 3 + 2 + 2)
+          val s = Unpickle[String].fromBytes(bb)
+          assert(s == "\uD834\uDF06泡菜")
         }
         'numeric {
           val bb = Pickle.intoBytes("100")
@@ -717,13 +724,13 @@ object PickleTests extends TestSuite {
         'positive {
           val value = BigInt("3031082301820398102312310273912739712397")
           val bb = Pickle.intoBytes(value)
-          assert(bb.limit == value.toByteArray.size + 4)
+          assert(bb.limit == value.toByteArray.length + 4)
           assert(Unpickle[BigInt].fromBytes(bb) == value)
         }
         'negative {
           val value = BigInt("-3031082301820398102312310273912739712397")
           val bb = Pickle.intoBytes(value)
-          assert(bb.limit == value.toByteArray.size + 4)
+          assert(bb.limit == value.toByteArray.length + 4)
           assert(Unpickle[BigInt].fromBytes(bb) == value)
         }
       }
@@ -736,28 +743,28 @@ object PickleTests extends TestSuite {
         'positive {
           val value = BigDecimal("3031082301820398102312310273912739712397.420348203423429374928374")
           val bb = Pickle.intoBytes(value)
-          val expectedLimit = value.underlying.unscaledValue.toByteArray.size + 4 + 4
+          val expectedLimit = value.underlying.unscaledValue.toByteArray.length + 4 + 4
           assert(bb.limit == expectedLimit)
           assert(Unpickle[BigDecimal].fromBytes(bb) == value)
         }
         'positiveZeroScale {
           val value = BigDecimal("3031082301820398102312310273912739712397420348203423429374928374")
           val bb = Pickle.intoBytes(value)
-          val expectedLimit = value.underlying.unscaledValue.toByteArray.size + 4 + 4
+          val expectedLimit = value.underlying.unscaledValue.toByteArray.length + 4 + 4
           assert(bb.limit == expectedLimit)
           assert(Unpickle[BigDecimal].fromBytes(bb) == value)
         }
         'negativeScale {
           val value = BigDecimal("-3031082301820398102312310273912739712397.420348203423429374928374")
           val bb = Pickle.intoBytes(value)
-          val expectedLimit = value.underlying.unscaledValue.toByteArray.size + 4 + 4
+          val expectedLimit = value.underlying.unscaledValue.toByteArray.length + 4 + 4
           assert(bb.limit == expectedLimit)
           assert(Unpickle[BigDecimal].fromBytes(bb) == value)
         }
         'negativeZeroScale {
           val value = BigDecimal("-3031082301820398102312310273912739712397420348203423429374928374")
           val bb = Pickle.intoBytes(value)
-          val expectedLimit = value.underlying.unscaledValue.toByteArray.size + 4 + 4
+          val expectedLimit = value.underlying.unscaledValue.toByteArray.length + 4 + 4
           assert(bb.limit == expectedLimit)
           assert(Unpickle[BigDecimal].fromBytes(bb) == value)
         }
@@ -777,7 +784,14 @@ object PickleTests extends TestSuite {
         'normal {
           val bb = Pickle.intoBytes("normal")
           assert(bb.limit == 4 + 6 * 2)
-          assert(Unpickle[String].fromBytes(bb) == "normal")
+          val s = Unpickle[String].fromBytes(bb)
+          assert(s == "normal")
+        }
+        'unicode {
+          val bb = Pickle.intoBytes("\uD834\uDF06泡菜")
+          assert(bb.limit == 4 + 4 * 2)
+          val s = Unpickle[String].fromBytes(bb)
+          assert(s == "\uD834\uDF06泡菜")
         }
         'numeric {
           val bb = Pickle.intoBytes("100")

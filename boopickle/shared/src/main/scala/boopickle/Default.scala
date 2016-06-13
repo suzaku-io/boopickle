@@ -18,11 +18,12 @@ trait BasicImplicitPicklers extends PicklerHelper {
   implicit val longPickler = BasicPicklers.LongPickler
   implicit val floatPickler = BasicPicklers.FloatPickler
   implicit val doublePickler = BasicPicklers.DoublePickler
-  implicit val bigIntPickler = BasicPicklers.BigIntPickler
-  implicit val bigDecimalPickler = BasicPicklers.BigDecimalPickler
   implicit val byteBufferPickler = BasicPicklers.ByteBufferPickler
   implicit val stringPickler = BasicPicklers.StringPickler
 
+  // less frequently used picklers are initializes lazily to enable DCE
+  implicit lazy val bigIntPickler = BasicPicklers.BigIntPickler
+  implicit lazy val bigDecimalPickler = BasicPicklers.BigDecimalPickler
   implicit lazy val UUIDPickler = BasicPicklers.UUIDPickler
   implicit lazy val durationPickler = BasicPicklers.DurationPickler
   implicit lazy val finiteDurationPickler = BasicPicklers.FiniteDurationPickler

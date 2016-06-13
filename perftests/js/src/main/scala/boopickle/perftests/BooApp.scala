@@ -46,12 +46,12 @@ object BooApp extends js.JSApp {
       }
       resView.innerHTML = resView.innerHTML + "\n"
       if (suites.tail.nonEmpty)
-        dom.setTimeout(() => runNext(suites.tail), 100)
+        dom.window.setTimeout(() => runNext(suites.tail), 100)
       else {
         resultsDiv.appendChild(h4("Completed!").render)
       }
     }
-    dom.setTimeout(() => runNext(Tests.suites), 10)
+    dom.window.setTimeout(() => runNext(Tests.suites), 10)
   }
 
   @JSExport

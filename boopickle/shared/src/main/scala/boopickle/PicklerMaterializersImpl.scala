@@ -124,15 +124,15 @@ object PicklerMaterializersImpl {
           q"""state.unpickle[$fieldTpe]"""
         }
       q"""
-          val ic = state.dec.readIntCode
-          if(ic.isRight && ic.right.get == 0) {
+          val ic = state.dec.readInt
+          if(ic == 0) {
               val value = new $tpe(..$unpickledFields)
               state.addIdentityRef(value)
               value
-          } else if(ic.isRight && ic.right.get < 0) {
-              state.identityFor[$tpe](-ic.right.get)
+          } else if(ic < 0) {
+              state.identityFor[$tpe](-ic)
           } else {
-              throw new IllegalArgumentException("Unknown object coding")
+              throw new IllegalArgumentException(s"Unknown object coding: $$ic")
           }
         """
     }

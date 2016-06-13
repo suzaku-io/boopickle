@@ -352,11 +352,26 @@ object BasicPicklers extends PicklerHelper {
           // encode index as negative "length"
           state.enc.writeInt(-idx)
         case None =>
-          // encode length
-          state.enc.writeInt(array.length)
-          // encode contents
-          array.foreach(a => write[T](a))
-          state.addIdentityRef(array)
+          implicitly[ClassTag[T]] match {
+            case ClassTag.Byte =>
+              state.enc.writeByteArray(array.asInstanceOf[Array[Byte]])
+              state.addIdentityRef(array)
+            case ClassTag.Int =>
+              state.enc.writeIntArray(array.asInstanceOf[Array[Int]])
+              state.addIdentityRef(array)
+            case ClassTag.Float =>
+              state.enc.writeFloatArray(array.asInstanceOf[Array[Float]])
+              state.addIdentityRef(array)
+            case ClassTag.Double =>
+              state.enc.writeDoubleArray(array.asInstanceOf[Array[Double]])
+              state.addIdentityRef(array)
+            case _ =>
+              // encode length
+              state.enc.writeInt(array.length)
+              // encode contents
+              array.foreach(a => write[T](a))
+              state.addIdentityRef(array)
+          }
       }
     }
     override def unpickle(implicit state: UnpickleState): Array[T] = {
@@ -369,15 +384,28 @@ object BasicPicklers extends PicklerHelper {
         case idx if idx < 0 =>
           state.identityFor[Array[T]](-idx)
         case len =>
-          val a = new Array[T](len)
-          for (i <- 0 until len) {
-            a(i) = read[T]
+          val r = implicitly[ClassTag[T]] match {
+            case ClassTag.Byte =>
+              state.dec.readByteArray(len).asInstanceOf[Array[T]]
+            case ClassTag.Int =>
+              state.dec.readIntArray(len).asInstanceOf[Array[T]]
+            case ClassTag.Float =>
+              state.dec.readFloatArray(len).asInstanceOf[Array[T]]
+            case ClassTag.Double =>
+              state.dec.readDoubleArray(len).asInstanceOf[Array[T]]
+            case _ =>
+              val a = new Array[T](len)
+              for (i <- 0 until len) {
+                a(i) = read[T]
+              }
+              a
           }
-          state.addIdentityRef(a)
-          a
+          state.addIdentityRef(r)
+          r
       }
     }
   }
+  
   /**
     * Maps require a specific pickler as they have two type parameters.
     *

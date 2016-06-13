@@ -8,16 +8,16 @@ import scala.scalajs.js.typedarray.TypedArrayBufferOps._
 import scala.scalajs.js.typedarray._
 
 /**
- * Facade for native JS engine provided TextDecoder
- */
+  * Facade for native JS engine provided TextDecoder
+  */
 @js.native
 class TextDecoder extends js.Object {
   def decode(data: Int8Array): String = js.native
 }
 
 /**
- * Facade for native JS engine provided TextEncoder
- */
+  * Facade for native JS engine provided TextEncoder
+  */
 @js.native
 class TextEncoder extends js.Object {
   def encode(str: String): Uint8Array = js.native
@@ -61,20 +61,27 @@ object StringCodec extends StringCodecFuncs {
   }
 
   override def decodeUTF16(len: Int, buf: ByteBuffer): String = {
-    val ta = new Uint16Array(buf.typedArray().subarray(buf.position, buf.position + len))
-    buf.position(buf.position + len)
-    js.Dynamic.global.String.fromCharCode.apply(null, ta)
-    new String(ta.toArray)
+    if (buf.isDirect) {
+      val ta = new Uint16Array(buf.typedArray().buffer, buf.position + buf.typedArray().byteOffset, len/2)
+      buf.position(buf.position + len)
+      js.Dynamic.global.String.fromCharCode.applyDynamic("apply")(null, ta).asInstanceOf[String]
+      //new String(ta.toArray) // alt implementation
+    } else {
+      val bb = buf.slice()
+      bb.limit(len)
+      val s = StandardCharsets.UTF_16LE.decode(bb).toString
+      buf.position(buf.position + len)
+      s
+    }
   }
 
   override def encodeUTF16(s: String): ByteBuffer = {
     val ta = new Uint16Array(s.length)
-    val str = s.asInstanceOf[js.Dynamic]
     var i = 0
-    while(i < s.length) {
-      ta(i) = str.charCodeAt(i).asInstanceOf[Short]
+    while (i < s.length) {
+      ta(i) = s.charAt(i).toShort
       i += 1
     }
-    TypedArrayBuffer.wrap(new Int8Array(ta))
+    TypedArrayBuffer.wrap(new Int8Array(ta.buffer))
   }
 }
