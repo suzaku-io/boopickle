@@ -106,7 +106,7 @@ object CompositePickleTests extends TestSuite {
       assert(u == q)
     }
     'Transformers {
-      implicit val datePickler = transformPickler[java.util.Date, Long](_.getTime, t => new java.util.Date(t))
+      implicit val datePickler = transformPickler((t: Long) => new java.util.Date(t))(_.getTime)
       val date = new java.util.Date()
       val bb = Pickle.intoBytes(date)
       val d = Unpickle[java.util.Date].fromBytes(bb)

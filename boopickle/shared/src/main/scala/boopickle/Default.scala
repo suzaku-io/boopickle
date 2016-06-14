@@ -37,28 +37,28 @@ trait BasicImplicitPicklers extends PicklerHelper {
   implicit def iterablePickler[T: P, V[_] <: Iterable[_]](implicit cbf: CanBuildFrom[Nothing, T, V[T]]): P[V[T]] = BasicPicklers.IterablePickler[T, V]
   implicit def arrayPickler[T: P : ClassTag]: P[Array[T]] = BasicPicklers.ArrayPickler[T]
   implicit def mapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]](implicit
-                                                                             cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): P[V[T, S]] = BasicPicklers.MapPickler[T, S, V]
+    cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): P[V[T, S]] = BasicPicklers.MapPickler[T, S, V]
 }
 
 trait TransformPicklers {
   /**
-   * Create a transforming pickler that takes an object of type `A` and transforms it into `B`, which is then pickled.
-   * Similarly a `B` is unpickled and then transformed back into `A`.
-   *
-   * This allows for easy creation of picklers for (relatively) simple classes. For example
-   * {{{
-   *   // transform Date into Long and back
-   *   implicit val datePickler = transformPickler[java.util.Date, Long](
-   *     _.getTime,
-   *     t => new java.util.Date(t))
-   * }}}
-   *
-   * @param transformTo Function that takes `A` and transforms it into `B`
-   * @param transformFrom Function that takes `B` and transforms it into `A`
-   * @tparam A Type of the original object
-   * @tparam B Type for the object used for pickling
-   */
-  def transformPickler[A, B](transformTo: (A) => B, transformFrom: (B) => A)(implicit p: Pickler[B]) = {
+    * Create a transforming pickler that takes an object of type `A` and transforms it into `B`, which is then pickled.
+    * Similarly a `B` is unpickled and then transformed back into `A`.
+    *
+    * This allows for easy creation of picklers for (relatively) simple classes. For example
+    * {{{
+    *   // transform Date into Long and back
+    *   implicit val datePickler = transformPickler((t: Long) => new java.util.Date(t))(_.getTime)
+    * }}}
+    *
+    * Note that parameters are in reversed order.
+    *
+    * @param transformFrom Function that takes `B` and transforms it into `A`
+    * @param transformTo   Function that takes `A` and transforms it into `B`
+    * @tparam A Type of the original object
+    * @tparam B Type for the object used for pickling
+    */
+  def transformPickler[A, B](transformFrom: (B) => A)(transformTo: (A) => B)(implicit p: Pickler[B]) = {
     p.xmap(transformFrom)(transformTo)
   }
 }
@@ -117,21 +117,21 @@ trait Base {
 }
 
 /**
- * Provides basic implicit picklers including macro support for case classes
- */
+  * Provides basic implicit picklers including macro support for case classes
+  */
 object Default extends Base with
-BasicImplicitPicklers with
-TransformPicklers with
-TuplePicklers with
-MaterializePicklerFallback
+  BasicImplicitPicklers with
+  TransformPicklers with
+  TuplePicklers with
+  MaterializePicklerFallback
 
 /**
- * Provides basic implicit picklers without macro support for case classes
- */
+  * Provides basic implicit picklers without macro support for case classes
+  */
 object DefaultBasic extends Base with
-BasicImplicitPicklers with
-TransformPicklers with
-TuplePicklers {
+  BasicImplicitPicklers with
+  TransformPicklers with
+  TuplePicklers {
 
   object PicklerGenerator {
     def generatePickler[T]: Pickler[T] = macro PicklerMaterializersImpl.materializePickler[T]

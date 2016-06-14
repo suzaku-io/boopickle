@@ -32,7 +32,7 @@ object MacroPickleTests extends TestSuite {
 
   object MyTrait {
     // a pickler for non-case classes cannot be automatically generated, so use the transform pickler
-    implicit val pickler3 = transformPickler[TT3, (Int, String)]((t) => (t.i, t.s), (t) => new TT3(t._1, t._2))
+    implicit val pickler3 = transformPickler[TT3, (Int, String)]((t) => new TT3(t._1, t._2))((t) => (t.i, t.s))
     implicit val pickler = generatePickler[MyTrait]
   }
 

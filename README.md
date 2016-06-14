@@ -1,7 +1,7 @@
 # BooPickle
 
 [![Build Status](https://travis-ci.org/ochrons/boopickle.svg?branch=master)](https://travis-ci.org/ochrons/boopickle)
-[![Scala.js](http://www.scala-js.org/assets/badges/scalajs-0.6.9.svg)](http://www.scala-js.org)
+[![Scala.js](http://www.scala-js.org/assets/badges/scalajs-0.6.8.svg)](http://www.scala-js.org)
 
 BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization (aka pickling) library for Scala 
 and [Scala.js](http://www.scala-js.org). It encodes into a binary format instead of the more customary JSON. A binary format brings efficiency 
@@ -115,7 +115,7 @@ assert(u == fruits)
 
 Note that internally `CompositePickler` encodes types using indices, so they must be specified in the same order on both sides!
 
-BooPickle needs to know the type when pickling to do deserialize to the correct type, thus this fails
+BooPickle needs to know the type when pickling to deserialize to the correct type, thus this fails
 
 ```scala
 val b = Banana(1.0)
@@ -694,6 +694,10 @@ def encodeUTF8(s: String): ByteBuffer = {
     web workers in Scala.js
   - `Unpickle.fromBytes` now takes an implicit for building an `UnpickleState` for a given `ByteBuffer` to allow selection between different decoders.
 - Removed special encodings for UUID and numeric strings.
+- Special codecs for common `Array` types (`Byte`, `Int`, `Float`, `Double`) and optimized code path when pickling them.
+- Infrequently used picklers made `lazy` to improve Dead Code Elimination (DCE) in Scala.js
+- Updated to Scala.js 0.6.9
+- `transformPickler` parameter order switched to better support type inference.
 
 ### 1.1.3
 
@@ -768,7 +772,7 @@ BooPickle was created and is maintained by [Otto Chrons](https://github.com/ochr
 
 Special thanks to Li Haoyi and Ben Hutchison for their pickling libraries, which provided more than inspiration to BooPickle.
 
-Contributors: @japgolly, @FlorianKirmaier
+Contributors: @japgolly, @FlorianKirmaier, @guersam, @akshaal, @cquiroz
 
 ## MIT License
 
