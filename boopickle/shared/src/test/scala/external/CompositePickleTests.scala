@@ -62,13 +62,27 @@ final case class OwnerAttribute(owner: String, parent: Element) extends Attribut
 
 object CompositePickleTests extends TestSuite {
   override def tests = TestSuite {
-    'CaseClassHierarchy {
+    'CaseClassHierarchySeq {
       implicit val fruitPickler = compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
 
       val fruits: Seq[Fruit] = Seq(Kiwi(0.5), Kiwi(0.6), Carambola(5.0), Banana(1.2))
       val bb = Pickle.intoBytes(fruits)
       val u = Unpickle[Seq[Fruit]].fromBytes(bb)
       assert(u == fruits)
+    }
+    'CaseClassHierarchy {
+      implicit val fruitPickler = compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
+
+      val b = Banana(1.0)
+      val bb = Pickle.intoBytes(b)
+      assert(Unpickle[Banana].fromBytes(bb) == b) // This produces Banana
+      val bb2 = Pickle.intoBytes(b)
+      assert(Unpickle[Fruit].fromBytes(bb2) == null) // This produces null
+
+      // Instead pickle with the parent's type
+      val f: Fruit = Banana(1.0)
+      val bf = Pickle.intoBytes(f)
+      assert(Unpickle[Fruit].fromBytes(bf) == f) // This produces a Fruit
     }
     'CaseObjects {
       implicit val errorPickler = compositePickler[Error].addConcreteType[InvalidName.type].addConcreteType[Unknown.type].addConcreteType[NotFound.type]

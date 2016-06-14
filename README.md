@@ -115,6 +115,24 @@ assert(u == fruits)
 
 Note that internally `CompositePickler` encodes types using indices, so they must be specified in the same order on both sides!
 
+BooPickle needs to know the type when pickling to do deserialize to the correct type, thus this fails
+
+```scala
+val b = Banana(1.0)
+val bb = Pickle.intoBytes(b)
+assert(Unpickle[Banana].fromBytes(bb) == b) // This produces Banana
+val bb2 = Pickle.intoBytes(b)
+assert(Unpickle[Fruit].fromBytes(bb2) == null) // This produces null
+```
+
+Instead when pickling declare the parent type
+
+```scala
+val f: Fruit = Banana(1.0)
+val bf = Pickle.intoBytes(f)
+assert(Unpickle[Fruit].fromBytes(bf) == f) // This produces a Fruit
+```
+
 ### Recursive composite types
 
 If you have a recursive composite type (a sub type has a reference to the super type), you need to build the `CompositePickler` in two steps,
