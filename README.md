@@ -18,7 +18,6 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 - Very fast
 - Very efficient coding
 - Low memory usage, no intermediate structures needed
-- Special optimization for UUID and numeric strings
 - Zero dependencies
 - Scala 2.11 (no Scala 2.10.x support at the moment)
 - All modern browsers are supported (not IE9 and below, though)
@@ -28,13 +27,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"me.chrons" %% "boopickle" % "1.1.3"
+"me.chrons" %% "boopickle" % "1.2.0"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```scala
-"me.chrons" %%% "boopickle" % "1.1.3"
+"me.chrons" %%% "boopickle" % "1.2.0"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
@@ -63,7 +62,7 @@ val helloWorld = Unpickle[Seq[String]].fromBytes(buf)
 BooPickle has built-in support for most of the typical Scala types, including
 
 - primitives: `Boolean`, `Byte`, `Short`, `Char`, `Int`, `Long`, `Float`, `Double` and `String`
-- common types: `Tuple`s, `Option`, `Either`, `Duration`, `UUID` and `ByteBuffer`
+- common types: `Tuple`s, `Option`, `Either`, `Duration`, `UUID`, `BigInt`, `BigDecimal` and `ByteBuffer`
 - collections, both mutable and immutable, including: `Array`, `Vector`, `List`, `Set`s, `Map`s and any `Iterable` with a `CanBuildFrom` implementation
 - `case class`es and `case object`s (via a macro)
 - `trait`s as a base for a class hierarchy
@@ -416,6 +415,16 @@ implicit def pState: PickleState = new PickleState(new EncoderSpeed)
 implicit def uState: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSpeed(b))
 ```
 
+## Buffer pooling
+
+When BooPickle codecs allocate `ByteBuffer`s they do it via `BufferProvider`s. The default implementations for both heap and direct buffers utilize
+the `BufferPool` object which recycles buffers. Buffer providers automatically release intermediate `ByteBuffer`s back to the pool when their contents
+is copied to a new buffer. To improve pool performance, you should release buffers that are not used anymore by calling `BufferPool.release`. Only
+buffers allocated through the `BufferProvider` should be released to the pool.
+
+The pool has a maximum size (currently 4M) to prevent it from locking down too much memory and it also only recycles relatively small buffers (less
+than 64kB).
+
 ## Performance
 
 As one of the main design goals of BooPickle was performance (both in execution speed as in data size), the project includes a sub-project
@@ -449,12 +458,12 @@ Under JVM:
 16/16 : Decoding Seq[Book] with numerical IDs
 =============================================
 Library    ops/s      %          size       %          size.gz    %
-BooPickle  409032     91.5%      210        100%       190        100%
-BooPickle! 447024     100.0%     318        151%       207        109%
-Prickle    5362       1.2%       879        419%       276        145%
-uPickle    96992      21.7%      680        324%       234        123%
-Circe      60130      13.5%      680        324%       234        123%
-Pushka     154092     34.5%      680        324%       234        123%
+BooPickle  537296     100.0%     210        100%       190        100%
+BooPickle! 505594     94.1%      318        151%       207        109%
+Prickle    5276       1.0%       879        419%       276        145%
+uPickle    90670      16.9%      680        324%       234        123%
+Circe      55946      10.4%      680        324%       234        123%
+Pushka     145128     27.0%      680        324%       234        123%
 ```
 
 Performance test suite measures how many encode or decode operations the library can do in one second and also checks the size of the raw
@@ -478,8 +487,6 @@ When serializing large objects, BooPickle encodes them into multiple separate `B
 which will avoid duplicating the serialized data.
 
 ## Using BooPickle with Ajax
-
-To be documented :)
 
 For now, see [SPA tutorial](https://github.com/ochrons/scalajs-spa-tutorial) for example usage.
 
@@ -512,9 +519,9 @@ UTF-8 coding itself. Several browsers provide a `TextDecoder` interface to do th
 other browsers, BooPickle relies on Scala.js' implementation for coding UTF-8.
 
 Under Scala.js BooPickle depends indirectly on [typed arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays) 
-because direct `ByteBuffer`s are implemented with typed arrays. These may not be available on all JS platforms (most notably Node.js, which has its 
-own Buffers, and IE versions 9 and below). When testing code that uses BooPickle (and direct `ByteBuffer`s), make sure your tests are run
-under PhantomJS, because neither Node.js nor Rhino support typed arrays. Alternatively make sure your tests only use heap `ByteBuffer`s.
+because direct `ByteBuffer`s are implemented with typed arrays. These may not be available on all JS platforms (most notably old Node.js, which has
+its own Buffers, and IE versions 9 and below). When testing code that uses BooPickle (and direct `ByteBuffer`s), make sure your tests are run under
+a recent version of Node.js as Rhino doesn't support typed arrays. Alternatively make sure your tests only use heap `ByteBuffer`s.
  
 ## Common issues with ByteBuffers
 
@@ -711,15 +718,17 @@ def encodeUTF8(s: String): ByteBuffer = {
 
 ### 1.2.0-SNAPSHOT
 
-- Extracted common `Encoder` and `Decoder` traits with implementations for size and speed. Default codec is optimized for size.
+- Extracted common `Encoder` and `Decoder` traits with separate implementations for size and speed. Default codec is optimized for size
   - Added a codec optimized for speed, using simpler encoding. This is intended to be used within an application, for example when communicating between
     web workers in Scala.js
-  - `Unpickle.fromBytes` now takes an implicit for building an `UnpickleState` for a given `ByteBuffer` to allow selection between different decoders.
-- Removed special encodings for UUID and numeric strings.
-- Special codecs for common `Array` types (`Byte`, `Int`, `Float`, `Double`) and optimized code path when pickling them.
+  - `Unpickle.fromBytes` now takes an implicit for building an `UnpickleState` for a given `ByteBuffer` to allow selection between different decoders
+- Removed special encodings for UUID and numeric strings
+- Special codecs for common `Array` types (`Byte`, `Int`, `Float`, `Double`) and optimized code path for pickling them
 - Infrequently used picklers made `lazy` to improve Dead Code Elimination (DCE) in Scala.js
+- String coding performance improved on JVM
 - Updated to Scala.js 0.6.9
-- `transformPickler` parameter order switched to better support type inference.
+- `transformPickler` parameter order switched to better support type inference
+- Introduced a `BufferPool` for reusing `ByteBuffer`s when pickling. You can return used buffers back to the pool with `BufferPool.release`
 
 ### 1.1.3
 

@@ -72,9 +72,8 @@ lazy val boopickle = crossProject
         Some("releases" at nexus + "service/local/staging/deploy/maven2")
     }
   ).jsSettings(
-    // use PhantomJS for testing, because we need real browser JS stuff like TypedArrays
+    // use NodeJS for testing, because we need stuff like TypedArrays
     scalaJSUseRhino in Global := false,
-    //jsDependencies += RuntimeDOM,
     scalacOptions ++= (if (isSnapshot.value) Seq.empty
     else Seq({
       val a = baseDirectory.value.toURI.toString.replaceFirst("[^/]+/?$", "")
@@ -147,7 +146,6 @@ lazy val perftestsJVM = preventPublication(perftests.jvm)
     libraryDependencies += "io.circe" %% "circe-jawn" % "0.2.1"
   )
   .dependsOn(boopickleJVM)
-
 
 lazy val root = preventPublication(project.in(file(".")))
   .settings()

@@ -12,10 +12,13 @@ object BufferPool {
     override def compare(o1: Entry, o2: Entry): Int = o2.size - o1.size
   }
 
+  // maximum size of a ByteBuffer to be included in the pool
   private final val maxBufferSize = 64*1024
+  // maximum total size of buffers in the pool
   private final val maxPoolSize = 4*1024*1024
 
   val pool = new ConcurrentSkipListSet[Entry](new EntryComparator)
+  // for collecting some performance characteristics
   @volatile var allocOk = 0
   @volatile var allocMiss = 0
   @volatile var maxSize = 0L
