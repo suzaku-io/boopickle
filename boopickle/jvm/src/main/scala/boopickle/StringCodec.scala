@@ -27,4 +27,8 @@ object StringCodec extends StringCodecFuncs {
   override def encodeUTF16(str: String): ByteBuffer = {
     StandardCharsets.UTF_16LE.encode(str)
   }
+
+  override def decodeFast(len: Int, buf: ByteBuffer): String = decodeUTF8(len, buf)
+
+  override def encodeFast(s: String): ByteBuffer = encodeUTF8(s)
 }

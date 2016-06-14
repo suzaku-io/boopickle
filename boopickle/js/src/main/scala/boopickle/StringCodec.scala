@@ -84,4 +84,8 @@ object StringCodec extends StringCodecFuncs {
     }
     TypedArrayBuffer.wrap(new Int8Array(ta.buffer))
   }
+
+  override def decodeFast(len: Int, buf: ByteBuffer): String = decodeUTF16(len, buf)
+
+  override def encodeFast(s: String): ByteBuffer = encodeUTF16(s)
 }

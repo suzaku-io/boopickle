@@ -103,11 +103,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
     *
     * @return
     */
-  def readString: String = {
-    // read string length
-    val len = readInt
-    stringCodec.decodeUTF16(len, buf)
-  }
+  def readString: String = readString(readInt)
 
   /**
     * Decodes a UTF-8 encoded string whose length is already known
@@ -116,7 +112,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
     * @return
     */
   def readString(len: Int): String = {
-    stringCodec.decodeUTF16(len, buf)
+    stringCodec.decodeFast(len, buf)
   }
 
   def readByteBuffer: ByteBuffer = {
@@ -290,7 +286,7 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
     * @return
     */
   def writeString(s: String): Encoder = {
-    val strBytes = stringCodec.encodeUTF16(s)
+    val strBytes = stringCodec.encodeFast(s)
     writeInt(strBytes.limit)
     alloc(strBytes.limit).put(strBytes)
     this

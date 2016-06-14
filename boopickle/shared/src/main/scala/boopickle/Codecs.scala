@@ -10,6 +10,10 @@ trait StringCodecFuncs {
   def decodeUTF16(len: Int, buf: ByteBuffer): String
 
   def encodeUTF16(s: String): ByteBuffer
+
+  def decodeFast(len: Int, buf: ByteBuffer): String
+
+  def encodeFast(s: String): ByteBuffer
 }
 
 trait Decoder {

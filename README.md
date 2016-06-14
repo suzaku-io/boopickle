@@ -397,7 +397,25 @@ val bb = Pickle.intoBytes(ex)
 Note that the basic `addException` mechanism only pickles the exception message, not any other fields. If you wish to pickle more
 fields, create transform picklers described above with the `addTransform` function. The same `CompositePickler` can contain both regular
 exception picklers and transform picklers.
- 
+
+## Codecs
+
+Originally BooPickle had a single codec optimized for both size and speed. From 1.2.0 onwards there are now two codecs, the original one optimized
+for size and a new codec optimized for speed (especially in the browser).
+
+The speed oriented codec (`EncodeSpeed` and `DecodeSpeed`) works reliably only within a single application as it may dynamically choose different
+encoding methods based on the environment. You should therefore not use it in network communication.
+
+The codec is chosen as part of building an instance of `PickleState` and `UnpickleState`, which implicitly chooses the size optimized codec by
+default. To override this you can either manually create the instances of pickle states, or define an implicit to override the defaults. For
+`UnpickleState` you need to define a function taking a `ByteBuffer` and returning an instance of `UnpickleState` as in the example below. This will
+then be used by the `Unpickle[A].fromBytes` function.
+
+```scala
+implicit def pState: PickleState = new PickleState(new EncoderSpeed)
+implicit def uState: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSpeed(b))
+```
+
 ## Performance
 
 As one of the main design goals of BooPickle was performance (both in execution speed as in data size), the project includes a sub-project
@@ -413,24 +431,30 @@ To ensure good results, run the tests at least twice in the browser.
 
 Both tests provide similar output, although there are small differences in the Gzipped sizes due to the use of different libraries.
 
-In the browser:
+In the browser (BooPickle! is using the speed optimized codec):
 ```
-18/18 : Decoding Seq[Book] with numerical IDs
+16/16 : Decoding Seq[Book] with numerical IDs
 =============================================
-Library    ops/s      %          size       %          size.gz    %         
-BooPickle  42418      100.0%     194        100%       192        100%      
-Prickle    2056       4.8%       863        445%       272        142%      
-uPickle    13740      32.4%      680        351%       233        121%  
+Library    ops/s      %          size       %          size.gz    %
+BooPickle  38928      82.9%      210        100%       196        100%
+BooPickle! 46972      100.0%     468        223%       244        124%
+Prickle    1854       3.9%       863        411%       272        139%
+uPickle    11082      23.6%      680        324%       233        119%
+Circe      9040       19.2%      680        324%       233        119%
+Pushka     20052      42.7%      680        324%       233        119%
 ```
 
 Under JVM:
 ```
-18/18 : Decoding Seq[Book] with numerical IDs
+16/16 : Decoding Seq[Book] with numerical IDs
 =============================================
 Library    ops/s      %          size       %          size.gz    %
-BooPickle  562824     100.0%     194        100%       187        100%
-Prickle    11876      2.1%       879        453%       276        148%
-uPickle    110466     19.6%      680        351%       234        125%
+BooPickle  409032     91.5%      210        100%       190        100%
+BooPickle! 447024     100.0%     318        151%       207        109%
+Prickle    5362       1.2%       879        419%       276        145%
+uPickle    96992      21.7%      680        324%       234        123%
+Circe      60130      13.5%      680        324%       234        123%
+Pushka     154092     34.5%      680        324%       234        123%
 ```
 
 Performance test suite measures how many encode or decode operations the library can do in one second and also checks the size of the raw
@@ -519,7 +543,8 @@ buffer.get(data)
 
 Conversion in the other direction is trivial with the help of `ByteBuffer.wrap()` method.
 
-On the JS side things are a bit more complicated. 
+On the JS side things are a bit more complicated due to the use of JavaScript `ArrayBuffer` underneath the `ByteBuffer`.
+
 ## Internal details
 
 ### Efficient coding
@@ -533,10 +558,7 @@ In many situations there is a need to encode a length (of String, Seq, Map, etc.
 non-negative, we can use negative integers to indicate other things. BooPickle supports coding multiple instances of the same object reference by using
 a reference value. The length value is reused to encode the reference by just flipping it into a negative value.
 
-In addition to reusing negative values, the multi-byte integer format also allows for special codings. These are used to indicate special values such as
-UUID and numeral strings. For example a UUID as a string takes 36 bytes of space, although it only represents a 128-bit (or 16 byte) value. By recognizing
-these specific patterns, they can be represented in a more optimal way, saving up to 20 bytes. Of course inspecting string content when encoding makes
-it a bit slower, but it's small price to pay for savings in data size.
+Note that when using the speed optimized codecs (`EncodeSpeed` and `DecodeSpeed`) some of these size optimizations are not used.
 
 ### Automatic pickler generation with macros
 

@@ -34,10 +34,10 @@ trait BasicImplicitPicklers extends PicklerHelper {
   implicit def eitherPickler[T: P, S: P] = BasicPicklers.EitherPickler[T, S]
   implicit def leftPickler[T: P, S: P] = BasicPicklers.LeftPickler[T, S]
   implicit def rightPickler[T: P, S: P] = BasicPicklers.RightPickler[T, S]
-  implicit def iterablePickler[T: P, V[_] <: Iterable[_]](implicit cbf: CanBuildFrom[Nothing, T, V[T]]): P[V[T]] = BasicPicklers.IterablePickler[T, V]
   implicit def arrayPickler[T: P : ClassTag]: P[Array[T]] = BasicPicklers.ArrayPickler[T]
   implicit def mapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]](implicit
     cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): P[V[T, S]] = BasicPicklers.MapPickler[T, S, V]
+  implicit def iterablePickler[T: P, V[_] <: Iterable[_]](implicit cbf: CanBuildFrom[Nothing, T, V[T]]): P[V[T]] = BasicPicklers.IterablePickler[T, V]
 }
 
 trait TransformPicklers {

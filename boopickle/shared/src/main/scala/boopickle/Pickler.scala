@@ -358,6 +358,7 @@ object BasicPicklers extends PicklerHelper {
           state.enc.writeInt(-idx)
         case None =>
           implicitly[ClassTag[T]] match {
+            // handle specialization
             case ClassTag.Byte =>
               state.enc.writeByteArray(array.asInstanceOf[Array[Byte]])
               state.addIdentityRef(array)
@@ -391,6 +392,7 @@ object BasicPicklers extends PicklerHelper {
           state.identityFor[Array[T]](-idx)
         case len =>
           val r = implicitly[ClassTag[T]] match {
+            // handle specialization
             case ClassTag.Byte =>
               state.dec.readByteArray(len).asInstanceOf[Array[T]]
             case ClassTag.Int =>
@@ -431,7 +433,7 @@ object BasicPicklers extends PicklerHelper {
           // encode length
           state.enc.writeInt(map.size)
           // encode contents as a sequence
-          map.iterator.asInstanceOf[Iterator[(T, S)]].foreach { a => write[T](a._1); write[S](a._2) }
+          map.asInstanceOf[scala.collection.Map[T, S]].foreach { case (k, v) => write(k); write(v) }
           state.addIdentityRef(map)
       }
     }

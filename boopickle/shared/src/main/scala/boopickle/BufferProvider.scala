@@ -35,8 +35,7 @@ trait BufferProvider {
 }
 
 abstract class ByteBufferProvider extends BufferProvider {
-  // fits into a MTU
-  private final val initSize = 1400
+  private final val initSize = 1024
   private val buffers = mutable.ArrayBuffer[ByteBuffer]()
   private var currentBuf: ByteBuffer = _
 
