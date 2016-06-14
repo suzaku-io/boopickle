@@ -405,7 +405,7 @@ object BasicPicklers extends PicklerHelper {
       }
     }
   }
-  
+
   /**
     * Maps require a specific pickler as they have two type parameters.
     *
