@@ -5,30 +5,26 @@ import java.nio.charset.StandardCharsets
 
 object StringCodec extends StringCodecFuncs {
   override def decodeUTF8(len: Int, buf: ByteBuffer): String = {
-    val bb = buf.slice()
-    bb.limit(len)
-    val s = StandardCharsets.UTF_8.decode(bb).toString
-    buf.position(buf.position + len)
-    s
+    val a = new Array[Byte](len)
+    buf.get(a)
+    new String(a, StandardCharsets.UTF_8)
   }
 
   override def encodeUTF8(str: String): ByteBuffer = {
-    StandardCharsets.UTF_8.encode(str)
+    ByteBuffer.wrap(str.getBytes(StandardCharsets.UTF_8))
   }
 
   override def decodeUTF16(len: Int, buf: ByteBuffer): String = {
-    val bb = buf.slice()
-    bb.limit(len)
-    val s = StandardCharsets.UTF_16LE.decode(bb).toString
-    buf.position(buf.position + len)
-    s
+    val a = new Array[Byte](len)
+    buf.get(a)
+    new String(a, StandardCharsets.UTF_16LE)
   }
 
   override def encodeUTF16(str: String): ByteBuffer = {
-    StandardCharsets.UTF_16LE.encode(str)
+    ByteBuffer.wrap(str.getBytes(StandardCharsets.UTF_16LE))
   }
 
   override def decodeFast(len: Int, buf: ByteBuffer): String = decodeUTF8(len, buf)
 
-  override def encodeFast(s: String): ByteBuffer = encodeUTF8(s)
+  override def encodeFast(str: String): ByteBuffer = encodeUTF8(str)
 }

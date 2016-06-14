@@ -1,5 +1,6 @@
 package boopickle.perftests
 
+import boopickle.BufferPool
 import org.scalajs.dom
 import org.scalajs.dom.html
 
@@ -50,6 +51,14 @@ object BooApp extends js.JSApp {
       else {
         resultsDiv.appendChild(h4("Completed!").render)
       }
+      // print out buffer pool usage
+      println(
+        s"""BufferPool:
+            |  allocations = ${BufferPool.allocOk}
+            |  misses      = ${BufferPool.allocMiss}
+            |  count       = ${BufferPool.poolCount}
+            |  size        = ${BufferPool.poolSize}
+            |  maxSize     = ${BufferPool.maxSize}""".stripMargin)
       ()
     }
     dom.window.setTimeout(() => runNext(Tests.suites), 10)

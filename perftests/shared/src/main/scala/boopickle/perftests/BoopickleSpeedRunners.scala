@@ -3,7 +3,7 @@ package boopickle.perftests
 import java.nio.ByteBuffer
 
 import boopickle.Default._
-import boopickle.{DecoderSpeed, EncoderSpeed}
+import boopickle.{BufferPool, DecoderSpeed, EncoderSpeed}
 
 abstract class BooSpeedRunner[A](data: A) extends TestRunner[A](data) {
   override def name = "BooPickle!"
@@ -26,7 +26,8 @@ object BooPickleSpeedRunners {
     }
 
     override def run(): Unit = {
-      Pickle.intoBytes(testData)
+      val bb = Pickle.intoBytes(testData)
+      BufferPool.release(bb)
       ()
     }
   }

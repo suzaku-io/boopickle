@@ -2,6 +2,7 @@ package boopickle.perftests
 
 import java.nio.ByteBuffer
 
+import boopickle.BufferPool
 import boopickle.Default._
 
 abstract class BooRunner[A](data: A) extends TestRunner[A](data) {
@@ -22,7 +23,8 @@ object BooPickleRunners {
     }
 
     override def run(): Unit = {
-      Pickle.intoBytes(testData)
+      val bb = Pickle.intoBytes(testData)
+      BufferPool.release(bb)
       ()
     }
   }

@@ -7,7 +7,6 @@ import io.circe.generic.auto._
 object Tests {
   val tree = TestData.genTree(5, 3)
   val suites = Seq(
-/*
     PerfTestSuite("Encode single Seq[Int]", Seq(
       BooPickleRunners.encodeRunner(Seq(3)),
       BooPickleSpeedRunners.encodeRunner(Seq(3)),
@@ -88,7 +87,6 @@ object Tests {
       // CirceRunners.decodeRunner(tree),
       PushkaRunners.decodeRunner(tree)
     )),
-*/
     PerfTestSuite("Encode very large Map[String, Int]", List(
       BooPickleRunners.encodeRunner(TestData.largeStringIntMap),
       BooPickleSpeedRunners.encodeRunner(TestData.largeStringIntMap),

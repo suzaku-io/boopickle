@@ -1,6 +1,6 @@
 package boopickle
 
-import java.nio.{ByteOrder, ByteBuffer}
+import java.nio.{ByteBuffer, ByteOrder}
 
 import scala.collection.mutable
 
@@ -35,9 +35,9 @@ trait BufferProvider {
 }
 
 abstract class ByteBufferProvider extends BufferProvider {
-  private final val initSize = 1024
-  private val buffers = mutable.ArrayBuffer[ByteBuffer]()
-  private var currentBuf: ByteBuffer = _
+  private final val initSize = 1500
+  protected val buffers = mutable.ArrayBuffer[ByteBuffer]()
+  protected var currentBuf: ByteBuffer = _
 
   // prepare initial buffer
   reset()
@@ -82,11 +82,50 @@ abstract class ByteBufferProvider extends BufferProvider {
 }
 
 class HeapByteBufferProvider extends ByteBufferProvider {
-  override protected def allocate(size: Int) = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
+  override protected def allocate(size: Int) = {
+    BufferPool.allocate(size).getOrElse(ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN))
+  }
+
+  override def asByteBuffer = {
+    currentBuf.flip()
+    if (buffers.size == 1)
+      currentBuf
+    else {
+      // create a new buffer and combine all buffers into it
+      val comb = allocate(buffers.map(_.limit).sum)
+      buffers.foreach {buf =>
+        comb.put(buf)
+        // release to the pool
+        BufferPool.release(buf)
+      }
+      comb.flip()
+      comb
+    }
+  }
+
 }
 
 class DirectByteBufferProvider extends ByteBufferProvider {
-  override protected def allocate(size: Int) = ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN)
+  override protected def allocate(size: Int) = {
+    BufferPool.allocate(size).getOrElse(ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN))
+  }
+
+  override def asByteBuffer = {
+    currentBuf.flip()
+    if (buffers.size == 1)
+      currentBuf
+    else {
+      // create a new buffer and combine all buffers into it
+      val comb = allocate(buffers.map(_.limit).sum)
+      buffers.foreach {buf =>
+        comb.put(buf)
+        // release to the pool
+        BufferPool.release(buf)
+      }
+      comb.flip()
+      comb
+    }
+  }
 }
 
 trait DefaultByteBufferProviderFuncs {

@@ -3,6 +3,8 @@ package boopickle.perftests
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 
+import boopickle.BufferPool
+
 object BooApp extends App {
 
   runTests()
@@ -33,6 +35,14 @@ object BooApp extends App {
         println(f"${r._1.name}%-10s ${r._1.count}%-10d ${f"${r._1.count * 100.0 / maxCount}%.1f%%"}%-10s ${r._2}%-10d ${f"${r._2*100.0 / minSize}%.0f%%"}%-10s ${r._3}%-10d ${f"${r._3*100.0 / minGZSize}%.0f%%"}%-10s")
       }
       println()
+      // print out buffer pool usage
+      println(
+        s"""BufferPool:
+           |  allocations = ${BufferPool.allocOk}
+           |  misses      = ${BufferPool.allocMiss}
+           |  count       = ${BufferPool.poolCount}
+           |  size        = ${BufferPool.poolSize}
+           |  maxSize     = ${BufferPool.maxSize}""".stripMargin)
     }
   }
 }

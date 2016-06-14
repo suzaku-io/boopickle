@@ -44,19 +44,17 @@ object StringCodec extends StringCodecFuncs {
       buf.position(buf.position + len)
       s
     } else {
-      val bb = buf.slice()
-      bb.limit(len)
-      val s = StandardCharsets.UTF_8.decode(bb).toString
-      buf.position(buf.position + len)
-      s
+      val a = new Array[Byte](len)
+      buf.get(a)
+      new String(a, StandardCharsets.UTF_8)
     }
   }
 
-  override def encodeUTF8(s: String): ByteBuffer = {
+  override def encodeUTF8(str: String): ByteBuffer = {
     if (js.isUndefined(js.Dynamic.global.TextEncoder)) {
-      StandardCharsets.UTF_8.encode(s)
+      ByteBuffer.wrap(str.getBytes(StandardCharsets.UTF_8))
     } else {
-      TypedArrayBuffer.wrap(utf8encoder(s))
+      TypedArrayBuffer.wrap(utf8encoder(str))
     }
   }
 
@@ -67,19 +65,17 @@ object StringCodec extends StringCodecFuncs {
       js.Dynamic.global.String.fromCharCode.applyDynamic("apply")(null, ta).asInstanceOf[String]
       //new String(ta.toArray) // alt implementation
     } else {
-      val bb = buf.slice()
-      bb.limit(len)
-      val s = StandardCharsets.UTF_16LE.decode(bb).toString
-      buf.position(buf.position + len)
-      s
+      val a = new Array[Byte](len)
+      buf.get(a)
+      new String(a, StandardCharsets.UTF_16LE)
     }
   }
 
-  override def encodeUTF16(s: String): ByteBuffer = {
-    val ta = new Uint16Array(s.length)
+  override def encodeUTF16(str: String): ByteBuffer = {
+    val ta = new Uint16Array(str.length)
     var i = 0
-    while (i < s.length) {
-      ta(i) = s.charAt(i).toInt
+    while (i < str.length) {
+      ta(i) = str.charAt(i).toInt
       i += 1
     }
     TypedArrayBuffer.wrap(new Int8Array(ta.buffer))
@@ -87,5 +83,5 @@ object StringCodec extends StringCodecFuncs {
 
   override def decodeFast(len: Int, buf: ByteBuffer): String = decodeUTF16(len, buf)
 
-  override def encodeFast(s: String): ByteBuffer = encodeUTF16(s)
+  override def encodeFast(str: String): ByteBuffer = encodeUTF16(str)
 }
