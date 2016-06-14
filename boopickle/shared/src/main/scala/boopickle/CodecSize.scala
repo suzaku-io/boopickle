@@ -107,7 +107,7 @@ class DecoderSize(val buf: ByteBuffer) extends Decoder {
     val b = buf.get & 0xFF
     if (b != 0xE1) {
       buf.position(buf.position - 1)
-      readInt
+      readInt.toLong
     } else {
       readRawLong
     }

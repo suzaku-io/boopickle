@@ -18,7 +18,7 @@ abstract class TestRunner[A](val data: A) {
   /**
    * Run the test case
    */
-  def run: Unit
+  def run(): Unit
 }
 
 case class PerfTestGroupResult(name: String, results: Seq[PerfTestResult])

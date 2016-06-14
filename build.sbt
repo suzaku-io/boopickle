@@ -5,11 +5,24 @@ import com.typesafe.sbt.pgp.PgpKeys._
 val commonSettings = Seq(
   organization := "me.chrons",
   version := Version.library,
-  scalaVersion := "2.11.6",
-  scalacOptions ++= Seq("-unchecked", "-feature", "-deprecation", "-encoding", "utf8"),
+  scalaVersion := "2.11.8",
+  scalacOptions := Seq(
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-unchecked",
+    "-Xfatal-warnings",
+    "-Xlint",
+    "-Yinline-warnings",
+    "-Yno-adapted-args",
+    "-Ywarn-dead-code",
+    "-Ywarn-numeric-widen",
+    "-Ywarn-value-discard",
+    "-Xfuture"),
+  scalacOptions in Compile ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "utest" % "0.3.1" % "test",
+    "com.lihaoyi" %%% "utest" % "0.4.3" % "test",
     "com.github.japgolly.nyaya" %%% "nyaya-test" % "0.5.11" % "test",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
@@ -117,7 +130,7 @@ lazy val perftests = crossProject
       "io.circe" %%% "circe-parse" % "0.2.1",
       "io.circe" %%% "circe-generic" % "0.2.1"
     ),
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
   .jsSettings(
     bootSnippet := "BooApp().main();",

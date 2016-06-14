@@ -20,8 +20,9 @@ object PrickleRunners {
       r.getBytes(StandardCharsets.UTF_8)
     }
 
-    override def run = {
+    override def run(): Unit = {
       Pickle.intoString(testData)
+      ()
     }
   }
 
@@ -35,8 +36,9 @@ object PrickleRunners {
       s.getBytes(StandardCharsets.UTF_8)
     }
 
-    override def run = {
+    override def run(): Unit = {
       Unpickle[A].fromString(s)
+      ()
     }
   }
 }

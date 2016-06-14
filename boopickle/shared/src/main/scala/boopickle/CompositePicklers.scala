@@ -13,7 +13,7 @@ case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_
 
   override def pickle(obj: A)(implicit state: PickleState): Unit = {
     if (obj == null) {
-      state.enc.writeInt(CompositeNull)
+      state.enc.writeInt(CompositeNull.toInt)
     } else {
       val name = obj.getClass.getName
       val idx = picklers.indexWhere(_._1 == name)
@@ -46,11 +46,12 @@ case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_
     this
   }
 
-  def addException[B <: A with Throwable](ctor: (String) => B)(implicit tag: ClassTag[B]) = {
+  def addException[B <: A with Throwable](ctor: (String) => B)(implicit tag: ClassTag[B]): CompositePickler[A] = {
     val pickler = new Pickler[B] {
       override def pickle(ex: B)(implicit state: PickleState): Unit = {
         state.pickle(ex.getMessage)
       }
+
       override def unpickle(implicit state: UnpickleState): B = {
         ctor(state.unpickle[String])
       }
@@ -59,7 +60,7 @@ case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_
     this
   }
 
-  def join[B <: A](implicit cp: CompositePickler[B]) = {
+  def join[B <: A](implicit cp: CompositePickler[B]): CompositePickler[A] = {
     picklers ++= cp.picklers
     this
   }
