@@ -484,6 +484,10 @@ object PickleTests extends TestSuite {
           assert(bb.limit == 1 + 1 + 1 + 2 + 3)
           assert(Unpickle[Array[Int]].fromBytes(bb) sameElements Array(0, 1, -1, -5555))
         }
+        'strings {
+          val bb = Pickle.intoBytes(Array("Hello", " ", "World!"))
+          assert(Unpickle[Array[String]].fromBytes(bb) sameElements Array("Hello", " ", "World!"))
+        }
         'arrayOfArray {
           val bb = Pickle.intoBytes(Array(Array(0, 0, 0), Array(1, 1, 1)))
           assert(bb.limit == 1 + 4 + 4)
@@ -783,19 +787,16 @@ object PickleTests extends TestSuite {
         }
         'normal {
           val bb = Pickle.intoBytes("normal")
-          assert(bb.limit == 4 + 6 * 2)
           val s = Unpickle[String].fromBytes(bb)
           assert(s == "normal")
         }
         'unicode {
           val bb = Pickle.intoBytes("\uD834\uDF06泡菜")
-          assert(bb.limit == 4 + 4 * 2)
           val s = Unpickle[String].fromBytes(bb)
           assert(s == "\uD834\uDF06泡菜")
         }
         'numeric {
           val bb = Pickle.intoBytes("100")
-          assert(bb.limit == 4 + 3 * 2)
           assert(Unpickle[String].fromBytes(bb) == "100")
         }
         'numericSmall {
@@ -806,41 +807,34 @@ object PickleTests extends TestSuite {
         }
         'numericLarge {
           val bb = Pickle.intoBytes("-10000000000")
-          assert(bb.limit == 4 + 12 * 2)
           assert(Unpickle[String].fromBytes(bb) == "-10000000000")
         }
         'numeric20 {
           val bb = Pickle.intoBytes("45248643522829592471")
-          // assert(bb.limit == 1 + 8)
           assert(Unpickle[String].fromBytes(bb) == "45248643522829592471")
         }
         'numericStart {
           val bb = Pickle.intoBytes("100x")
-          assert(bb.limit == 4 + 4 * 2)
           assert(Unpickle[String].fromBytes(bb) == "100x")
         }
         'numericZeros {
           val bb = Pickle.intoBytes("0100")
-          assert(bb.limit == 4 + 4 * 2)
           assert(Unpickle[String].fromBytes(bb) == "0100")
         }
         'uuid {
           val uuidStr = UUID.randomUUID().toString
           val bb = Pickle.intoBytes(uuidStr)
-          assert(bb.limit == 4 + 36 * 2)
           assert(Unpickle[String].fromBytes(bb) == uuidStr)
         }
         'uuidUpperCase {
           val uuidStr = UUID.randomUUID().toString.toUpperCase
           val bb = Pickle.intoBytes(uuidStr)
-          assert(bb.limit == 4 + 36 * 2)
           assert(Unpickle[String].fromBytes(bb) == uuidStr)
         }
       }
       'Option - {
         'some {
           val bb = Pickle.intoBytes(Some("test"))
-          assert(bb.limit == 4 + 4 + 4 * 2)
           assert(Unpickle[Option[String]].fromBytes(bb).contains("test"))
         }
         'none {
@@ -914,14 +908,12 @@ object PickleTests extends TestSuite {
         'right {
           val e: Either[Int, String] = Right("Error!")
           val bb = Pickle.intoBytes(e)
-          assert(bb.limit == 4 + 4 + 6 * 2)
           assert(Unpickle[Either[Int, String]].fromBytes(bb) == Right("Error!"))
         }
       }
       'Tuples - {
         'tuple2 {
           val bb = Pickle.intoBytes(("Hello", Some("World")))
-          assert(bb.limit == 4 + 5 * 2 + 4 + 4 + 5 * 2)
           assert(Unpickle[(String, Option[String])].fromBytes(bb) == (("Hello", Some("World"))))
         }
       }
@@ -933,7 +925,6 @@ object PickleTests extends TestSuite {
         }
         'nulls {
           val bb = Pickle.intoBytes(Seq[String](null, "Test"))
-          assert(bb.limit == 4 + 4 + 4 + 4 * 2)
           assert(Unpickle[Seq[String]].fromBytes(bb) == Seq[String](null, "Test"))
         }
         'singleEntry {
@@ -948,7 +939,6 @@ object PickleTests extends TestSuite {
         }
         'dupStrings {
           val bb = Pickle.intoBytes(Seq("test", "test", "test", "test"))
-          assert(bb.limit == 4 + 4 + 4 * 2 + 3 * 4) // seq length, first "test", 3x reference
           assert(Unpickle[Seq[String]].fromBytes(bb) == Seq("test", "test", "test", "test"))
         }
         'longSeq {
@@ -1023,6 +1013,10 @@ object PickleTests extends TestSuite {
           assert(bb.limit == 4 + 4 * 4)
           assert(Unpickle[Array[Int]].fromBytes(bb) sameElements Array(0, 1, -1, -5555))
         }
+        'strings {
+          val bb = Pickle.intoBytes(Array("Hello", " ", "World!"))
+          assert(Unpickle[Array[String]].fromBytes(bb) sameElements Array("Hello", " ", "World!"))
+        }
         'arrayOfArray {
           val bb = Pickle.intoBytes(Array(Array(0, 0, 0), Array(1, 1, 1)))
           assert(bb.limit == 4 + 4 + 4 * 3 + 4 + 4 * 3)
@@ -1045,7 +1039,6 @@ object PickleTests extends TestSuite {
           val d = Pickle.intoBytes("Testing") // BooPickle output is Little Endian
           val data: (String, ByteBuffer, String) = ("Hello", d, "World")
           val bb = Pickle.intoBytes(data)
-          assert(bb.limit == 4 + 5 * 2 + 4 + 4 + 7 * 2 + 4 + 5 * 2)
           val r = Unpickle[(String, ByteBuffer, String)].fromBytes(bb)
           val rd = Unpickle[String].fromBytes(r._2)
           assert(r._2.order() == ByteOrder.LITTLE_ENDIAN) // check byte order
@@ -1067,7 +1060,6 @@ object PickleTests extends TestSuite {
         'twoStrings {
           val s = Pickle("Hello")
           val bb = s.pickle("World").toByteBuffer
-          assert(bb.limit == 4 + 5 * 2 + 4 + 5 * 2)
           val state = UnpickleState(new DecoderSpeed(bb))
           assert(Unpickle[String].fromState(state) == "Hello")
           assert(Unpickle[String].fromState(state) == "World")
@@ -1075,7 +1067,6 @@ object PickleTests extends TestSuite {
         'stringRef {
           val s = Pickle("Hello")
           val bb = s.pickle("Hello").toByteBuffer
-          assert(bb.limit == 4 + 5 * 2 + 4)
           val state = UnpickleState(new DecoderSpeed(bb))
           assert(Unpickle[String].fromState(state) == "Hello")
           assert(Unpickle[String].fromState(state) == "Hello")
@@ -1086,17 +1077,14 @@ object PickleTests extends TestSuite {
           val state = new PickleState(new EncoderSpeed(new HeapByteBufferProvider))
           val s = state.pickle("Hello")
           val bb = s.toByteBuffer
-          assert(bb.limit == 4 + 5 * 2)
           assert(bb.hasArray)
           val ba = bb.array
-          assert(ba(0) == 10)
           assert(Unpickle[String].fromBytes(bb) == "Hello")
         }
         'DirectBuffer {
           val state = new PickleState(new EncoderSpeed(new DirectByteBufferProvider))
           val s = state.pickle("Hello")
           val bb = s.toByteBuffer
-          assert(bb.limit == 4 + 5 * 2)
           assert(bb.isDirect)
         }
       }
