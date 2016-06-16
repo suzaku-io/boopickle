@@ -111,7 +111,7 @@ trait Base {
   val Unpickle = _root_.boopickle.UnpickleImpl
   type UnpickleState = _root_.boopickle.UnpickleState
 
-  def compositePickler[A <: AnyRef] = CompositePickler[A]()
+  def compositePickler[A <: AnyRef] = CompositePickler[A]
 
   def exceptionPickler = ExceptionPickler.base
 }

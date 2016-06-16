@@ -119,24 +119,6 @@ object Tests {
       CirceRunners.decodeRunner(TestData.booksRandomID),
       PushkaRunners.decodeRunner(TestData.booksRandomID)
     )),
-    /*
-        PerfTestSuite("Encoding Seq[Book] with UUIDs", Seq(
-          BooPickleRunners.encodeRunner(TestData.booksUUID),
-          BooPickleSpeedRunners.encodeRunner(TestData.booksUUID),
-          PrickleRunners.encodeRunner(TestData.booksUUID),
-          UPickleRunners.encodeRunner(TestData.booksUUID),
-          CirceRunners.encodeRunner(TestData.booksUUID),
-          PushkaRunners.encodeRunner(TestData.booksUUID)
-        )),
-        PerfTestSuite("Decoding Seq[Book] with UUIDs", Seq(
-          BooPickleRunners.decodeRunner(TestData.booksUUID),
-          BooPickleSpeedRunners.decodeRunner(TestData.booksUUID),
-          PrickleRunners.decodeRunner(TestData.booksUUID),
-          UPickleRunners.decodeRunner(TestData.booksUUID),
-          CirceRunners.decodeRunner(TestData.booksUUID),
-          PushkaRunners.decodeRunner(TestData.booksUUID)
-        )),
-    */
     PerfTestSuite("Encoding Seq[Book] with numerical IDs", Seq(
       BooPickleRunners.encodeRunner(TestData.booksNumId),
       BooPickleSpeedRunners.encodeRunner(TestData.booksNumId),

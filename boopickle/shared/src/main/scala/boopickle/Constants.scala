@@ -1,6 +1,8 @@
 package boopickle
 
 private[boopickle] object Constants {
+  final val NullRef = 0
+
   // codes for special strings
   final val StringInt: Byte = 0
   final val StringLong: Byte = 1
@@ -17,6 +19,7 @@ private[boopickle] object Constants {
   final val EitherRight: Byte = 2
 
   // codes for Option
+  final val OptionNone: Byte = 0
   final val OptionSome: Byte = 1
 
   // codes for Composite pickler

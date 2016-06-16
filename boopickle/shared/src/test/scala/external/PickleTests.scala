@@ -262,7 +262,6 @@ object PickleTests extends TestSuite {
         }
         'numericSmall {
           val bb = Pickle.intoBytes("5")
-          assert(bb.limit == 2)
           assert(Unpickle[String].fromBytes(bb) == "5")
         }
         'numericLarge {
@@ -307,7 +306,7 @@ object PickleTests extends TestSuite {
         'none {
           val d: Option[String] = None
           val bb = Pickle.intoBytes(d)
-          assert(bb.limit == 2)
+          assert(bb.limit == 1)
           assert(Unpickle[Option[String]].fromBytes(bb).isEmpty)
         }
       }
@@ -800,9 +799,7 @@ object PickleTests extends TestSuite {
           assert(Unpickle[String].fromBytes(bb) == "100")
         }
         'numericSmall {
-          // short numeric strings are encoded with a ref
           val bb = Pickle.intoBytes("5")
-          assert(bb.limit == 4)
           assert(Unpickle[String].fromBytes(bb) == "5")
         }
         'numericLarge {

@@ -135,13 +135,13 @@ object BasicPicklers extends PicklerHelper {
   object StringPickler extends P[String] {
     override def pickle(s: String)(implicit state: PickleState): Unit = {
       // check for previously pickled string
-      state.immutableRefFor(s) match {
+      state.identityRefFor(s) match {
         case Some(idx) =>
           // encode index as negative "length"
           state.enc.writeInt(-idx)
         case None =>
           if (s.nonEmpty)
-            state.addImmutableRef(s)
+            state.addIdentityRef(s)
           state.enc.writeString(s)
       }
     }
@@ -150,10 +150,10 @@ object BasicPicklers extends PicklerHelper {
       state.dec.readInt match {
         case 0 => ""
         case idx if idx < 0 =>
-          state.immutableFor[String](-idx)
+          state.identityFor[String](-idx)
         case len =>
           val s = state.dec.readString(len)
-          state.addImmutableRef(s)
+          state.addIdentityRef(s)
           s
       }
     }
@@ -225,22 +225,17 @@ object BasicPicklers extends PicklerHelper {
 
   def OptionPickler[T: P]: P[Option[T]] = new P[Option[T]] {
     override def pickle(obj: Option[T])(implicit state: PickleState): Unit = {
+      if(obj == null) {
+        state.enc.writeInt(NullRef)
+        return
+      }
       obj match {
         case Some(x) =>
-          // check if this Option has been pickled already
-          state.identityRefFor(obj) match {
-            case Some(idx) =>
-              // encode index as negative "length"
-              state.enc.writeInt(-idx)
-            case None =>
-              state.enc.writeInt(OptionSome.toInt)
-              write[T](x)
-              state.addIdentityRef(obj)
-          }
+          state.enc.writeInt(OptionSome.toInt)
+          write[T](x)
         case None =>
-          // `None` is always encoded as reference
-          val idx = state.identityRefFor(obj).get
-          state.enc.writeInt(-idx)
+          // `None` is always encoded as zero
+          state.enc.writeInt(OptionNone.toInt)
       }
     }
 
@@ -248,10 +243,9 @@ object BasicPicklers extends PicklerHelper {
       state.dec.readInt match {
         case OptionSome =>
           val o = Some(read[T])
-          state.addIdentityRef(o)
           o
-        case idx if idx < 0 =>
-          state.identityFor[Option[T]](-idx)
+        case OptionNone =>
+          None
         case _ =>
           throw new IllegalArgumentException("Invalid coding for Option type")
       }
@@ -262,21 +256,17 @@ object BasicPicklers extends PicklerHelper {
 
   def EitherPickler[T: P, S: P]: P[Either[T, S]] = new P[Either[T, S]] {
     override def pickle(obj: Either[T, S])(implicit state: PickleState): Unit = {
-      // check if this Either has been pickled already
-      state.identityRefFor(obj) match {
-        case Some(idx) =>
-          // encode index as negative "length"
-          state.enc.writeInt(-idx)
-        case None =>
-          obj match {
-            case Left(l) =>
-              state.enc.writeInt(EitherLeft.toInt)
-              write[T](l)
-            case Right(r) =>
-              state.enc.writeInt(EitherRight.toInt)
-              write[S](r)
-          }
-          state.addIdentityRef(obj)
+      if(obj == null) {
+        state.enc.writeInt(NullRef)
+        return
+      }
+      obj match {
+        case Left(l) =>
+          state.enc.writeInt(EitherLeft.toInt)
+          write[T](l)
+        case Right(r) =>
+          state.enc.writeInt(EitherRight.toInt)
+          write[S](r)
       }
     }
 
@@ -286,8 +276,6 @@ object BasicPicklers extends PicklerHelper {
           Left(read[T])
         case EitherRight =>
           Right(read[S])
-        case idx if idx < 0 =>
-          state.identityFor[Either[T, S]](-idx)
         case _ =>
           throw new IllegalArgumentException("Invalid coding for Either type")
       }
@@ -465,41 +453,25 @@ final class PickleState(val enc: Encoder) {
   import PickleState._
 
   /**
-    * Object reference for pickled immutable objects. Currently only for strings.
-    *
-    * Index 0 is not used
-    * Index 1 = null
-    * Index 2-n, references to pickled immutable objects
-    */
-  private[this] val immutableRefs = new mutable.AnyRefMap[AnyRef, Int]
-  private[this] var immutableIdx = 1
-
-  // initialize with basic data
-  addImmutableRef(null)
-  Constants.immutableInitData.foreach(addImmutableRef)
-
-  @inline def immutableRefFor(obj: AnyRef) = immutableRefs.get(obj)
-
-  @inline def addImmutableRef(obj: AnyRef): Unit = {
-    immutableRefs += obj -> immutableIdx
-    immutableIdx += 1
-  }
-
-  /**
     * Object reference for pickled objects (use identity for equality comparison)
     *
     * Index 0 is not used
     * Index 1 = null
     * Index 2-n, references to pickled objects
     */
-  private[this] val identityRefs = new mutable.HashMap[Identity[AnyRef], Int]
-  private[this] var identityIdx = 1
+  private[this] val identityRefs: mutable.HashMap[Identity[AnyRef], Int] = mutable.HashMap.empty
+  private[this] var identityIdx = 2
 
   // initialize with basic data
-  addIdentityRef(null)
-  Constants.identityInitData.foreach(addIdentityRef)
+  // addIdentityRef(null)
+  // Constants.identityInitData.foreach(addIdentityRef)
 
-  @inline def identityRefFor(obj: AnyRef) = identityRefs.get(Identity(obj))
+  @inline def identityRefFor(obj: AnyRef): Option[Int] = {
+    if (obj == null)
+      Some(1)
+    else
+      identityRefs.get(Identity(obj))
+  }
 
   @inline def addIdentityRef(obj: AnyRef): Unit = {
     identityRefs += ((Identity(obj), identityIdx))
@@ -539,44 +511,24 @@ object PickleState {
 
 final class UnpickleState(val dec: Decoder) {
   /**
-    * Object reference for pickled immutable objects. Currently only for strings.
-    *
-    * Index 0 is not used
-    * Index 1 = null
-    * Index 2-n, references to pickled immutable objects
-    */
-  private[this] val immutableRefs = new mutable.ArrayBuffer[AnyRef](16)
-
-  // initialize with basic data
-  addImmutableRef(null)
-  addImmutableRef(null)
-  Constants.immutableInitData.foreach(addImmutableRef)
-
-  @inline def immutableFor[A <: AnyRef](ref: Int): A = {
-    assert(ref > 0)
-    immutableRefs(ref).asInstanceOf[A]
-  }
-
-  @inline def addImmutableRef(obj: AnyRef): Unit =
-    immutableRefs += obj
-
-  /**
     * Object reference for pickled objects (use identity for equality comparison)
     *
     * Index 0 is not used
     * Index 1 = null
     * Index 2-n, references to pickled objects
     */
-  private[this] val identityRefs = new mutable.ArrayBuffer[AnyRef](16)
+  private[this] lazy val identityRefs = new mutable.ArrayBuffer[AnyRef](16)
 
   // initialize with basic data
-  addIdentityRef(null)
-  addIdentityRef(null)
-  Constants.identityInitData.foreach(addIdentityRef)
+  //addIdentityRef(null)
+  //addIdentityRef(null)
+  // Constants.identityInitData.foreach(addIdentityRef)
 
   @inline def identityFor[A <: AnyRef](ref: Int): A = {
-    assert(ref > 0)
-    identityRefs(ref).asInstanceOf[A]
+    if (ref == 1)
+      null.asInstanceOf[A]
+    else
+      identityRefs(ref - 2).asInstanceOf[A]
   }
 
   @inline def addIdentityRef(obj: AnyRef): Unit =

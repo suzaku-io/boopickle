@@ -1,26 +1,34 @@
 package boopickle
 
+import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
  * Encodes a class belonging to a type hierarchy. Type is identified by the index in the `picklers` sequence, so care
  * must be taken to ensure picklers are added in the same order.
  */
-case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_])] = Vector()) extends Pickler[A] {
+class CompositePickler[A <: AnyRef] extends Pickler[A] {
 
   import Constants._
   import Default.stringPickler
+
+  var picklerIdx = 0
+  val picklers = mutable.HashMap.empty[Class[_], (Int, Pickler[_])]
+  val unpicklers = mutable.ArrayBuffer.empty[Pickler[_]]
 
   override def pickle(obj: A)(implicit state: PickleState): Unit = {
     if (obj == null) {
       state.enc.writeInt(CompositeNull.toInt)
     } else {
-      val name = obj.getClass.getName
-      val idx = picklers.indexWhere(_._1 == name)
-      if (idx == -1)
-        throw new IllegalArgumentException(s"CompositePickler doesn't know class '$name'. Known classes: ${picklers.map(_._1).mkString(", ")}")
-      state.enc.writeInt(idx + 1)
-      picklers(idx)._2.asInstanceOf[Pickler[A]].pickle(obj)
+      val clz = obj.getClass.asInstanceOf[Class[_]]
+      val name = clz.getName
+      picklers.get(clz) match {
+        case None =>
+          throw new IllegalArgumentException(s"CompositePickler doesn't know class '$name'. Known classes: ${picklers.map(_._1.getName).mkString(", ")}")
+        case Some((idx, pickler)) =>
+          state.enc.writeInt(idx + 1)
+          pickler.asInstanceOf[Pickler[A]].pickle(obj)
+      }
     }
   }
 
@@ -29,20 +37,26 @@ case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_
     if (idx == CompositeNull)
       null.asInstanceOf[A]
     else {
-      if (idx < 0 || idx > picklers.length)
+      if (idx < 0 || idx > unpicklers.size)
         throw new IllegalStateException(s"Index $idx is not defined in this CompositePickler")
-      picklers(idx - 1)._2.asInstanceOf[Pickler[A]].unpickle
+      unpicklers(idx - 1).asInstanceOf[Pickler[A]].unpickle
     }
   }
 
-  def addConcreteType[B <: A](implicit p: Pickler[B], tag: ClassTag[B]): CompositePickler[A] = {
-    picklers :+= (tag.runtimeClass.getName -> p)
+  private def addPickler[B](pickler: Pickler[B], tag: ClassTag[B]): Unit = {
+    picklers.put(tag.runtimeClass, (picklerIdx, pickler))
+    unpicklers.append(pickler)
+    picklerIdx += 1
+
+  }
+  def addConcreteType[B <: A](implicit pickler: Pickler[B], tag: ClassTag[B]): CompositePickler[A] = {
+    addPickler(pickler, tag)
     this
   }
 
   def addTransform[B <: A, C](transformTo: (B) => C, transformFrom: (C) => B)(implicit p: Pickler[C], tag: ClassTag[B]) = {
     val pickler = p.xmap(transformFrom)(transformTo)
-    picklers :+= (tag.runtimeClass.getName -> pickler)
+    addPickler(pickler, tag)
     this
   }
 
@@ -56,18 +70,19 @@ case class CompositePickler[A <: AnyRef](var picklers: Vector[(String, Pickler[_
         ctor(state.unpickle[String])
       }
     }
-    picklers :+= (tag.runtimeClass.getName -> pickler)
+    addPickler(pickler, tag)
     this
   }
 
   def join[B <: A](implicit cp: CompositePickler[B]): CompositePickler[A] = {
     picklers ++= cp.picklers
+    unpicklers.appendAll(cp.unpicklers)
     this
   }
 }
 
 object CompositePickler {
-  def apply[A <: AnyRef] = new CompositePickler[A]()
+  def apply[A <: AnyRef] = new CompositePickler[A]
 }
 
 object ExceptionPickler {
@@ -95,6 +110,6 @@ object ExceptionPickler {
    * Provides simple (message only) pickling of most common Java/Scala exception types. This can be used
    * as a base for adding custom exception types.
    */
-  def base = CompositePickler[Throwable](basePicklers.picklers)
+  def base = CompositePickler[Throwable].join(basePicklers)
 }
 
