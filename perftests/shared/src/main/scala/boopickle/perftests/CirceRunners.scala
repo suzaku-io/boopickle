@@ -38,7 +38,7 @@ object CirceRunners {
     }
 
     override def run(): Unit = {
-      u.decodeJson(parse.parse(s).toOption.get)
+      u.decodeJson(parser.parse(s).toOption.get)
       ()
     }
   }

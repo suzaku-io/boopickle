@@ -131,7 +131,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
   /**
     * Decodes an array of Bytes
     */
-  def readByteArray(): Array[Byte] = readByteArray(readInt)
+  def readByteArray(): Array[Byte] = readByteArray(readRawInt)
   def readByteArray(len: Int): Array[Byte] = {
     val array = new Array[Byte](len)
     buf.get(array)
@@ -141,7 +141,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
   /**
     * Decodes an array of Integers
     */
-  def readIntArray(): Array[Int] = readIntArray(readInt)
+  def readIntArray(): Array[Int] = readIntArray(readRawInt)
   def readIntArray(len: Int): Array[Int] = {
     val array = new Array[Int](len)
     buf.asIntBuffer().get(array)
@@ -152,7 +152,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
   /**
     * Decodes an array of Floats
     */
-  def readFloatArray(): Array[Float] = readFloatArray(readInt)
+  def readFloatArray(): Array[Float] = readFloatArray(readRawInt)
   def readFloatArray(len: Int): Array[Float] = {
     val array = new Array[Float](len)
     buf.asFloatBuffer().get(array)
@@ -163,7 +163,11 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
   /**
     * Decodes an array of Doubles
     */
-  def readDoubleArray(): Array[Double] = readDoubleArray(readInt)
+  def readDoubleArray(): Array[Double] = {
+    val len = readRawInt
+    readRawInt // remove padding
+    readDoubleArray(len)
+  }
   def readDoubleArray(len: Int): Array[Double] = {
     val array = new Array[Double](len)
     buf.asDoubleBuffer().get(array)
@@ -334,7 +338,7 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
     * Encodes an array of Bytes
     */
   def writeByteArray(ba: Array[Byte]): Encoder = {
-    writeInt(ba.length)
+    writeRawInt(ba.length)
     alloc(ba.length).put(ba)
     this
   }
@@ -343,7 +347,7 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
     * Encodes an array of Integers
     */
   def writeIntArray(ia: Array[Int]): Encoder = {
-    writeInt(ia.length)
+    writeRawInt(ia.length)
     val bb = alloc(ia.length * 4)
     bb.asIntBuffer().put(ia)
     bb.position(bb.position + ia.length * 4)
@@ -354,7 +358,7 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
     * Encodes an array of Floats
     */
   def writeFloatArray(fa: Array[Float]): Encoder = {
-    writeInt(fa.length)
+    writeRawInt(fa.length)
     val bb = alloc(fa.length * 4)
     bb.asFloatBuffer().put(fa)
     bb.position(bb.position + fa.length * 4)
@@ -365,7 +369,9 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
     * Encodes an array of Doubles
     */
   def writeDoubleArray(da: Array[Double]): Encoder = {
-    writeInt(da.length)
+    writeRawInt(da.length)
+    // padding
+    writeRawInt(0)
     val bb = alloc(da.length * 8)
     bb.asDoubleBuffer().put(da)
     bb.position(bb.position + da.length * 8)

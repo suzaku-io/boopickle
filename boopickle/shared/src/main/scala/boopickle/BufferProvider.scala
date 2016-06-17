@@ -27,43 +27,35 @@ trait BufferProvider {
    * @return
    */
   def asByteBuffers: Iterable[ByteBuffer]
-
-  /**
-   * Resets the buffer provider so it can be reused
-   */
-  def reset(): Unit
 }
 
 abstract class ByteBufferProvider extends BufferProvider {
-  private final val initSize = 1500
-  protected val buffers = mutable.ArrayBuffer[ByteBuffer]()
-  protected var currentBuf: ByteBuffer = _
-
-  // prepare initial buffer
-  reset()
+  import ByteBufferProvider._
+  protected var buffers: List[ByteBuffer] = Nil
+  protected var currentBuf: ByteBuffer = allocate(initSize)
 
   protected def allocate(size: Int): ByteBuffer
 
   def alloc(size: Int): ByteBuffer = {
     if (currentBuf.remaining() < size) {
-      val newBuf = allocate(size + initSize * 2)
-      buffers.append(newBuf)
       // flip current buffer (prepare for reading and set limit)
       currentBuf.flip()
+      buffers = currentBuf :: buffers
       // replace current buffer with the new one
-      currentBuf = newBuf
+      currentBuf = allocate((size + expandSize + 15) & ~15)
     }
     currentBuf
   }
 
   def asByteBuffer = {
     currentBuf.flip()
-    if (buffers.size == 1)
+    if (buffers.isEmpty)
       currentBuf
     else {
+      val bufList = (currentBuf :: buffers).reverse
       // create a new buffer and combine all buffers into it
-      val comb = allocate(buffers.map(_.limit).sum)
-      buffers.foreach(buf => comb.put(buf))
+      val comb = allocate(bufList.map(_.limit).sum)
+      bufList.foreach(buf => comb.put(buf))
       comb.flip()
       comb
     }
@@ -71,14 +63,13 @@ abstract class ByteBufferProvider extends BufferProvider {
 
   def asByteBuffers = {
     currentBuf.flip()
-    buffers.toVector
+    (currentBuf :: buffers).toVector
   }
+}
 
-  def reset(): Unit = {
-    buffers.clear()
-    currentBuf = allocate(initSize)
-    buffers += currentBuf
-  }
+object ByteBufferProvider {
+  final val initSize = 512
+  final val expandSize = initSize * 4
 }
 
 class HeapByteBufferProvider extends ByteBufferProvider {
@@ -88,12 +79,13 @@ class HeapByteBufferProvider extends ByteBufferProvider {
 
   override def asByteBuffer = {
     currentBuf.flip()
-    if (buffers.size == 1)
+    if (buffers.isEmpty)
       currentBuf
     else {
       // create a new buffer and combine all buffers into it
-      val comb = allocate(buffers.map(_.limit).sum)
-      buffers.foreach {buf =>
+      val bufList = (currentBuf :: buffers).reverse
+      val comb = allocate(bufList.map(_.limit).sum)
+      bufList.foreach {buf =>
         comb.put(buf)
         // release to the pool
         BufferPool.release(buf)
@@ -107,17 +99,18 @@ class HeapByteBufferProvider extends ByteBufferProvider {
 
 class DirectByteBufferProvider extends ByteBufferProvider {
   override protected def allocate(size: Int) = {
-    BufferPool.allocate(size).getOrElse(ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN))
+    BufferPool.allocateDirect(size).getOrElse(ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN))
   }
 
   override def asByteBuffer = {
     currentBuf.flip()
-    if (buffers.size == 1)
+    if (buffers.isEmpty)
       currentBuf
     else {
       // create a new buffer and combine all buffers into it
-      val comb = allocate(buffers.map(_.limit).sum)
-      buffers.foreach {buf =>
+      val bufList = (currentBuf :: buffers).reverse
+      val comb = allocate(bufList.map(_.limit).sum)
+      bufList.foreach {buf =>
         comb.put(buf)
         // release to the pool
         BufferPool.release(buf)

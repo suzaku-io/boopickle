@@ -134,28 +134,21 @@ object BasicPicklers extends PicklerHelper {
 
   object StringPickler extends P[String] {
     override def pickle(s: String)(implicit state: PickleState): Unit = {
-      // check for previously pickled string
-      state.identityRefFor(s) match {
-        case Some(idx) =>
-          // encode index as negative "length"
-          state.enc.writeInt(-idx)
-        case None =>
-          if (s.nonEmpty)
-            state.addIdentityRef(s)
-          state.enc.writeString(s)
+      if (s == null) {
+        state.enc.writeInt(NullRef)
+        return
       }
+      state.enc.writeString(s)
     }
 
     override def unpickle(implicit state: UnpickleState): String = {
-      state.dec.readInt match {
-        case 0 => ""
-        case idx if idx < 0 =>
-          state.identityFor[String](-idx)
-        case len =>
-          val s = state.dec.readString(len)
-          state.addIdentityRef(s)
-          s
-      }
+      val len = state.dec.readInt
+      if (len == NullRef)
+        null
+      else if (len == 0)
+        ""
+      else
+        state.dec.readString(len)
     }
   }
 
@@ -225,7 +218,7 @@ object BasicPicklers extends PicklerHelper {
 
   def OptionPickler[T: P]: P[Option[T]] = new P[Option[T]] {
     override def pickle(obj: Option[T])(implicit state: PickleState): Unit = {
-      if(obj == null) {
+      if (obj == null) {
         state.enc.writeInt(NullRef)
         return
       }
@@ -241,6 +234,8 @@ object BasicPicklers extends PicklerHelper {
 
     override def unpickle(implicit state: UnpickleState): Option[T] = {
       state.dec.readInt match {
+        case NullRef =>
+          null
         case OptionSome =>
           val o = Some(read[T])
           o
@@ -256,7 +251,7 @@ object BasicPicklers extends PicklerHelper {
 
   def EitherPickler[T: P, S: P]: P[Either[T, S]] = new P[Either[T, S]] {
     override def pickle(obj: Either[T, S])(implicit state: PickleState): Unit = {
-      if(obj == null) {
+      if (obj == null) {
         state.enc.writeInt(NullRef)
         return
       }
@@ -272,6 +267,8 @@ object BasicPicklers extends PicklerHelper {
 
     override def unpickle(implicit state: UnpickleState): Either[T, S] = {
       state.dec.readInt match {
+        case NullRef =>
+          null
         case EitherLeft =>
           Left(read[T])
         case EitherRight =>
@@ -296,36 +293,30 @@ object BasicPicklers extends PicklerHelper {
     */
   def IterablePickler[T: P, V[_] <: Iterable[_]](implicit cbf: CanBuildFrom[Nothing, T, V[T]]): P[V[T]] = new P[V[T]] {
     override def pickle(iterable: V[T])(implicit state: PickleState): Unit = {
-      // check if this iterable has been pickled already
-      state.identityRefFor(iterable) match {
-        case Some(idx) =>
-          // encode index as negative "length"
-          state.enc.writeInt(-idx)
-        case None =>
-          // encode length
-          state.enc.writeInt(iterable.size)
-          // encode contents
-          iterable.iterator.asInstanceOf[Iterator[T]].foreach(a => write[T](a))
-          state.addIdentityRef(iterable)
+      if (iterable == null) {
+        state.enc.writeInt(NullRef)
+        return
       }
+      // encode length
+      state.enc.writeInt(iterable.size)
+      // encode contents
+      iterable.iterator.asInstanceOf[Iterator[T]].foreach(a => write[T](a))
     }
 
     override def unpickle(implicit state: UnpickleState): V[T] = {
       state.dec.readInt match {
+        case NullRef =>
+          null.asInstanceOf[V[T]]
         case 0 =>
           // empty sequence
           val res = cbf().result()
-          state.addIdentityRef(res)
           res
-        case idx if idx < 0 =>
-          state.identityFor[V[T]](-idx)
         case len =>
           val b = cbf()
           for (i <- 0 until len) {
             b += read[T]
           }
           val res = b.result()
-          state.addIdentityRef(res)
           res
       }
     }
@@ -339,45 +330,36 @@ object BasicPicklers extends PicklerHelper {
     */
   def ArrayPickler[T: P : ClassTag]: P[Array[T]] = new P[Array[T]] {
     override def pickle(array: Array[T])(implicit state: PickleState): Unit = {
-      // check if this iterable has been pickled already
-      state.identityRefFor(array) match {
-        case Some(idx) =>
-          // encode index as negative "length"
-          state.enc.writeInt(-idx)
-        case None =>
-          implicitly[ClassTag[T]] match {
-            // handle specialization
-            case ClassTag.Byte =>
-              state.enc.writeByteArray(array.asInstanceOf[Array[Byte]])
-              state.addIdentityRef(array)
-            case ClassTag.Int =>
-              state.enc.writeIntArray(array.asInstanceOf[Array[Int]])
-              state.addIdentityRef(array)
-            case ClassTag.Float =>
-              state.enc.writeFloatArray(array.asInstanceOf[Array[Float]])
-              state.addIdentityRef(array)
-            case ClassTag.Double =>
-              state.enc.writeDoubleArray(array.asInstanceOf[Array[Double]])
-              state.addIdentityRef(array)
-            case _ =>
-              // encode length
-              state.enc.writeInt(array.length)
-              // encode contents
-              array.foreach(a => write[T](a))
-              state.addIdentityRef(array)
-          }
+      if (array == null)
+        state.enc.writeRawInt(NullRef)
+      else {
+        // check if this iterable has been pickled already
+        implicitly[ClassTag[T]] match {
+          // handle specialization
+          case ClassTag.Byte =>
+            state.enc.writeByteArray(array.asInstanceOf[Array[Byte]])
+          case ClassTag.Int =>
+            state.enc.writeIntArray(array.asInstanceOf[Array[Int]])
+          case ClassTag.Float =>
+            state.enc.writeFloatArray(array.asInstanceOf[Array[Float]])
+          case ClassTag.Double =>
+            state.enc.writeDoubleArray(array.asInstanceOf[Array[Double]])
+          case _ =>
+            // encode length
+            state.enc.writeRawInt(array.length)
+            // encode contents
+            array.foreach(a => write[T](a))
+        }
       }
     }
 
     override def unpickle(implicit state: UnpickleState): Array[T] = {
-      state.dec.readInt match {
+      state.dec.readRawInt match {
+        case NullRef =>
+          null
         case 0 =>
           // empty Array
-          val a = Array.empty[T]
-          state.addIdentityRef(a)
-          a
-        case idx if idx < 0 =>
-          state.identityFor[Array[T]](-idx)
+          Array.empty[T]
         case len =>
           val r = implicitly[ClassTag[T]] match {
             // handle specialization
@@ -388,6 +370,8 @@ object BasicPicklers extends PicklerHelper {
             case ClassTag.Float =>
               state.dec.readFloatArray(len).asInstanceOf[Array[T]]
             case ClassTag.Double =>
+              // remove padding
+              state.dec.readRawInt
               state.dec.readDoubleArray(len).asInstanceOf[Array[T]]
             case _ =>
               val a = new Array[T](len)
@@ -396,7 +380,6 @@ object BasicPicklers extends PicklerHelper {
               }
               a
           }
-          state.addIdentityRef(r)
           r
       }
     }
@@ -412,36 +395,39 @@ object BasicPicklers extends PicklerHelper {
   def MapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]]
   (implicit cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): P[V[T, S]] = new P[V[T, S]] {
     override def pickle(map: V[T, S])(implicit state: PickleState): Unit = {
-      // check if this map has been pickled already
-      state.identityRefFor(map) match {
-        case Some(idx) =>
-          // encode index as negative "length"
-          state.enc.writeInt(-idx)
-        case None =>
-          // encode length
-          state.enc.writeInt(map.size)
-          // encode contents as a sequence
-          map.asInstanceOf[scala.collection.Map[T, S]].foreach { case (k, v) => write(k); write(v) }
-          state.addIdentityRef(map)
+      if (map == null) {
+        state.enc.writeInt(NullRef)
+        return
+      }
+      // encode length
+      state.enc.writeInt(map.size)
+      // encode contents as a sequence
+      val kPickler = implicitly[P[T]]
+      val vPickler = implicitly[P[S]]
+      map.asInstanceOf[scala.collection.Map[T, S]].foreach { kv =>
+        kPickler.pickle(kv._1)(state)
+        vPickler.pickle(kv._2)(state)
       }
     }
 
     override def unpickle(implicit state: UnpickleState): V[T, S] = {
       state.dec.readInt match {
+        case NullRef =>
+          null.asInstanceOf[V[T, S]]
         case 0 =>
           // empty map
           val res = cbf().result()
-          state.addIdentityRef(res)
           res
         case idx if idx < 0 =>
           state.identityFor[V[T, S]](-idx)
         case len =>
           val b = cbf()
+          val kPickler = implicitly[P[T]]
+          val vPickler = implicitly[P[S]]
           for (i <- 0 until len) {
-            b += read[T] -> read[S]
+            b += kPickler.unpickle(state) -> vPickler.unpickle(state)
           }
           val res = b.result()
-          state.addIdentityRef(res)
           res
       }
     }
@@ -450,8 +436,6 @@ object BasicPicklers extends PicklerHelper {
 
 final class PickleState(val enc: Encoder) {
 
-  import PickleState._
-
   /**
     * Object reference for pickled objects (use identity for equality comparison)
     *
@@ -459,23 +443,17 @@ final class PickleState(val enc: Encoder) {
     * Index 1 = null
     * Index 2-n, references to pickled objects
     */
-  private[this] val identityRefs: mutable.HashMap[Identity[AnyRef], Int] = mutable.HashMap.empty
-  private[this] var identityIdx = 2
-
-  // initialize with basic data
-  // addIdentityRef(null)
-  // Constants.identityInitData.foreach(addIdentityRef)
+  private[this] var identityRefs: IdentMap = EmptyIdentMap
 
   @inline def identityRefFor(obj: AnyRef): Option[Int] = {
     if (obj == null)
       Some(1)
     else
-      identityRefs.get(Identity(obj))
+      identityRefs(obj)
   }
 
   @inline def addIdentityRef(obj: AnyRef): Unit = {
-    identityRefs += ((Identity(obj), identityIdx))
-    identityIdx += 1
+    identityRefs = identityRefs.updated(obj)
   }
 
   @inline def pickle[A](value: A)(implicit p: Pickler[A]): PickleState = {
@@ -497,16 +475,6 @@ object PickleState {
     */
   implicit def Default: PickleState = new PickleState(new EncoderSize)
 
-  private case class Identity[+A <: AnyRef](obj: A) {
-    override def equals(that: Any): Boolean = that match {
-      case that: Identity[_] => this.obj eq that.obj
-      case _ => false
-    }
-
-    override def hashCode(): Int =
-      System.identityHashCode(obj)
-  }
-
 }
 
 final class UnpickleState(val dec: Decoder) {
@@ -517,12 +485,7 @@ final class UnpickleState(val dec: Decoder) {
     * Index 1 = null
     * Index 2-n, references to pickled objects
     */
-  private[this] lazy val identityRefs = new mutable.ArrayBuffer[AnyRef](16)
-
-  // initialize with basic data
-  //addIdentityRef(null)
-  //addIdentityRef(null)
-  // Constants.identityInitData.foreach(addIdentityRef)
+  private[this] lazy val identityRefs = new mutable.ListBuffer[AnyRef]()
 
   @inline def identityFor[A <: AnyRef](ref: Int): A = {
     if (ref == 1)

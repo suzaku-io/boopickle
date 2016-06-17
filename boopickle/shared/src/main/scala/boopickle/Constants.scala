@@ -1,7 +1,7 @@
 package boopickle
 
 private[boopickle] object Constants {
-  final val NullRef = 0
+  final val NullRef = -1
 
   // codes for special strings
   final val StringInt: Byte = 0

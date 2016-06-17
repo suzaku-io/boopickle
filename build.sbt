@@ -1,6 +1,7 @@
 import sbt._
 import Keys._
 import com.typesafe.sbt.pgp.PgpKeys._
+import org.scalajs.sbtplugin.OptimizerOptions
 
 val commonSettings = Seq(
   organization := "me.chrons",
@@ -125,14 +126,15 @@ lazy val perftests = crossProject
       "com.lihaoyi" %%% "upickle" % "0.3.7",
       "com.github.benhutchison" %%% "prickle" % "1.1.10",
       "com.github.fomkin" %%% "pushka-json" % "0.6.0",
-      "io.circe" %%% "circe-core" % "0.2.1",
-      "io.circe" %%% "circe-parse" % "0.2.1",
-      "io.circe" %%% "circe-generic" % "0.2.1"
+      "io.circe" %%% "circe-core" % "0.4.1",
+      "io.circe" %%% "circe-parser" % "0.4.1",
+      "io.circe" %%% "circe-generic" % "0.4.1"
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
   .jsSettings(
     bootSnippet := "BooApp().main();",
+    // scalaJSOptimizerOptions in (Compile, fullOptJS) ~= { _.withUseClosureCompiler(false) },
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "0.9.0",
       "com.lihaoyi" %%% "scalatags" % "0.5.5"

@@ -71,7 +71,7 @@ object MacroPickleTests extends TestSuite {
       'Recursive {
         val t = List(Test2(1, Some(Test2(2, Some(Test2(3, None))))))
         val bb = Pickle.intoBytes(t)
-        assert(bb.limit == 15)
+        assert(bb.limit == 13)
         val u = Unpickle[List[Test2]].fromBytes(bb)
         assert(u == t)
       }

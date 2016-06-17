@@ -26,7 +26,7 @@ case class PerfTestGroupResult(name: String, results: Seq[PerfTestResult])
 case class PerfTestResult(name: String, count: Int, data: Array[Byte])
 
 class PerfTester(suite: PerfTestSuite) {
-  val testTime = 500
+  val testTime = 1000
 
   def runSuite: PerfTestGroupResult = {
     // initialize all runners
@@ -35,16 +35,19 @@ class PerfTester(suite: PerfTestSuite) {
     }
     val startTime = System.currentTimeMillis()
     // warm up the VM
-    while (System.currentTimeMillis() - startTime < testTime / 2) {
-      suite.runners.foreach(_.run)
+    while (System.currentTimeMillis() - startTime < testTime) {
+      suite.runners.foreach(_.run())
     }
     // analyze performance
     val counters = suite.runners.map { runner =>
       val startTime = System.currentTimeMillis()
       var counter = 0
       while (System.currentTimeMillis() - startTime < testTime) {
-        runner.run
-        counter += 1
+        runner.run()
+        runner.run()
+        runner.run()
+        runner.run()
+        counter += 4
       }
       val endTime = System.currentTimeMillis()
       (counter * 1000L / (endTime - startTime)).toInt

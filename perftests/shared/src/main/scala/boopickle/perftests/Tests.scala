@@ -7,21 +7,22 @@ import io.circe.generic.auto._
 object Tests {
   val tree = TestData.genTree(5, 3)
   val suites = Seq(
-    PerfTestSuite("Encode single Seq[Int]", Seq(
-      BooPickleRunners.encodeRunner(Seq(3)),
-      BooPickleSpeedRunners.encodeRunner(Seq(3)),
-      PrickleRunners.encodeRunner(Seq(3)),
-      UPickleRunners.encodeRunner(Seq(3)),
-      CirceRunners.encodeRunner(Seq(3)),
-      PushkaRunners.encodeRunner(Seq(3))
-    )),
-    PerfTestSuite("Decode single Seq[Int]", Seq(
-      BooPickleRunners.decodeRunner(Seq(3)),
-      BooPickleSpeedRunners.decodeRunner(Seq(3)),
-      PrickleRunners.decodeRunner(Seq(3)),
-      UPickleRunners.decodeRunner(Seq(3)),
-      CirceRunners.decodeRunner(Seq(3)),
-      PushkaRunners.decodeRunner(Seq(3))
+    PerfTestSuite("Encode single Event(42)", Seq(
+      BooPickleRunners.encodeRunner(Event(42)),
+      BooPickleSpeedRunners.encodeRunner(Event(42)),
+      PrickleRunners.encodeRunner(Event(42)),
+      UPickleRunners.encodeRunner(Event(42)),
+      CirceRunners.encodeRunner(Event(42)),
+      PushkaRunners.encodeRunner(Event(42))
+    ))
+    ,
+    PerfTestSuite("Decode single Event(42)", Seq(
+      BooPickleRunners.decodeRunner(Event(42)),
+      BooPickleSpeedRunners.decodeRunner(Event(42)),
+      PrickleRunners.decodeRunner(Event(42)),
+      UPickleRunners.decodeRunner(Event(42)),
+      CirceRunners.decodeRunner(Event(42)),
+      PushkaRunners.decodeRunner(Event(42))
     )),
     PerfTestSuite("Encode very large Array[Int]", Seq(
       BooPickleRunners.encodeRunner(TestData.largeIntSeq),
@@ -76,7 +77,7 @@ object Tests {
       BooPickleSpeedRunners.encodeRunner(tree),
       PrickleRunners.encodeRunner(tree),
       UPickleRunners.encodeRunner(tree),
-      // CirceRunners.encodeRunner(tree),
+      CirceRunners.encodeRunner(tree),
       PushkaRunners.encodeRunner(tree)
     )),
     PerfTestSuite("Decode an object tree", Seq(
@@ -84,7 +85,7 @@ object Tests {
       BooPickleSpeedRunners.decodeRunner(tree),
       PrickleRunners.decodeRunner(tree),
       UPickleRunners.decodeRunner(tree),
-      // CirceRunners.decodeRunner(tree),
+      CirceRunners.decodeRunner(tree),
       PushkaRunners.decodeRunner(tree)
     )),
     PerfTestSuite("Encode very large Map[String, Int]", List(
@@ -102,7 +103,8 @@ object Tests {
       UPickleRunners.decodeRunner(TestData.largeStringIntMap),
       CirceRunners.decodeRunner(TestData.largeStringIntMap),
       PushkaRunners.decodeRunner(TestData.largeStringIntMap)
-    )),
+    ))
+    ,
     PerfTestSuite("Encoding Seq[Book] with random IDs", Seq(
       BooPickleRunners.encodeRunner(TestData.booksRandomID),
       BooPickleSpeedRunners.encodeRunner(TestData.booksRandomID),

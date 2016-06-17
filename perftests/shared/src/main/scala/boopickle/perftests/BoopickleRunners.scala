@@ -15,6 +15,7 @@ object BooPickleRunners {
     var testData: A = _
 
     override def initialize = {
+      BufferPool.disablePool = false
       testData = data
       val bb = Pickle.intoBytes(testData)
       val ba = new Array[Byte](bb.limit)

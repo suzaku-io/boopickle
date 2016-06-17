@@ -11,6 +11,9 @@ case class Book(id: String, name: String, author: String, publicationYear: Int)
 @pushka
 case class Node(name: String, color: String, children: Seq[Node])
 
+@pushka
+case class Event(i: Int)
+
 object TestData {
   val uuids = {
     val r = new Random(0)

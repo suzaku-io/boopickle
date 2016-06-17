@@ -716,7 +716,22 @@ def encodeUTF8(s: String): ByteBuffer = {
 
 ## Change history
 
-### 1.2.0-SNAPSHOT
+### 1.2.1-SNAPSHOT
+
+- Several optimizations to reduce overhead of pickling small data.
+  - removed immutable references from pickle states
+  - streamlined pickle state initialization
+  - custom identity map class for managing identity references while pickling
+  - smaller initial encode buffer
+- `CompositePickler` performance improved when pickling a composite with a lot of subtypes
+  - the "copy constructor" is removed from `CompositePickler` as a result of this change. Use `.join` instead
+- Array size is always written as a 32-bit integer to ensure proper alignment (big boost when reading/writing floats/ints in JS) and is padded with
+  extra 32-bits to ensure proper alignment for Double arrays
+- Strings are no longer de-duplicated to avoid a performance hit
+- Collections are no longer de-duplicated
+- Separate buffer pools for heap and direct `ByteBuffer`s
+
+### 1.2.0
 
 - Extracted common `Encoder` and `Decoder` traits with separate implementations for size and speed. Default codec is optimized for size
   - Added a codec optimized for speed, using simpler encoding. This is intended to be used within an application, for example when communicating between
