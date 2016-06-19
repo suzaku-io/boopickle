@@ -18,7 +18,7 @@ class CompositePickler[A <: AnyRef] extends Pickler[A] {
 
   override def pickle(obj: A)(implicit state: PickleState): Unit = {
     if (obj == null) {
-      state.enc.writeInt(CompositeNull.toInt)
+      state.enc.writeInt(NullObject)
     } else {
       val clz = obj.getClass.asInstanceOf[Class[_]]
       val name = clz.getName
@@ -34,7 +34,7 @@ class CompositePickler[A <: AnyRef] extends Pickler[A] {
 
   override def unpickle(implicit state: UnpickleState): A = {
     val idx = state.dec.readInt
-    if (idx == CompositeNull)
+    if (idx == NullObject)
       null.asInstanceOf[A]
     else {
       if (idx < 0 || idx > unpicklers.size)

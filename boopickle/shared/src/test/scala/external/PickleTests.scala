@@ -531,6 +531,7 @@ object PickleTests extends TestSuite {
           assert(r._1 == data._1)
           assert(r._3 == data._3)
           assert(rd == "Testing")
+          val a = Array.empty[Int]
         }
       }
       'IdentityDeduplication - {
@@ -578,6 +579,15 @@ object PickleTests extends TestSuite {
           val bb = s.toByteBuffer
           assert(bb.limit == 6)
           assert(bb.isDirect)
+        }
+        'NoDeDuplication {
+          val state = new PickleState(new EncoderSize, false)
+          case class Test(i: Int, s: Int)
+          val data = Test(42, 45)
+          val bb = state.pickle(Seq(data, data, data)).toByteBuffer
+          assert(bb.limit == 1 + 3 * 3)
+          val unpickleState = new UnpickleState(new DecoderSize(bb), false)
+          assert(unpickleState.unpickle[Seq[Test]] == Seq(data, data, data))
         }
       }
     }
@@ -846,6 +856,10 @@ object PickleTests extends TestSuite {
         }
       }
       'Option - {
+        'null {
+          val bb = Pickle.intoBytes(null.asInstanceOf[Option[String]])
+          assert(Unpickle[Option[String]].fromBytes(bb) == null)
+        }
         'some {
           val bb = Pickle.intoBytes(Some("test"))
           assert(Unpickle[Option[String]].fromBytes(bb).contains("test"))
@@ -858,6 +872,10 @@ object PickleTests extends TestSuite {
         }
       }
       'Duration - {
+        'null {
+          val bb = Pickle.intoBytes(null.asInstanceOf[Duration])
+          assert(Unpickle[Duration].fromBytes(bb) == null)
+        }
         'finite {
           val bb = Pickle.intoBytes(Duration.fromNanos(1000))
           assert(bb.limit == 9)
@@ -931,6 +949,10 @@ object PickleTests extends TestSuite {
         }
       }
       'Seq - {
+        'null {
+          val bb = Pickle.intoBytes(null.asInstanceOf[Seq[String]])
+          assert(Unpickle[Seq[String]].fromBytes(bb) == null)
+        }
         'empty {
           val bb = Pickle.intoBytes(Seq.empty[Int])
           assert(bb.limit == 4)
@@ -974,6 +996,10 @@ object PickleTests extends TestSuite {
         }
       }
       'Map - {
+        'null {
+          val bb = Pickle.intoBytes(null.asInstanceOf[Map[String, Int]])
+          assert(Unpickle[Map[String, Int]].fromBytes(bb) == null)
+        }
         'empty {
           val bb = Pickle.intoBytes(Map.empty[String, Int])
           assert(bb.limit == 4)
@@ -1004,6 +1030,10 @@ object PickleTests extends TestSuite {
         }
       }
       'Set - {
+        'null {
+          val bb = Pickle.intoBytes(null.asInstanceOf[Set[String]])
+          assert(Unpickle[Set[String]].fromBytes(bb) == null)
+        }
         'empty {
           val bb = Pickle.intoBytes(Set.empty[String])
           assert(bb.limit == 4)
@@ -1016,6 +1046,10 @@ object PickleTests extends TestSuite {
         }
       }
       'Array - {
+        'null {
+          val bb = Pickle.intoBytes(null.asInstanceOf[Array[String]])
+          assert(Unpickle[Array[String]].fromBytes(bb) == null)
+        }
         'empty {
           val bb = Pickle.intoBytes(Array.empty[Int])
           assert(bb.limit == 4)
@@ -1114,6 +1148,15 @@ object PickleTests extends TestSuite {
           val s = state.pickle("Hello")
           val bb = s.toByteBuffer
           assert(bb.isDirect)
+        }
+        'NoDeDuplication {
+          val state = new PickleState(new EncoderSpeed, false)
+          case class Test(i: Int, s: Int)
+          val data = Test(42, 45)
+          val bb = state.pickle(Seq(data, data, data)).toByteBuffer
+          assert(bb.limit == 4 + 12 * 3)
+          val unpickleState = new UnpickleState(new DecoderSpeed(bb), false)
+          assert(unpickleState.unpickle[Seq[Test]] == Seq(data, data, data))
         }
       }
     }

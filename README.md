@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/ochrons/boopickle.svg?branch=master)](https://travis-ci.org/ochrons/boopickle)
 [![Scala.js](http://www.scala-js.org/assets/badges/scalajs-0.6.8.svg)](http://www.scala-js.org)
 
-BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization (aka pickling) library for Scala 
+BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization (aka pickling) library that works on both Scala
 and [Scala.js](http://www.scala-js.org). It encodes into a binary format instead of the more customary JSON. A binary format brings efficiency 
 gains in both size and speed, at the cost of legibility of the encoded data. BooPickle borrows heavily from both [uPickle](https://github.com/lihaoyi/upickle-pprint)
 and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li Haoyi and Ben Hutchison for those two great libraries!
@@ -19,7 +19,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 - Very efficient coding
 - Low memory usage, no intermediate structures needed
 - Zero dependencies
-- Scala 2.11 (no Scala 2.10.x support at the moment)
+- Scala 2.11
 - All modern browsers are supported (not IE9 and below, though)
 
 ## Getting started
@@ -27,13 +27,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"me.chrons" %% "boopickle" % "1.2.0"
+"me.chrons" %% "boopickle" % "1.2.1"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```scala
-"me.chrons" %%% "boopickle" % "1.2.0"
+"me.chrons" %%% "boopickle" % "1.2.1"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
@@ -299,11 +299,6 @@ assert(newPoints(0) eq newPoints(1))
 Reference identity is checked by actual object identity, not by its `equal` method, so a `val a = List(2)` and `val b = List(2)` are two
 different objects and will not be replaced by each other in pickling.
 
-BooPickle also supports storing only one instance of immutable objects, but by default this is only supported for `String`s. Couple of common
-strings are pre-filled into the reference table, so that they can be used without encoding them even once. These are defined in the
-`Constants.scala` file, if you feel a need to add your own there. Just remember that both pickler and unpickler must use exactly the same
-initialization data!
- 
 ## Custom picklers
 
 If you need to pickle non-case classes or for example Java classes, you can define custom picklers for them. If it's a non-generic type,
@@ -424,6 +419,13 @@ buffers allocated through the `BufferProvider` should be released to the pool.
 
 The pool has a maximum size (currently 4M) to prevent it from locking down too much memory and it also only recycles relatively small buffers (less
 than 64kB).
+
+## Deduplication
+
+Boopickle support deduplication of pickled case classes by default, but this can be turned off by setting the `deduplicate` parameter in `PickleState`
+and `UnpickleState` constructors to `false`. The effect of deduplication is that when the same object is encountered again while pickling, only
+a reference is stored. When unpickling the reference is used instead of unpickling the object again. This saves space and enhances performance
+if your data contains a lot of copies of same objects.
 
 ## Performance
 
@@ -716,101 +718,7 @@ def encodeUTF8(s: String): ByteBuffer = {
 
 ## Change history
 
-### 1.2.1-SNAPSHOT
-
-- Several optimizations to reduce overhead of pickling small data.
-  - removed immutable references from pickle states
-  - streamlined pickle state initialization
-  - custom identity map class for managing identity references while pickling
-  - smaller initial encode buffer
-- `CompositePickler` performance improved when pickling a composite with a lot of subtypes
-  - the "copy constructor" is removed from `CompositePickler` as a result of this change. Use `.join` instead
-- Array size is always written as a 32-bit integer to ensure proper alignment (big boost when reading/writing floats/ints in JS) and is padded with
-  extra 32-bits to ensure proper alignment for Double arrays
-- Strings are no longer de-duplicated to avoid a performance hit
-- Collections are no longer de-duplicated
-- Separate buffer pools for heap and direct `ByteBuffer`s
-
-### 1.2.0
-
-- Extracted common `Encoder` and `Decoder` traits with separate implementations for size and speed. Default codec is optimized for size
-  - Added a codec optimized for speed, using simpler encoding. This is intended to be used within an application, for example when communicating between
-    web workers in Scala.js
-  - `Unpickle.fromBytes` now takes an implicit for building an `UnpickleState` for a given `ByteBuffer` to allow selection between different decoders
-- Removed special encodings for UUID and numeric strings
-- Special codecs for common `Array` types (`Byte`, `Int`, `Float`, `Double`) and optimized code path for pickling them
-- Infrequently used picklers made `lazy` to improve Dead Code Elimination (DCE) in Scala.js
-- String coding performance improved on JVM
-- Updated to Scala.js 0.6.9
-- `transformPickler` parameter order switched to better support type inference
-- Introduced a `BufferPool` for reusing `ByteBuffer`s when pickling. You can return used buffers back to the pool with `BufferPool.release`
-
-### 1.1.3
-
-- Support `null` `UUID`s. `UUID`s still take 16 bytes, except for `null` and `00000000-0000-0000-0000-000000000000` which take 17.
-
-### 1.1.2
-
-- Added support for `sealed abstract class` hierarchies (fix #37)
-- Updated to Scala.js 0.6.6 (due to [#2158](https://github.com/scala-js/scala-js/issues/2158))
-- Updated other pickling libs to latest version in performance tests
-
-### 1.1.1
-
-- Picklers for `BigInt` and `BigDecimal` (by @guersam)
-- Performance tests for Circe 0.2.0
-
-### 1.1.0
-
-This version has several backward-compatibility breaking changes. Most notably you should change your `import boopickle._` into 
-`import boopickle.Default._`, which should be enough for most common cases. If you have written your own picklers, you must merge
-the unpickling functionality into the pickler. There are also changes to how `CompositePickler`, `TransformPickler` and
-`ExceptionPickler` are used.
-
-- Moved all implicits into `boopickle.Default` to better control what implicits are imported
-- Unpicklers merged into Picklers, so there are no separate Unpicklers anymore
-- Added helper functions `compositePickler`, `transformPickler` and `exceptionPickler` in `Default`
-- BooPickle generated macros are now compatible with *-Xstrict-inference* compiler option
-- Trait hierarchies with type parameters can now be pickled automatically (by @FlorianKirmaier)
-- Improved error messages
-- Performance tests now use uPickle 0.3.4
-
-### 1.0.0
-
-- Support for auto-generation of `CompositePickler` for sealed trait class hierarchies
-- When a `ByteBuffer` is pickled, it now retains its byte order when unpickled
-- Refactored String coding in Scala.js
-
-### 0.1.4
-
-- Fixed a bug in decoding strings from a `ByteBuffer` with an array offset
-- Added transformation picklers to help creating custom picklers
-- Added special support for pickling Exceptions
-
-### 0.1.3
-
-- Fixed a bug in byte order when unpickling a `ByteBuffer`
-- Enforce byte ordering before unpickling
-- `CompositePickler` supports `join` method to pickle deeper type hierarchies
-- Use heap `ByteBuffers` on JVM by default, direct on JS for optimal performance
-
-### 0.1.2
-
-- Support for heap and direct byte buffers (and custom ones, too)
-- Support for returning a sequence of ByteBuffers instead of a combined one
-- Changed to little endian, and updated integer encoding scheme for negative numbers
-- Fixed a bug in unpickling a ByteBuffer
-- Optimized string decoding in case of heap buffer
-
-### 0.1.1
-
-- Functions in Un/PickleState were private, so macros did not work outside the boopickle package!
-- TextEncoder produces Uint8Array which needs to be cast to Int8Array for ByteBuffer to work
-- Added pickler for ByteBuffer (mainly to make BooPickle work easily with Autowire)
-
-### 0.1.0
-
-- Initial release
+See a separate (changes document)[CHANGES.md]
 
 ## Contributors
 

@@ -136,9 +136,9 @@ object BasicPicklers extends PicklerHelper {
     override def pickle(s: String)(implicit state: PickleState): Unit = {
       if (s == null) {
         state.enc.writeInt(NullRef)
-        return
+      } else {
+        state.enc.writeString(s)
       }
-      state.enc.writeString(s)
     }
 
     override def unpickle(implicit state: UnpickleState): String = {
@@ -154,20 +154,18 @@ object BasicPicklers extends PicklerHelper {
 
   object UUIDPickler extends P[UUID] {
     override def pickle(s: UUID)(implicit state: PickleState): Unit = {
-      s match {
-        case null =>
-          state.enc.writeRawLong(0)
-          state.enc.writeRawLong(0)
-          state.enc.writeByte(0)
-
-        case _ if s.getMostSignificantBits == 0 && s.getLeastSignificantBits == 0 =>
-          state.enc.writeRawLong(0)
-          state.enc.writeRawLong(0)
+      if (s == null) {
+        state.enc.writeRawLong(0)
+        state.enc.writeRawLong(0)
+        state.enc.writeByte(0)
+      } else {
+        val msb = s.getMostSignificantBits
+        val lsb = s.getLeastSignificantBits
+        state.enc.writeRawLong(msb)
+        state.enc.writeRawLong(lsb)
+        // special encoding for UUID zero, to differentiate from null
+        if (msb == 0 && lsb == 0)
           state.enc.writeByte(1)
-
-        case _ =>
-          state.enc.writeRawLong(s.getMostSignificantBits)
-          state.enc.writeRawLong(s.getLeastSignificantBits)
       }
     }
 
@@ -187,6 +185,8 @@ object BasicPicklers extends PicklerHelper {
     override def pickle(value: Duration)(implicit state: PickleState): Unit = {
       // take care of special Durations
       value match {
+        case null =>
+          state.enc.writeLongCode(Left(NullObject.toByte))
         case Duration.Inf =>
           state.enc.writeLongCode(Left(DurationInf))
         case Duration.MinusInf =>
@@ -200,14 +200,18 @@ object BasicPicklers extends PicklerHelper {
 
     @inline override def unpickle(implicit state: UnpickleState): Duration = {
       state.dec.readLongCode match {
-        case Left(c) if c == DurationInf =>
+        case Left(NullObject) =>
+          null
+        case Left(DurationInf) =>
           Duration.Inf
-        case Left(c) if c == DurationMinusInf =>
+        case Left(DurationMinusInf) =>
           Duration.MinusInf
-        case Left(c) if c == DurationUndefined =>
+        case Left(DurationUndefined) =>
           Duration.Undefined
         case Right(value) =>
           Duration.fromNanos(value)
+        case Left(_) =>
+          null
       }
     }
   }
@@ -218,11 +222,9 @@ object BasicPicklers extends PicklerHelper {
 
   def OptionPickler[T: P]: P[Option[T]] = new P[Option[T]] {
     override def pickle(obj: Option[T])(implicit state: PickleState): Unit = {
-      if (obj == null) {
-        state.enc.writeInt(NullRef)
-        return
-      }
       obj match {
+        case null =>
+          state.enc.writeInt(NullObject)
         case Some(x) =>
           state.enc.writeInt(OptionSome.toInt)
           write[T](x)
@@ -234,7 +236,7 @@ object BasicPicklers extends PicklerHelper {
 
     override def unpickle(implicit state: UnpickleState): Option[T] = {
       state.dec.readInt match {
-        case NullRef =>
+        case NullObject =>
           null
         case OptionSome =>
           val o = Some(read[T])
@@ -251,11 +253,9 @@ object BasicPicklers extends PicklerHelper {
 
   def EitherPickler[T: P, S: P]: P[Either[T, S]] = new P[Either[T, S]] {
     override def pickle(obj: Either[T, S])(implicit state: PickleState): Unit = {
-      if (obj == null) {
-        state.enc.writeInt(NullRef)
-        return
-      }
       obj match {
+        case null =>
+          state.enc.writeInt(NullObject)
         case Left(l) =>
           state.enc.writeInt(EitherLeft.toInt)
           write[T](l)
@@ -267,7 +267,7 @@ object BasicPicklers extends PicklerHelper {
 
     override def unpickle(implicit state: UnpickleState): Either[T, S] = {
       state.dec.readInt match {
-        case NullRef =>
+        case NullObject =>
           null
         case EitherLeft =>
           Left(read[T])
@@ -295,12 +295,12 @@ object BasicPicklers extends PicklerHelper {
     override def pickle(iterable: V[T])(implicit state: PickleState): Unit = {
       if (iterable == null) {
         state.enc.writeInt(NullRef)
-        return
+      } else {
+        // encode length
+        state.enc.writeInt(iterable.size)
+        // encode contents
+        iterable.iterator.asInstanceOf[Iterator[T]].foreach(a => write[T](a))
       }
-      // encode length
-      state.enc.writeInt(iterable.size)
-      // encode contents
-      iterable.iterator.asInstanceOf[Iterator[T]].foreach(a => write[T](a))
     }
 
     override def unpickle(implicit state: UnpickleState): V[T] = {
@@ -313,8 +313,10 @@ object BasicPicklers extends PicklerHelper {
           res
         case len =>
           val b = cbf()
-          for (i <- 0 until len) {
+          var i = 0
+          while (i < len) {
             b += read[T]
+            i += 1
           }
           val res = b.result()
           res
@@ -375,8 +377,10 @@ object BasicPicklers extends PicklerHelper {
               state.dec.readDoubleArray(len).asInstanceOf[Array[T]]
             case _ =>
               val a = new Array[T](len)
-              for (i <- 0 until len) {
+              var i = 0
+              while (i < len) {
                 a(i) = read[T]
+                i += 1
               }
               a
           }
@@ -397,16 +401,16 @@ object BasicPicklers extends PicklerHelper {
     override def pickle(map: V[T, S])(implicit state: PickleState): Unit = {
       if (map == null) {
         state.enc.writeInt(NullRef)
-        return
-      }
-      // encode length
-      state.enc.writeInt(map.size)
-      // encode contents as a sequence
-      val kPickler = implicitly[P[T]]
-      val vPickler = implicitly[P[S]]
-      map.asInstanceOf[scala.collection.Map[T, S]].foreach { kv =>
-        kPickler.pickle(kv._1)(state)
-        vPickler.pickle(kv._2)(state)
+      } else {
+        // encode length
+        state.enc.writeInt(map.size)
+        // encode contents as a sequence
+        val kPickler = implicitly[P[T]]
+        val vPickler = implicitly[P[S]]
+        map.asInstanceOf[scala.collection.Map[T, S]].foreach { kv =>
+          kPickler.pickle(kv._1)(state)
+          vPickler.pickle(kv._2)(state)
+        }
       }
     }
 
@@ -424,8 +428,10 @@ object BasicPicklers extends PicklerHelper {
           val b = cbf()
           val kPickler = implicitly[P[T]]
           val vPickler = implicitly[P[S]]
-          for (i <- 0 until len) {
+          var i = 0
+          while (i < len) {
             b += kPickler.unpickle(state) -> vPickler.unpickle(state)
+            i += 1
           }
           val res = b.result()
           res
@@ -434,7 +440,13 @@ object BasicPicklers extends PicklerHelper {
   }
 }
 
-final class PickleState(val enc: Encoder) {
+/**
+  * Manage state for a pickling "session".
+  *
+  * @param enc Encoder instance to use
+  * @param deduplicate Set to `false` if you want to disable deduplication
+  */
+final class PickleState(val enc: Encoder, deduplicate: Boolean = true) {
 
   /**
     * Object reference for pickled objects (use identity for equality comparison)
@@ -448,12 +460,15 @@ final class PickleState(val enc: Encoder) {
   @inline def identityRefFor(obj: AnyRef): Option[Int] = {
     if (obj == null)
       Some(1)
+    else if(!deduplicate)
+      None
     else
       identityRefs(obj)
   }
 
   @inline def addIdentityRef(obj: AnyRef): Unit = {
-    identityRefs = identityRefs.updated(obj)
+    if(deduplicate)
+      identityRefs = identityRefs.updated(obj)
   }
 
   @inline def pickle[A](value: A)(implicit p: Pickler[A]): PickleState = {
@@ -474,10 +489,15 @@ object PickleState {
     * @return
     */
   implicit def Default: PickleState = new PickleState(new EncoderSize)
-
 }
 
-final class UnpickleState(val dec: Decoder) {
+/**
+  * Manage state for an unpickling "session"
+ *
+  * @param dec Decoder instance to use
+  * @param deduplicate Set to `false` if you want to disable deduplication
+  */
+final class UnpickleState(val dec: Decoder, deduplicate: Boolean = true) {
   /**
     * Object reference for pickled objects (use identity for equality comparison)
     *
@@ -485,17 +505,20 @@ final class UnpickleState(val dec: Decoder) {
     * Index 1 = null
     * Index 2-n, references to pickled objects
     */
-  private[this] lazy val identityRefs = new mutable.ListBuffer[AnyRef]()
+  private[this] var identityRefs: IdentList = EmptyIdentList
 
   @inline def identityFor[A <: AnyRef](ref: Int): A = {
-    if (ref == 1)
+    if (ref < 2)
       null.asInstanceOf[A]
+    else if (!deduplicate)
+      throw new Exception("Deduplication is disabled, but identityFor was called.")
     else
       identityRefs(ref - 2).asInstanceOf[A]
   }
 
   @inline def addIdentityRef(obj: AnyRef): Unit =
-    identityRefs += obj
+    if (deduplicate)
+      identityRefs = identityRefs.updated(obj)
 
   @inline def unpickle[A](implicit u: Pickler[A]): A = u.unpickle(this)
 }

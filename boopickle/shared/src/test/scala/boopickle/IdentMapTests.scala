@@ -1,5 +1,6 @@
 package boopickle
 
+import boopickle.IdentMap3Plus.Entry
 import utest._
 
 object IdentMapTests  extends TestSuite {
@@ -19,7 +20,7 @@ object IdentMapTests  extends TestSuite {
         val objs = for( i <- 0 until 1024) yield Option(i)
         var m: IdentMap = EmptyIdentMap
         objs.tail.foreach(o => m = m.updated(o))
-        val entries = m.asInstanceOf[NonEmptyIdentMap].hashTable.toSeq
+        val entries = m.asInstanceOf[IdentMap3Plus].hashTable.toSeq
         def entrySize(entry: Entry): Int = {
           if(entry == null)
             0

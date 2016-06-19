@@ -12,7 +12,7 @@ case class Book(id: String, name: String, author: String, publicationYear: Int)
 case class Node(name: String, color: String, children: Seq[Node])
 
 @pushka
-case class Event(i: Int)
+case class Event(i: Int, b: Boolean)
 
 object TestData {
   val uuids = {

@@ -41,7 +41,7 @@ abstract class ByteBufferProvider extends BufferProvider {
       // flip current buffer (prepare for reading and set limit)
       currentBuf.flip()
       buffers = currentBuf :: buffers
-      // replace current buffer with the new one
+      // replace current buffer with the new one, align to 16-byte border for small sizes
       currentBuf = allocate((size + expandSize + 15) & ~15)
     }
     currentBuf

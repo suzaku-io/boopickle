@@ -11,16 +11,16 @@ import scala.scalajs.js.typedarray._
   * Facade for native JS engine provided TextDecoder
   */
 @js.native
-class TextDecoder extends js.Object {
-  def decode(data: Int8Array): String = js.native
+class TextDecoder(utfLabel: js.UndefOr[String] = js.undefined) extends js.Object {
+  def decode(data: ArrayBufferView): String = js.native
 }
 
 /**
   * Facade for native JS engine provided TextEncoder
   */
 @js.native
-class TextEncoder extends js.Object {
-  def encode(str: String): Uint8Array = js.native
+class TextEncoder(utfLabel: js.UndefOr[String] = js.undefined) extends js.Object {
+  def encode(str: String): Int8Array = js.native
 }
 
 object StringCodec extends StringCodecFuncs {
@@ -33,7 +33,41 @@ object StringCodec extends StringCodecFuncs {
   private lazy val utf8encoder: (String) => Int8Array = {
     val te = new TextEncoder
     // use native TextEncoder
-    (str: String) => new Int8Array(te.encode(str))
+    (str: String) => te.encode(str)
+  }
+
+  private lazy val utf16decoder: (Uint16Array) => String = {
+    /*
+      try {
+          // do not use native TextDecoder as it's slow
+          val td = new TextDecoder("utf-16none")
+          (data: Uint16Array) => td.decode(data)
+        } catch {
+          case e: Throwable =>
+    */
+    (data: Uint16Array) =>
+      js.Dynamic.global.String.fromCharCode.applyDynamic("apply")(null, data).asInstanceOf[String]
+  }
+
+  private lazy val utf16encoder: (String) => Int8Array = {
+    /*
+      try {
+          // do not use native TextEncoder as it's slow
+          val te = new TextEncoder("utf-16none")
+          (str: String) => te.encode(str)
+        } catch {
+          case e: Throwable =>
+          }
+    */
+    (str: String) => {
+      val ta = new Uint16Array(str.length)
+      var i = 0
+      while (i < str.length) {
+        ta(i) = str.charAt(i).toInt
+        i += 1
+      }
+      new Int8Array(ta.buffer)
+    }
   }
 
   override def decodeUTF8(len: Int, buf: ByteBuffer): String = {
@@ -60,9 +94,9 @@ object StringCodec extends StringCodecFuncs {
 
   override def decodeUTF16(len: Int, buf: ByteBuffer): String = {
     if (buf.isDirect) {
-      val ta = new Uint16Array(buf.typedArray().buffer, buf.position + buf.typedArray().byteOffset, len/2)
+      val ta = new Uint16Array(buf.typedArray().buffer, buf.position + buf.typedArray().byteOffset, len / 2)
       buf.position(buf.position + len)
-      js.Dynamic.global.String.fromCharCode.applyDynamic("apply")(null, ta).asInstanceOf[String]
+      utf16decoder(ta)
       //new String(ta.toArray) // alt implementation
     } else {
       val a = new Array[Byte](len)
@@ -72,14 +106,9 @@ object StringCodec extends StringCodecFuncs {
   }
 
   override def encodeUTF16(str: String): ByteBuffer = {
-    val ta = new Uint16Array(str.length)
-    var i = 0
-    while (i < str.length) {
-      ta(i) = str.charAt(i).toInt
-      i += 1
-    }
-    TypedArrayBuffer.wrap(new Int8Array(ta.buffer))
+    TypedArrayBuffer.wrap(utf16encoder(str))
   }
+
 
   override def decodeFast(len: Int, buf: ByteBuffer): String = decodeUTF16(len, buf)
 

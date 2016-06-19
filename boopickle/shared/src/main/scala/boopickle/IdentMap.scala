@@ -15,9 +15,9 @@ object EmptyIdentMap extends IdentMap {
   override def updated(obj: AnyRef): IdentMap = new IdentMap1(obj)
 }
 
-private[boopickle] class IdentMap1(o1: AnyRef) extends IdentMap {
+private[boopickle] final class IdentMap1(o1: AnyRef) extends IdentMap {
   override def apply(obj: AnyRef): Option[Int] = {
-    if(obj eq o1)
+    if (obj eq o1)
       Some(2)
     else None
   }
@@ -25,26 +25,33 @@ private[boopickle] class IdentMap1(o1: AnyRef) extends IdentMap {
   override def updated(obj: AnyRef): IdentMap = new IdentMap2(o1, obj)
 }
 
-private[boopickle] class IdentMap2(o1: AnyRef, o2: AnyRef) extends IdentMap {
+private[boopickle] final class IdentMap2(o1: AnyRef, o2: AnyRef) extends IdentMap {
   override def apply(obj: AnyRef): Option[Int] = {
-    if(obj eq o1)
+    if (obj eq o1)
       Some(2)
-    else if(obj eq o2)
+    else if (obj eq o2)
       Some(3)
     else None
   }
 
-  override def updated(obj: AnyRef): IdentMap = new NonEmptyIdentMap(o1, o2, obj)
+  override def updated(obj: AnyRef): IdentMap = new IdentMap3Plus(o1, o2, obj)
 }
 
-private[boopickle] class Entry(val hash: Int, val obj: AnyRef, val idx: Int, val next: Entry)
+object IdentMap3Plus {
 
-private[boopickle] class NonEmptyIdentMap(o1: AnyRef,o2: AnyRef,o3: AnyRef) extends IdentMap {
+  private[boopickle] class Entry(val hash: Int, val obj: AnyRef, val idx: Int, val next: Entry)
 
-  final val hashSize = 32
+}
+
+private[boopickle] final class IdentMap3Plus(o1: AnyRef, o2: AnyRef, o3: AnyRef) extends IdentMap {
+  import IdentMap3Plus.Entry
+
+  val hashSize = 32
   val hashTable = new Array[Entry](hashSize)
+  // indices 0 (not used) and 1 (for null) are reserved
   var curIdx = 2
 
+  // initialize with data
   updated(o1)
   updated(o2)
   updated(o3)
