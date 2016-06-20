@@ -1,5 +1,10 @@
 # Changes
 
+## 1.2.3-SNAPSHOT
+
+- Performance fix for really large datasets where the `IdentMap` implementation fails totally as the number of references grows
+- Added an optional deduplicating `String` pickler
+
 ## 1.2.2
 
 - Quick bug fix for UTF8 encoding on browsers with `TextEncoder` support

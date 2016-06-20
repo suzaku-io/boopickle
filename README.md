@@ -312,45 +312,41 @@ already has pickler support. For example you can transform a `java.util.Date` in
 to a suitable `Tuple`. 
 
 ```scala
-implicit val datePickler = transformPickler[java.util.Date, Long](_.getTime, t => new java.util.Date(t))
+implicit val datePickler = transformPickler((t: Long) => new java.util.Date(t))(_.getTime)
 ```
 
 Note that transformation breaks reference equality, so multiple instances of the same reference will be pickled
 separately. Transforming picklers can also be used in `CompositePickler` with the `addTransform` method.
 
-For a full pickler you need to do as in the example below.
+For a full pickler you need to do as in the example below. It's optimizing encoding size by reusing the slot for identity reference for
+the string length.
 
 ```scala
+class Custom(val name: String, value: Int)
+
 object MyCustomPicklers extends PicklerHelper {
-  implicit def EitherPickler[T: P, S: P]: P[Either[T, S]] = new P[Either[T, S]] {
-    override def pickle(obj: Either[T, S])(implicit state: PickleState): Unit = {
-      // check if this Either has been pickled already
+  implicit object customPickler extends P[Custom] {
+    override def pickle(obj: Custom)(implicit state: PickleState): Unit = {
       state.identityRefFor(obj) match {
         case Some(idx) =>
-          // encode index as negative "length"
           state.enc.writeInt(-idx)
         case None =>
-          obj match {
-            case Left(l) =>
-              state.enc.writeInt(EitherLeft)
-              write[T](l)
-            case Right(r) =>
-              state.enc.writeInt(EitherRight)
-              write[S](r)
-          }
+          // writeString will write an Int with the string length that we can
+          // put at same position as identity ref
+          state.enc.writeString(obj.name)
+          state.enc.writeInt(obj.value)
           state.addIdentityRef(obj)
       }
     }
-    override def unpickle(implicit state: UnpickleState): Either[T, S] = {
-      state.dec.readIntCode match {
-        case Right(EitherLeft) =>
-          Left(read[T])
-        case Right(EitherRight) =>
-          Right(read[S])
-        case Right(idx) if idx < 0 =>
-          state.identityFor[Either[T, S]](-idx)
-        case _ =>
-          throw new IllegalArgumentException("Invalid coding for Either type")
+
+    override def unpickle(implicit state: UnpickleState): Custom = {
+      state.dec.readInt match {
+        case idx if idx < 0 =>
+          state.identityFor[Custom](idx)
+        case len =>
+          val c = new Custom(state.dec.readString(len), state.dec.readInt)
+          state.addIdentityRef(c)
+          c
       }
     }
   }
@@ -358,7 +354,7 @@ object MyCustomPicklers extends PicklerHelper {
 ```
 
 In principle the pickler should do following things:
-- check if the object has been pickled already using `state.identityRefFor(obj)`
+- check if the object has been pickled already using `state.identityRefFor(obj)` (if you want deduplication)
 - if yes, store an index to the reference (this also takes care of `null` values)
 - it not, encode the class using `state.enc` and/or calling picklers for members
 - if your class has a `length`, you can encode it in the same space as reference index by using a non-negative value
@@ -367,15 +363,12 @@ In principle the pickler should do following things:
 If your object is immutable, you can use `immutableRefFor` and `addImmutableRef` instead for even more efficient encoding.
 
 On the unpickling side you'll need to do following:
-- read reference/length/special code using `state.readIntCode`
+- read reference/length using `state.readInt`
 - depending on the result,
-- get an existing reference
-- or use length to know how much to unpickle
-- or use the special code to determine what to unpickle
+  - get an existing reference
+  - or use length to know how much to unpickle
 - unpickle class members
 - finally add the reference to identity table
-
-Again, if you are using immutable refs in pickling, make sure to use them when unpickling as well. These are two different indexes.
 
 ## Exception picklers
 
