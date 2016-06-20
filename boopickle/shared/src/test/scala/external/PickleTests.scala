@@ -249,7 +249,13 @@ object PickleTests extends TestSuite {
           val s = Unpickle[String].fromBytes(bb)
           assert(s == "normal")
         }
-        'unicode {
+        'unicode1 {
+          val bb = Pickle.intoBytes("“Life”")
+          assert(bb.limit == 11)
+          val s = Unpickle[String].fromBytes(bb)
+          assert(s == "“Life”")
+        }
+        'unicode2 {
           val bb = Pickle.intoBytes("\uD834\uDF06泡菜")
           assert(bb.limit == 4 + 3 + 2 + 2)
           val s = Unpickle[String].fromBytes(bb)

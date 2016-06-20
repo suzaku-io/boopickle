@@ -20,7 +20,7 @@ class TextDecoder(utfLabel: js.UndefOr[String] = js.undefined) extends js.Object
   */
 @js.native
 class TextEncoder(utfLabel: js.UndefOr[String] = js.undefined) extends js.Object {
-  def encode(str: String): Int8Array = js.native
+  def encode(str: String): Uint8Array = js.native
 }
 
 object StringCodec extends StringCodecFuncs {
@@ -33,7 +33,7 @@ object StringCodec extends StringCodecFuncs {
   private lazy val utf8encoder: (String) => Int8Array = {
     val te = new TextEncoder
     // use native TextEncoder
-    (str: String) => te.encode(str)
+    (str: String) => new Int8Array(te.encode(str))
   }
 
   private lazy val utf16decoder: (Uint16Array) => String = {

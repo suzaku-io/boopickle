@@ -1,5 +1,9 @@
 # Changes
 
+## 1.2.2
+
+- Quick bug fix for UTF8 encoding on browsers with `TextEncoder` support
+
 ## 1.2.1
 
 This is a speed optimization release focusing on reducing encoding overhead especially when pickling small objects. These changes should not affect
