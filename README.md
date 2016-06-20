@@ -718,7 +718,7 @@ def encodeUTF8(s: String): ByteBuffer = {
 
 ## Change history
 
-See a separate (changes document)[CHANGES.md]
+See a separate [changes document](CHANGES.md)
 
 ## Contributors
 
