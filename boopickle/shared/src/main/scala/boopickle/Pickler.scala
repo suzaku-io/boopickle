@@ -134,21 +134,30 @@ object BasicPicklers extends PicklerHelper {
 
   object StringPickler extends P[String] {
     override def pickle(s: String)(implicit state: PickleState): Unit = {
-      if (s == null) {
-        state.enc.writeInt(NullRef)
-      } else {
-        state.enc.writeString(s)
+      state.identityRefFor(s) match {
+        case Some(idx) =>
+          state.enc.writeInt(-idx)
+        case None =>
+          if (s.isEmpty) {
+            state.enc.writeInt(0)
+          } else {
+            state.enc.writeString(s)
+            state.addIdentityRef(s)
+          }
       }
     }
 
     override def unpickle(implicit state: UnpickleState): String = {
       val len = state.dec.readInt
-      if (len == NullRef)
-        null
-      else if (len == 0)
+      if (len < 0) {
+        state.identityFor[String](-len)
+      } else if (len == 0) {
         ""
-      else
-        state.dec.readString(len)
+      } else {
+        val s = state.dec.readString(len)
+        state.addIdentityRef(s)
+        s
+      }
     }
   }
 
@@ -443,10 +452,10 @@ object BasicPicklers extends PicklerHelper {
 /**
   * Manage state for a pickling "session".
   *
-  * @param enc Encoder instance to use
-  * @param deduplicate Set to `false` if you want to disable deduplication
+  * @param enc         Encoder instance to use
+  * @param deduplicate Set to `true` if you want to enable deduplication
   */
-final class PickleState(val enc: Encoder, deduplicate: Boolean = true) {
+final class PickleState(val enc: Encoder, deduplicate: Boolean = false) {
 
   /**
     * Object reference for pickled objects (use identity for equality comparison)
@@ -460,14 +469,14 @@ final class PickleState(val enc: Encoder, deduplicate: Boolean = true) {
   @inline def identityRefFor(obj: AnyRef): Option[Int] = {
     if (obj == null)
       Some(1)
-    else if(!deduplicate)
+    else if (!deduplicate)
       None
     else
       identityRefs(obj)
   }
 
   @inline def addIdentityRef(obj: AnyRef): Unit = {
-    if(deduplicate)
+    if (deduplicate)
       identityRefs = identityRefs.updated(obj)
   }
 
@@ -493,11 +502,11 @@ object PickleState {
 
 /**
   * Manage state for an unpickling "session"
- *
-  * @param dec Decoder instance to use
-  * @param deduplicate Set to `false` if you want to disable deduplication
+  *
+  * @param dec         Decoder instance to use
+  * @param deduplicate Set to `true` if you want to enable deduplication
   */
-final class UnpickleState(val dec: Decoder, deduplicate: Boolean = true) {
+final class UnpickleState(val dec: Decoder, deduplicate: Boolean = false) {
   /**
     * Object reference for pickled objects (use identity for equality comparison)
     *
@@ -533,5 +542,5 @@ object UnpickleState {
 
   def apply(bytes: ByteBuffer) = new UnpickleState(new DecoderSize(bytes))
 
-  def apply(decoder: Decoder) = new UnpickleState(decoder)
+  def apply(decoder: Decoder, deduplicate: Boolean = false) = new UnpickleState(decoder, deduplicate)
 }

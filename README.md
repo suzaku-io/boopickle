@@ -342,7 +342,7 @@ object MyCustomPicklers extends PicklerHelper {
     override def unpickle(implicit state: UnpickleState): Custom = {
       state.dec.readInt match {
         case idx if idx < 0 =>
-          state.identityFor[Custom](idx)
+          state.identityFor[Custom](-idx)
         case len =>
           val c = new Custom(state.dec.readString(len), state.dec.readInt)
           state.addIdentityRef(c)
@@ -401,8 +401,8 @@ default. To override this you can either manually create the instances of pickle
 then be used by the `Unpickle[A].fromBytes` function.
 
 ```scala
-implicit def pState: PickleState = new PickleState(new EncoderSpeed)
-implicit def uState: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSpeed(b))
+implicit def pickleState: PickleState = new PickleState(new EncoderSpeed)
+implicit val unpickleState= (b: ByteBuffer) => new UnpickleState(new DecoderSpeed(b))
 ```
 
 ## Buffer pooling
@@ -417,10 +417,19 @@ than 64kB).
 
 ## Deduplication
 
-Boopickle support deduplication of pickled case classes by default, but this can be turned off by setting the `deduplicate` parameter in `PickleState`
-and `UnpickleState` constructors to `false`. The effect of deduplication is that when the same object is encountered again while pickling, only
-a reference is stored. When unpickling the reference is used instead of unpickling the object again. This saves space and enhances performance
-if your data contains a lot of copies of same objects.
+BooPickle supports deduplication of pickled case classes and Strings, but this is turned off by default for performance reasons. Enable it by setting the
+`deduplicate` parameter in `PickleState` and `UnpickleState` constructors to `true`. The effect of deduplication is that when the same object is encountered
+again while pickling, only a reference is stored. When unpickling the reference is used instead of unpickling the object again. This saves space and enhances
+performance if your data contains a lot of copies of same objects.
+
+Note that deduplication can severely affect pickling performance (not that much unpickling), especially if you are pickling a lot of objects in one go.
+
+To implicitly provide deduplicating `PickleState` and `UnpickleState`, use following code.
+
+```scala
+implicit def pickleState = new PickleState(new EncoderSize, true)
+implicit val unpickleState = (bb: ByteBuffer) => new UnpickleState(new DecoderSize(bb), true)
+```
 
 ## Performance
 
@@ -442,12 +451,12 @@ In the browser (BooPickle! is using the speed optimized codec):
 16/16 : Decoding Seq[Book] with numerical IDs
 =============================================
 Library    ops/s      %          size       %          size.gz    %
-BooPickle  38928      82.9%      210        100%       196        100%
-BooPickle! 46972      100.0%     468        223%       244        124%
-Prickle    1854       3.9%       863        411%       272        139%
-uPickle    11082      23.6%      680        324%       233        119%
-Circe      9040       19.2%      680        324%       233        119%
-Pushka     20052      42.7%      680        324%       233        119%
+BooPickle  33516      72.3%      287        100%       196        100%
+BooPickle! 46344      100.0%     636        222%       246        126%
+Prickle    1766       3.8%       863        301%       272        139%
+uPickle    9612       20.7%      680        237%       233        119%
+Circe      8432       18.2%      680        237%       233        119%
+Pushka     20320      43.8%      680        237%       233        119%
 ```
 
 Under JVM:
@@ -455,12 +464,12 @@ Under JVM:
 16/16 : Decoding Seq[Book] with numerical IDs
 =============================================
 Library    ops/s      %          size       %          size.gz    %
-BooPickle  537296     100.0%     210        100%       190        100%
-BooPickle! 505594     94.1%      318        151%       207        109%
-Prickle    5276       1.0%       879        419%       276        145%
-uPickle    90670      16.9%      680        324%       234        123%
-Circe      55946      10.4%      680        324%       234        123%
-Pushka     145128     27.0%      680        324%       234        123%
+BooPickle  498412     100.0%     287        100%       190        100%
+BooPickle! 484308     97.2%      402        140%       207        109%
+Prickle    5300       1.1%       879        306%       276        145%
+uPickle    83204      16.7%      680        237%       234        123%
+Circe      58764      11.8%      680        237%       234        123%
+Pushka     143112     28.7%      680        237%       234        123%
 ```
 
 Performance test suite measures how many encode or decode operations the library can do in one second and also checks the size of the raw

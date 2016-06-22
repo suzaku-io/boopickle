@@ -13,18 +13,17 @@ class CompositePickler[A <: AnyRef] extends Pickler[A] {
   import Default.stringPickler
 
   var picklerIdx = 0
-  val picklers = mutable.HashMap.empty[Class[_], (Int, Pickler[_])]
+  val picklers = mutable.HashMap.empty[String, (Int, Pickler[_])]
   val unpicklers = mutable.ArrayBuffer.empty[Pickler[_]]
 
   override def pickle(obj: A)(implicit state: PickleState): Unit = {
     if (obj == null) {
       state.enc.writeInt(NullObject)
     } else {
-      val clz = obj.getClass.asInstanceOf[Class[_]]
-      val name = clz.getName
-      picklers.get(clz) match {
+      val name = obj.getClass.getName
+      picklers.get(name) match {
         case None =>
-          throw new IllegalArgumentException(s"CompositePickler doesn't know class '$name'. Known classes: ${picklers.map(_._1.getName).mkString(", ")}")
+          throw new IllegalArgumentException(s"CompositePickler doesn't know class '$name'. Known classes: ${picklers.keys.mkString(", ")}")
         case Some((idx, pickler)) =>
           state.enc.writeInt(idx + 1)
           pickler.asInstanceOf[Pickler[A]].pickle(obj)
@@ -44,7 +43,7 @@ class CompositePickler[A <: AnyRef] extends Pickler[A] {
   }
 
   private def addPickler[B](pickler: Pickler[B], tag: ClassTag[B]): Unit = {
-    picklers.put(tag.runtimeClass, (picklerIdx, pickler))
+    picklers.put(tag.runtimeClass.getName, (picklerIdx, pickler))
     unpicklers.append(pickler)
     picklerIdx += 1
 

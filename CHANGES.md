@@ -2,8 +2,13 @@
 
 ## 1.2.3-SNAPSHOT
 
-- Performance fix for really large datasets where the `IdentMap` implementation fails totally as the number of references grows
-- Added an optional deduplicating `String` pickler
+Again some performance tuning. Main goal of BooPickle is now performance, with size coming as a secondary goal. This will be reflected in the
+defaults, but you can always choose size optimization as well.
+
+- Performance fix for really large datasets where the `IdentMap` implementation fails totally as the number of references grows over 10k
+- Deduplication is by default **disabled**
+- `String` pickler is again doing deduplication (if deduplication is enabled)
+- A bug in `IdentMap` implementation caused errors when two different objects had same identity hash value
 
 ## 1.2.2
 

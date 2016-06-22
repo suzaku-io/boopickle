@@ -9,6 +9,10 @@ abstract class IdentMap {
   def updated(obj: AnyRef): IdentMap
 }
 
+object IdentMap {
+  def empty: IdentMap = EmptyIdentMap
+}
+
 object EmptyIdentMap extends IdentMap {
   override def apply(obj: AnyRef): Option[Int] = None
 
@@ -39,15 +43,16 @@ private[boopickle] final class IdentMap2(o1: AnyRef, o2: AnyRef) extends IdentMa
 
 object IdentMap3Plus {
 
-  private[boopickle] class Entry(val hash: Int, val obj: AnyRef, val idx: Int, val next: Entry)
+  private[boopickle] class Entry(val hash: Int, val obj: AnyRef, val idx: Int, var next: Entry)
 
 }
 
 private[boopickle] final class IdentMap3Plus(o1: AnyRef, o2: AnyRef, o3: AnyRef) extends IdentMap {
   import IdentMap3Plus.Entry
 
-  val hashSize = 32
-  val hashTable = new Array[Entry](hashSize)
+  var hashSize = 64
+  val maxDepth = 1
+  var hashTable = new Array[Entry](hashSize)
   // indices 0 (not used) and 1 (for null) are reserved
   var curIdx = 2
 
@@ -57,16 +62,15 @@ private[boopickle] final class IdentMap3Plus(o1: AnyRef, o2: AnyRef, o3: AnyRef)
   updated(o3)
 
   @inline private def hashIdx(hash: Int) = {
-    val a = (hash >> 16) ^ hash
-    val b = (a >> 8) ^ a
-    ((b >> 3) ^ b) & (hashSize - 1)
+    val h = scala.util.hashing.byteswap32(hash)
+    ((h >> 16) ^ (h >> 8) ^ h) & (hashSize - 1)
   }
 
   override def apply(obj: AnyRef): Option[Int] = {
     val hash = System.identityHashCode(obj)
     val tableIdx = hashIdx(hash)
     var e = hashTable(tableIdx)
-    while ((e != null) && (e.hash != hash) && (e.obj ne obj))
+    while ((e != null) && (e.obj ne obj))
       e = e.next
     if (e == null)
       None
@@ -79,10 +83,46 @@ private[boopickle] final class IdentMap3Plus(o1: AnyRef, o2: AnyRef, o3: AnyRef)
     val tableIdx = hashIdx(hash)
     hashTable(tableIdx) = new Entry(hash, obj, curIdx, hashTable(tableIdx))
     curIdx += 1
+    // should we switch to next gear?
+    if (curIdx > hashSize * maxDepth)
+      resize()
     this
+  }
+
+  /**
+    * Resizes the underlying hash table to make indexing fast as the number of entries grows
+    */
+  private def resize(): Unit = {
+    val newSize = hashSize * 4
+    val newTable = new Array[Entry](newSize)
+    // copy old entries
+    var i = hashSize - 1
+    hashSize = newSize
+    while (i >= 0) {
+      var e = hashTable(i)
+      while (e != null) {
+        val tableIdx = hashIdx(e.hash)
+        val n = e.next
+        e.next = newTable(tableIdx)
+        newTable(tableIdx) = e
+        e = n
+      }
+      i -= 1
+    }
+    hashTable = newTable
   }
 }
 
-object IdentMap {
-  def empty = EmptyIdentMap
+object IdentMapHuge {
+
+  private[boopickle] class Identity(val hash: Int, val obj: AnyRef) {
+    override def hashCode(): Int = hash
+    override def equals(that: scala.Any): Boolean = that match {
+      case entry: Identity =>
+        entry.obj eq obj
+      case _ =>
+        false
+    }
+  }
+
 }

@@ -4,13 +4,11 @@ import java.nio.{ByteBuffer, ByteOrder}
 import java.util.UUID
 
 import boopickle.Default._
-import boopickle._
+import boopickle.{DirectByteBufferProvider, EncoderSize, HeapByteBufferProvider, UnpickleState, EncoderSpeed, DecoderSize, DecoderSpeed}
 import utest._
-import utest.framework.TestThunkTree
 
 import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.util.Random
 
@@ -302,6 +300,15 @@ object PickleTests extends TestSuite {
           assert(bb.limit == 37)
           assert(Unpickle[String].fromBytes(bb) == uuidStr)
         }
+        'deduplication {
+          implicit def pstate = new PickleState(new EncoderSize, true)
+          implicit def ustate: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSize(b), true)
+          val data = Seq("testing", "testing", "testing")
+          val bb = Pickle.intoBytes(data)
+          assert(bb.limit == 1 + 1 + 7 + 2 * 2)
+          val udata = Unpickle[Seq[String]].fromBytes(bb)
+          assert(udata == data)
+        }
       }
       'Option - {
         'some {
@@ -542,6 +549,8 @@ object PickleTests extends TestSuite {
       }
       'IdentityDeduplication - {
         'CaseClasses - {
+          implicit def pstate = new PickleState(new EncoderSize, true)
+          implicit def ustate: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSize(b), true)
           case class Test(i: Int, s: String)
           val data = Test(42, "Earth")
           val bb = Pickle.intoBytes(Seq(data, data, data))
@@ -560,10 +569,12 @@ object PickleTests extends TestSuite {
           assert(Unpickle[String].fromState(state) == "World")
         }
         'stringRef {
+          implicit def pstate = new PickleState(new EncoderSize, true)
+
           val s = Pickle("Hello")
           val bb = s.pickle("Hello").toByteBuffer
-          assert(bb.limit == 6 + 6)
-          val state = UnpickleState(bb)
+          assert(bb.limit == 6 + 2)
+          val state = new UnpickleState(new DecoderSize(bb), true)
           assert(Unpickle[String].fromState(state) == "Hello")
           assert(Unpickle[String].fromState(state) == "Hello")
         }

@@ -1,31 +1,32 @@
 package boopickle
 
 import java.nio.{ByteBuffer, ByteOrder}
+import java.util
 
 import scala.collection.mutable
 
 trait BufferProvider {
   /**
-   * Makes sure the ByteBuffer has enough space for new data. If not, allocates a new ByteBuffer
-   * and returns it. The returned ByteBuffer must have little-endian ordering.
-   *
-   * @param size Number of bytes needed for new data
-   * @return
-   */
+    * Makes sure the ByteBuffer has enough space for new data. If not, allocates a new ByteBuffer
+    * and returns it. The returned ByteBuffer must have little-endian ordering.
+    *
+    * @param size Number of bytes needed for new data
+    * @return
+    */
   def alloc(size: Int): ByteBuffer
 
   /**
-   * Completes the encoding and returns the ByteBuffer, merging the chain of buffers if necessary
-   *
-   * @return
-   */
+    * Completes the encoding and returns the ByteBuffer, merging the chain of buffers if necessary
+    *
+    * @return
+    */
   def asByteBuffer: ByteBuffer
 
   /**
-   * Completes the encoding and returns a sequence of ByteBuffers
-   *
-   * @return
-   */
+    * Completes the encoding and returns a sequence of ByteBuffers
+    *
+    * @return
+    */
   def asByteBuffers: Iterable[ByteBuffer]
 }
 
@@ -69,7 +70,7 @@ abstract class ByteBufferProvider extends BufferProvider {
 
 object ByteBufferProvider {
   final val initSize = 512
-  final val expandSize = initSize * 4
+  final val expandSize = initSize * 8
 }
 
 class HeapByteBufferProvider extends ByteBufferProvider {
@@ -85,8 +86,11 @@ class HeapByteBufferProvider extends ByteBufferProvider {
       // create a new buffer and combine all buffers into it
       val bufList = (currentBuf :: buffers).reverse
       val comb = allocate(bufList.map(_.limit).sum)
-      bufList.foreach {buf =>
-        comb.put(buf)
+      bufList.foreach { buf =>
+        // use fast array copy
+        scala.compat.Platform.arraycopy(buf.array, buf.arrayOffset, comb.array, comb.position, buf.limit)
+        comb.position(comb.position + buf.limit)
+        //comb.put(buf)
         // release to the pool
         BufferPool.release(buf)
       }
@@ -94,7 +98,6 @@ class HeapByteBufferProvider extends ByteBufferProvider {
       comb
     }
   }
-
 }
 
 class DirectByteBufferProvider extends ByteBufferProvider {
@@ -110,7 +113,7 @@ class DirectByteBufferProvider extends ByteBufferProvider {
       // create a new buffer and combine all buffers into it
       val bufList = (currentBuf :: buffers).reverse
       val comb = allocate(bufList.map(_.limit).sum)
-      bufList.foreach {buf =>
+      bufList.foreach { buf =>
         comb.put(buf)
         // release to the pool
         BufferPool.release(buf)

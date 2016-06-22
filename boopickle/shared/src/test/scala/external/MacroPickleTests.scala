@@ -1,6 +1,9 @@
 package external
 
+import java.nio.ByteBuffer
+
 import boopickle.Default._
+import boopickle.{DecoderSize, EncoderSize, UnpickleState}
 import utest._
 
 object MacroPickleTests extends TestSuite {
@@ -27,8 +30,7 @@ object MacroPickleTests extends TestSuite {
     }
   }
 
-  object TT3 {
-  }
+  object TT3
 
   object MyTrait {
     // a pickler for non-case classes cannot be automatically generated, so use the transform pickler
@@ -41,15 +43,18 @@ object MacroPickleTests extends TestSuite {
   case class B(stops: List[(Double, Double)])
 
   sealed trait A1Trait[T]
+
   case class A1[T](i: T) extends A1Trait[T]
 
   sealed abstract class AClass
+
   case class AB(i: Int) extends AClass
 
   sealed abstract class Version(val number: Int)
-  case object V1 extends Version(1)
-  case object V2 extends Version(2)
 
+  case object V1 extends Version(1)
+
+  case object V2 extends Version(2)
 
   override def tests = TestSuite {
     // must import pickler from the companion object, otherwise scalac will try to use a macro to generate it
@@ -61,6 +66,8 @@ object MacroPickleTests extends TestSuite {
         assert(Unpickle[Test1].fromBytes(bb) == Test1(5, "Hello!"))
       }
       'SeqCase {
+        implicit def pstate = new PickleState(new EncoderSize, true)
+        implicit def ustate: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSize(b), true)
         val t = Test1(99, "Hello!")
         val s = Seq(t, t, t)
         val bb = Pickle.intoBytes(s)

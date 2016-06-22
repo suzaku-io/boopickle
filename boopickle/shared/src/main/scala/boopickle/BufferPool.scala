@@ -1,10 +1,9 @@
 package boopickle
 
 import java.nio.ByteBuffer
-import java.util.Comparator
-import java.util.concurrent.ConcurrentSkipListSet
 
 object BufferPool {
+
   private final case class Entry(bb: ByteBuffer, size: Int)
 
   // two pools for two different size categories
@@ -13,7 +12,7 @@ object BufferPool {
   // maximum size of a ByteBuffer to be included in a pool
   private final val maxBufferSize = poolEntrySize1 * 2
   // maximum total size of buffers in a pool
-  private final val maxPoolSize = 4*1024*1024
+  private final val maxPoolSize = 4 * 1024 * 1024
 
   var disablePool = false
 
@@ -34,21 +33,7 @@ object BufferPool {
       else if (minSize > poolEntrySize1 || poolCount == 0) {
         allocMiss += 1
         None
-      } else if (minSize <= poolEntrySize0) {
-        this.synchronized {
-          if (pool0.isEmpty) {
-            allocMiss += 1
-            None
-          } else {
-            val e = pool0.head
-            allocOk += 1
-            poolSize -= e.size
-            poolCount -= 1
-            pool0 = pool0.tail
-            Some(e.bb)
-          }
-        }
-      } else if (minSize <= poolEntrySize1) {
+      } else if (minSize > poolEntrySize0 || pool0.isEmpty) {
         this.synchronized {
           if (pool1.isEmpty) {
             allocMiss += 1
@@ -63,8 +48,14 @@ object BufferPool {
           }
         }
       } else {
-        allocMiss += 1
-        None
+        this.synchronized {
+          val e = pool0.head
+          allocOk += 1
+          poolSize -= e.size
+          poolCount -= 1
+          pool0 = pool0.tail
+          Some(e.bb)
+        }
       }
     }
 
@@ -101,7 +92,7 @@ object BufferPool {
   }
 
   def release(bb: ByteBuffer): Unit = {
-    if(bb.isDirect)
+    if (bb.isDirect)
       directPool.release(bb)
     else
       heapPool.release(bb)
@@ -112,5 +103,4 @@ object BufferPool {
   def maxSize = heapPool.maxSize + directPool.maxSize
   def poolSize = heapPool.poolSize + directPool.poolSize
   def poolCount = heapPool.poolCount + directPool.poolCount
-
 }
