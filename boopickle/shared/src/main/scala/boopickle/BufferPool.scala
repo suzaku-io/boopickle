@@ -28,13 +28,13 @@ object BufferPool {
     @volatile var poolCount = 0
 
     def allocate(minSize: Int): Option[ByteBuffer] = {
-      if (disablePool)
-        None
-      else if (minSize > poolEntrySize1 || poolCount == 0) {
-        allocMiss += 1
-        None
-      } else if (minSize > poolEntrySize0 || pool0.isEmpty) {
-        this.synchronized {
+      this.synchronized {
+        if (disablePool)
+          None
+        else if (minSize > poolEntrySize1 || poolCount == 0) {
+          allocMiss += 1
+          None
+        } else if (minSize > poolEntrySize0 || pool0.isEmpty) {
           if (pool1.isEmpty) {
             allocMiss += 1
             None
@@ -46,9 +46,7 @@ object BufferPool {
             pool1 = pool1.tail
             Some(e.bb)
           }
-        }
-      } else {
-        this.synchronized {
+        } else {
           val e = pool0.head
           allocOk += 1
           poolSize -= e.size

@@ -134,7 +134,7 @@ object BasicPicklers extends PicklerHelper {
 
   object StringPickler extends P[String] {
     override def pickle(s: String)(implicit state: PickleState): Unit = {
-      state.identityRefFor(s) match {
+      state.immutableRefFor(s) match {
         case Some(idx) =>
           state.enc.writeInt(-idx)
         case None =>
@@ -142,7 +142,7 @@ object BasicPicklers extends PicklerHelper {
             state.enc.writeInt(0)
           } else {
             state.enc.writeString(s)
-            state.addIdentityRef(s)
+            state.addImmutableRef(s)
           }
       }
     }
@@ -150,12 +150,12 @@ object BasicPicklers extends PicklerHelper {
     override def unpickle(implicit state: UnpickleState): String = {
       val len = state.dec.readInt
       if (len < 0) {
-        state.identityFor[String](-len)
+        state.immutableFor[String](-len)
       } else if (len == 0) {
         ""
       } else {
         val s = state.dec.readString(len)
-        state.addIdentityRef(s)
+        state.addImmutableRef(s)
         s
       }
     }
@@ -294,7 +294,7 @@ object BasicPicklers extends PicklerHelper {
 
   import collection.generic.CanBuildFrom
   /**
-    * This pickler works on all collections that derive from Iterable (Vector, Set, List, etc)
+    * This pickler works on all collections that derive from Iterable[T] (Vector, Set, List, etc)
     *
     * @tparam T type of the values
     * @tparam V type of the collection
@@ -322,6 +322,7 @@ object BasicPicklers extends PicklerHelper {
           res
         case len =>
           val b = cbf()
+          b.sizeHint(len)
           var i = 0
           while (i < len) {
             b += read[T]
@@ -435,6 +436,7 @@ object BasicPicklers extends PicklerHelper {
           state.identityFor[V[T, S]](-idx)
         case len =>
           val b = cbf()
+          b.sizeHint(len)
           val kPickler = implicitly[P[T]]
           val vPickler = implicitly[P[S]]
           var i = 0
@@ -452,10 +454,11 @@ object BasicPicklers extends PicklerHelper {
 /**
   * Manage state for a pickling "session".
   *
-  * @param enc         Encoder instance to use
-  * @param deduplicate Set to `true` if you want to enable deduplication
+  * @param enc            Encoder instance to use
+  * @param deduplicate    Set to `false` if you want to disable deduplication
+  * @param dedupImmutable Set to `false` if you want to disable deduplication of immutable values (like Strings)
   */
-final class PickleState(val enc: Encoder, deduplicate: Boolean = false) {
+final class PickleState(val enc: Encoder, deduplicate: Boolean = true, dedupImmutable: Boolean = true) {
 
   /**
     * Object reference for pickled objects (use identity for equality comparison)
@@ -480,6 +483,32 @@ final class PickleState(val enc: Encoder, deduplicate: Boolean = false) {
       identityRefs = identityRefs.updated(obj)
   }
 
+  /**
+    * Object reference for immutable pickled objects
+    */
+  private[this] var immutableRefs: mutable.AnyRefMap[AnyRef, Int] = null
+  private[this] var immutableIdx = 2
+
+  @inline def immutableRefFor(obj: AnyRef): Option[Int] = {
+    if (obj == null)
+      Some(1)
+    else if (!dedupImmutable)
+      None
+    else if (immutableRefs != null)
+      immutableRefs.get(obj)
+    else
+      None
+  }
+
+  @inline def addImmutableRef(obj: AnyRef): Unit = {
+    if (dedupImmutable) {
+      if (immutableRefs == null)
+        immutableRefs = mutable.AnyRefMap.empty
+      immutableRefs.update(obj, immutableIdx)
+      immutableIdx += 1
+    }
+  }
+
   @inline def pickle[A](value: A)(implicit p: Pickler[A]): PickleState = {
     p.pickle(value)(this)
     this
@@ -491,22 +520,22 @@ final class PickleState(val enc: Encoder, deduplicate: Boolean = false) {
 }
 
 object PickleState {
-
   /**
     * Provides a default PickleState if none is available implicitly
     *
     * @return
     */
-  implicit def Default: PickleState = new PickleState(new EncoderSize)
+  implicit def pickleStateSpeed: PickleState = new PickleState(new EncoderSize, true, true)
 }
 
 /**
   * Manage state for an unpickling "session"
   *
-  * @param dec         Decoder instance to use
-  * @param deduplicate Set to `true` if you want to enable deduplication
+  * @param dec            Decoder instance to use
+  * @param deduplicate    Set to `false` if you want to disable deduplication
+  * @param dedupImmutable Set to `false` if you want to disable deduplication of immutable values (like Strings)
   */
-final class UnpickleState(val dec: Decoder, deduplicate: Boolean = false) {
+final class UnpickleState(val dec: Decoder, deduplicate: Boolean = true, dedupImmutable: Boolean = true) {
   /**
     * Object reference for pickled objects (use identity for equality comparison)
     *
@@ -529,6 +558,25 @@ final class UnpickleState(val dec: Decoder, deduplicate: Boolean = false) {
     if (deduplicate)
       identityRefs = identityRefs.updated(obj)
 
+  /**
+    * Object reference for immutable pickled objects
+    */
+  private[this] var immutableRefs: IdentList = EmptyIdentList
+
+  @inline def immutableFor[A <: AnyRef](ref: Int): A = {
+    if (ref < 2)
+      null.asInstanceOf[A]
+    else if (dedupImmutable)
+      immutableRefs(ref - 2).asInstanceOf[A]
+    else
+      throw new Exception("Deduplication for immutable objects is disabled, but immutableFor was called.")
+  }
+
+  @inline def addImmutableRef(obj: AnyRef): Unit = {
+    if (dedupImmutable)
+      immutableRefs = immutableRefs.updated(obj)
+  }
+
   @inline def unpickle[A](implicit u: Pickler[A]): A = u.unpickle(this)
 }
 
@@ -538,9 +586,10 @@ object UnpickleState {
     *
     * @return
     */
-  implicit def Default: ByteBuffer => UnpickleState = bytes => new UnpickleState(new DecoderSize(bytes))
+  implicit def unpickleStateSpeed: ByteBuffer => UnpickleState = bytes => new UnpickleState(new DecoderSize(bytes), true, true)
 
   def apply(bytes: ByteBuffer) = new UnpickleState(new DecoderSize(bytes))
 
-  def apply(decoder: Decoder, deduplicate: Boolean = false) = new UnpickleState(decoder, deduplicate)
+  def apply(decoder: Decoder, deduplicate: Boolean = false, dedupImmutable: Boolean = false) =
+    new UnpickleState(decoder, deduplicate)
 }

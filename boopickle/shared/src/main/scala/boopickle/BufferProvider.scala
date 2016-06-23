@@ -37,14 +37,17 @@ abstract class ByteBufferProvider extends BufferProvider {
 
   protected def allocate(size: Int): ByteBuffer
 
-  def alloc(size: Int): ByteBuffer = {
-    if (currentBuf.remaining() < size) {
-      // flip current buffer (prepare for reading and set limit)
-      currentBuf.flip()
-      buffers = currentBuf :: buffers
-      // replace current buffer with the new one, align to 16-byte border for small sizes
-      currentBuf = allocate((size + expandSize + 15) & ~15)
-    }
+  final private def newBuffer(size: Int): Unit = {
+    // flip current buffer (prepare for reading and set limit)
+    currentBuf.flip()
+    buffers = currentBuf :: buffers
+    // replace current buffer with the new one, align to 16-byte border for small sizes
+    currentBuf = allocate((size + expandSize + 15) & ~15)
+  }
+
+  @inline final def alloc(size: Int): ByteBuffer = {
+    if (currentBuf.remaining() < size)
+      newBuffer(size)
     currentBuf
   }
 

@@ -29,13 +29,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"me.chrons" %% "boopickle" % "1.2.2"
+"me.chrons" %% "boopickle" % "1.2.3"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```scala
-"me.chrons" %%% "boopickle" % "1.2.2"
+"me.chrons" %%% "boopickle" % "1.2.3"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
@@ -387,7 +387,48 @@ Note that the basic `addException` mechanism only pickles the exception message,
 fields, create transform picklers described above with the `addTransform` function. The same `CompositePickler` can contain both regular
 exception picklers and transform picklers.
 
-## Codecs
+## Optimizations strategies
+
+### Buffer pooling
+
+When BooPickle codecs allocate `ByteBuffer`s they do it via `BufferProvider` classes. The default implementations for both heap and direct buffers utilize
+the `BufferPool` object for recycling buffers. Buffer providers automatically release intermediate `ByteBuffer`s back to the pool when their contents
+is copied to a new buffer. To improve pool performance, you should release buffers that are not used anymore by calling `BufferPool.release`. Only
+buffers allocated through the `BufferProvider` should be released to the pool.
+
+```scala
+val data = Pickle.intoBytes(fruits)
+// send data to client
+...
+// release buffer back to pool
+BufferPool.release(data)
+```
+
+The pool has a maximum size (currently 4M) to prevent it from locking down too much memory and it also only recycles relatively small buffers.
+
+### Deduplication
+
+BooPickle supports deduplication of pickled case classes and strings. If you know your data won't have duplicates, you can enhance performance by disabling it
+by setting the `deduplicate` and `dedupImmutable` parameters in `PickleState` and `UnpickleState` constructors to `false`. The effect of deduplication is that
+when the same object is encountered again while pickling, only a reference is stored. When unpickling the reference is used instead of unpickling the object
+again. This saves space and enhances performance if your data contains a lot of copies of same objects.
+
+There are two different methods of deduplication. First one compares object identities directly and the second compares object contents. The first one can be
+used for any objects but the second is safe to use only with immutable objects because only a single instance is created when unpickling and is used for all
+references. In the provided picklers immutable deduplication is used only for `String`s, but you can use it in your own picklers if you have immutable data that
+is duplicated a lot.
+
+Note that deduplication can severely affect pickling performance (not that much unpickling), especially if you are pickling a lot of non-duplicated objects in
+one go.
+
+To implicitly provide non-deduplicating `PickleState` and `UnpickleState`, use following code.
+
+```scala
+implicit def pickleState = new PickleState(new EncoderSize, false, false)
+implicit val unpickleState = (bb: ByteBuffer) => new UnpickleState(new DecoderSize(bb), false, false)
+```
+
+### Codecs
 
 Originally BooPickle had a single codec optimized for both size and speed. From 1.2.0 onwards there are now two codecs, the original one optimized
 for size and a new codec optimized for speed (especially in the browser).
@@ -405,36 +446,10 @@ implicit def pickleState: PickleState = new PickleState(new EncoderSpeed)
 implicit val unpickleState= (b: ByteBuffer) => new UnpickleState(new DecoderSpeed(b))
 ```
 
-## Buffer pooling
+## Performance testing
 
-When BooPickle codecs allocate `ByteBuffer`s they do it via `BufferProvider`s. The default implementations for both heap and direct buffers utilize
-the `BufferPool` object which recycles buffers. Buffer providers automatically release intermediate `ByteBuffer`s back to the pool when their contents
-is copied to a new buffer. To improve pool performance, you should release buffers that are not used anymore by calling `BufferPool.release`. Only
-buffers allocated through the `BufferProvider` should be released to the pool.
-
-The pool has a maximum size (currently 4M) to prevent it from locking down too much memory and it also only recycles relatively small buffers (less
-than 64kB).
-
-## Deduplication
-
-BooPickle supports deduplication of pickled case classes and Strings, but this is turned off by default for performance reasons. Enable it by setting the
-`deduplicate` parameter in `PickleState` and `UnpickleState` constructors to `true`. The effect of deduplication is that when the same object is encountered
-again while pickling, only a reference is stored. When unpickling the reference is used instead of unpickling the object again. This saves space and enhances
-performance if your data contains a lot of copies of same objects.
-
-Note that deduplication can severely affect pickling performance (not that much unpickling), especially if you are pickling a lot of objects in one go.
-
-To implicitly provide deduplicating `PickleState` and `UnpickleState`, use following code.
-
-```scala
-implicit def pickleState = new PickleState(new EncoderSize, true)
-implicit val unpickleState = (bb: ByteBuffer) => new UnpickleState(new DecoderSize(bb), true)
-```
-
-## Performance
-
-As one of the main design goals of BooPickle was performance (both in execution speed as in data size), the project includes a sub-project
-for comparing BooPickle performance with the two other common pickling libraries, uPickle and Prickle. To access the performance tests, just
+As one of the main design goals of BooPickle was performance (both in execution speed as in data size), the project includes a sub-project for comparing
+BooPickle performance with other common pickling libraries available for Scala.js: uPickle, Prickle, Circe and Pushka. To access the performance tests, just
 switch to `perftestsJS` or `perftestsJVM` project.
 
 On the JVM you can run the tests simply with the `run` command and the output will be shown in the SBT console. You might want to run the
@@ -446,7 +461,7 @@ To ensure good results, run the tests at least twice in the browser.
 
 Both tests provide similar output, although there are small differences in the Gzipped sizes due to the use of different libraries.
 
-In the browser (BooPickle! is using the speed optimized codec):
+In the browser (BooPickle! is using the speed optimized codec with deduplication disabled):
 ```
 16/16 : Decoding Seq[Book] with numerical IDs
 =============================================

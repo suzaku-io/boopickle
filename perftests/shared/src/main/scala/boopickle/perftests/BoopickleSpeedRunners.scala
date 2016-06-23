@@ -11,8 +11,8 @@ abstract class BooSpeedRunner[A](data: A) extends TestRunner[A](data) {
 
 object BooPickleSpeedRunners {
 
-  implicit def pickleState = new PickleState(new EncoderSpeed)
-  implicit def unpickleState = (b: ByteBuffer) => new UnpickleState(new DecoderSpeed(b))
+  implicit def pickleState = new PickleState(new EncoderSpeed, false, false)
+  implicit def unpickleState = (b: ByteBuffer) => new UnpickleState(new DecoderSpeed(b), false, false)
 
   def encodeRunner[A](data: A)(implicit p: Pickler[A]): BooSpeedRunner[A] = new BooSpeedRunner[A](data) {
     var testData: A = _

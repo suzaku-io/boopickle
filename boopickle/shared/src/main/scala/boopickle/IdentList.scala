@@ -15,8 +15,7 @@ abstract class IdentList {
 object IdentList {
 
   private[boopickle] final class Entry(val obj: AnyRef, var next: Entry)
-
-  private[boopickle] final val maxSize = 64
+  private[boopickle] val maxSize = 32
 }
 
 object EmptyIdentList extends IdentList {
@@ -34,9 +33,12 @@ private[boopickle] final class IdentList1Plus(o1: AnyRef) extends IdentList {
   import boopickle.IdentList.Entry
   var last: Entry = new Entry(o1, null)
   var head: Entry = last
-  var count = 1
+  var switchOver = false
+  var size = 0
 
   override def apply(idx: Int): AnyRef = {
+    // first time something is looked up, we switch to the more efficient implementation
+    switchOver = true
     var i = 0
     var e = head
     while (i < idx && e != null) {
@@ -52,9 +54,9 @@ private[boopickle] final class IdentList1Plus(o1: AnyRef) extends IdentList {
     val e = new Entry(obj, null)
     last.next = e
     last = e
-    count += 1
-    if (count > IdentList.maxSize)
-      new IdentListBig(head)
+    size += 1
+    if (switchOver || size > IdentList.maxSize)
+      new IdentListBig(head, size)
     else
       this
   }
@@ -65,10 +67,10 @@ private[boopickle] final class IdentList1Plus(o1: AnyRef) extends IdentList {
   *
   * @param first First entry in a list of entries
   */
-private[boopickle] final class IdentListBig(first: IdentList.Entry) extends IdentList {
+private[boopickle] final class IdentListBig(first: IdentList.Entry, size: Int) extends IdentList {
   // transform the linked list into an array buffer
   val b = mutable.ArrayBuffer.newBuilder[AnyRef]
-  b.sizeHint(IdentList.maxSize)
+  b.sizeHint(size)
   var e = first
   while (e != null) {
     b += e.obj

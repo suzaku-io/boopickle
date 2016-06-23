@@ -301,11 +301,11 @@ object PickleTests extends TestSuite {
           assert(Unpickle[String].fromBytes(bb) == uuidStr)
         }
         'deduplication {
-          implicit def pstate = new PickleState(new EncoderSize, true)
-          implicit def ustate: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSize(b), true)
-          val data = Seq("testing", "testing", "testing")
+          implicit def pstate = new PickleState(new EncoderSize, true, true)
+          implicit def ustate: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSize(b), true, true)
+          val data = (0 until 10).map(i => s"testing${i/10}")
           val bb = Pickle.intoBytes(data)
-          assert(bb.limit == 1 + 1 + 7 + 2 * 2)
+          assert(bb.limit == 1 + 1 + 8 + 2 * 9)
           val udata = Unpickle[Seq[String]].fromBytes(bb)
           assert(udata == data)
         }
@@ -569,12 +569,12 @@ object PickleTests extends TestSuite {
           assert(Unpickle[String].fromState(state) == "World")
         }
         'stringRef {
-          implicit def pstate = new PickleState(new EncoderSize, true)
+          implicit def pstate = new PickleState(new EncoderSize, true, true)
 
           val s = Pickle("Hello")
           val bb = s.pickle("Hello").toByteBuffer
           assert(bb.limit == 6 + 2)
-          val state = new UnpickleState(new DecoderSize(bb), true)
+          val state = new UnpickleState(new DecoderSize(bb), true, true)
           assert(Unpickle[String].fromState(state) == "Hello")
           assert(Unpickle[String].fromState(state) == "Hello")
         }
@@ -609,8 +609,9 @@ object PickleTests extends TestSuite {
       }
     }
     'speedCodec - {
-      implicit def pstate = new PickleState(new EncoderSpeed)
-      implicit def ustate: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSpeed(b))
+      import boopickle.SpeedOriented._
+      //implicit def pstate = new PickleState(new EncoderSpeed)
+      //implicit def ustate: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSpeed(b))
       'Boolean - {
         'true {
           val bb = Pickle.intoBytes(true)

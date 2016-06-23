@@ -11,9 +11,9 @@ object PerfTests extends TestSuite {
     'Performance - {
       case class Test(i: Int, s: String)
       // generate data
-      val template = (0 until 50000).map(i => Test(i, i.toString * 20))
+      val template = (0 until 50000).map(i => Test(i, (i/2).toString * 20))
       val data = (0 until 200000).map(i => template(i % template.size))
-      def dedupTest(pState: => PickleState, uState: ByteBuffer => UnpickleState) = {
+      def dedupTest(topic: String, pState: => PickleState, uState: ByteBuffer => UnpickleState) = {
         def testRun = {
           val pickleState = pState
           val start = System.nanoTime()
@@ -28,15 +28,15 @@ object PerfTests extends TestSuite {
           val (e, d, data, bb) = testRun
           (e min enc, d min dec, data, bb)
         }
-        println(s"Pickle time: ${eTime / 1000}, Unpickle time:  ${dTime / 1000}")
+        println(s"$topic -- Pickle time: ${eTime / 1000}, Unpickle time:  ${dTime / 1000}")
         println(s"Data size ${bb.capacity()}")
         assert(uData == data)
       }
       'Deduplication {
-        dedupTest(new PickleState(new EncoderSize, true), bb => new UnpickleState(new DecoderSize(bb), true))
+        dedupTest("With dedup", new PickleState(new EncoderSize, true, true), bb => new UnpickleState(new DecoderSize(bb), true, true))
       }
       'NoDeduplication {
-        dedupTest(new PickleState(new EncoderSize, false), bb => new UnpickleState(new DecoderSize(bb), false))
+        dedupTest("Without dedup", new PickleState(new EncoderSize, false, false), bb => new UnpickleState(new DecoderSize(bb), false, false))
       }
     }
   }

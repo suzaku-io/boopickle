@@ -176,10 +176,10 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
   }
 }
 
-class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.provider) extends Encoder {
+final class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.provider) extends Encoder {
   val stringCodec: StringCodecFuncs = StringCodec
 
-  private def alloc(size: Int): ByteBuffer = bufferProvider.alloc(size)
+  @inline private def alloc(size: Int): ByteBuffer = bufferProvider.alloc(size)
 
   /**
     * Encodes a single byte

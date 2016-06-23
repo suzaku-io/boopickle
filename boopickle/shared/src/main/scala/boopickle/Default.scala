@@ -97,7 +97,7 @@ object UnpickleImpl {
       result
     }
 
-    def tryFromBytes(bytes: ByteBuffer): Try[A] = Try(fromBytes(bytes))
+    def tryFromBytes(bytes: ByteBuffer)(implicit buildState: ByteBuffer => UnpickleState): Try[A] = Try(fromBytes(bytes))
 
     def fromState(state: UnpickleState): A = u.unpickle(state)
   }
@@ -114,6 +114,21 @@ trait Base {
   def compositePickler[A <: AnyRef] = CompositePickler[A]
 
   def exceptionPickler = ExceptionPickler.base
+}
+
+object SpeedOriented {
+  /**
+    * Provides a default PickleState if none is available implicitly
+    *
+    * @return
+    */
+  implicit def pickleStateSpeed: PickleState = new PickleState(new EncoderSpeed, false, false)
+  /**
+    * Provides a default UnpickleState if none is available implicitly
+    *
+    * @return
+    */
+  implicit def unpickleStateSpeed: ByteBuffer => UnpickleState = bytes => new UnpickleState(new DecoderSpeed(bytes), false, false)
 }
 
 /**
