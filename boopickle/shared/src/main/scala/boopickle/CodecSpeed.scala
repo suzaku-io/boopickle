@@ -4,7 +4,7 @@ import java.nio.charset.CharacterCodingException
 import java.nio.{ByteBuffer, ByteOrder}
 
 class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
-  val stringCodec: StringCodecFuncs = StringCodec
+  val stringCodec: StringCodecBase = StringCodec
   /**
     * Decodes a single byte
     *
@@ -177,7 +177,7 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
 }
 
 final class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.provider) extends Encoder {
-  val stringCodec: StringCodecFuncs = StringCodec
+  val stringCodec: StringCodecBase = StringCodec
 
   @inline private def alloc(size: Int): ByteBuffer = bufferProvider.alloc(size)
 

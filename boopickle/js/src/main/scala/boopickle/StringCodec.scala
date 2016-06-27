@@ -23,7 +23,7 @@ class TextEncoder(utfLabel: js.UndefOr[String] = js.undefined) extends js.Object
   def encode(str: String): Uint8Array = js.native
 }
 
-object StringCodec extends StringCodecFuncs {
+object StringCodec extends StringCodecBase {
   private lazy val utf8decoder: (Int8Array) => String = {
     val td = new TextDecoder
     // use native TextDecoder
@@ -110,7 +110,9 @@ object StringCodec extends StringCodecFuncs {
   }
 
 
+/*
   override def decodeFast(len: Int, buf: ByteBuffer): String = decodeUTF16(len, buf)
 
   override def encodeFast(str: String): ByteBuffer = encodeUTF16(str)
+*/
 }

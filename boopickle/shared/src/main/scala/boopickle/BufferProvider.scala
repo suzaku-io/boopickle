@@ -32,6 +32,7 @@ trait BufferProvider {
 
 abstract class ByteBufferProvider extends BufferProvider {
   import ByteBufferProvider._
+  protected val pool = BufferPool
   protected var buffers: List[ByteBuffer] = Nil
   protected var currentBuf: ByteBuffer = allocate(initSize)
 
@@ -78,7 +79,7 @@ object ByteBufferProvider {
 
 class HeapByteBufferProvider extends ByteBufferProvider {
   override protected def allocate(size: Int) = {
-    BufferPool.allocate(size).getOrElse(ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN))
+    pool.allocate(size).getOrElse(ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN))
   }
 
   override def asByteBuffer = {
@@ -93,9 +94,8 @@ class HeapByteBufferProvider extends ByteBufferProvider {
         // use fast array copy
         scala.compat.Platform.arraycopy(buf.array, buf.arrayOffset, comb.array, comb.position, buf.limit)
         comb.position(comb.position + buf.limit)
-        //comb.put(buf)
         // release to the pool
-        BufferPool.release(buf)
+        pool.release(buf)
       }
       comb.flip()
       comb
@@ -105,7 +105,7 @@ class HeapByteBufferProvider extends ByteBufferProvider {
 
 class DirectByteBufferProvider extends ByteBufferProvider {
   override protected def allocate(size: Int) = {
-    BufferPool.allocateDirect(size).getOrElse(ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN))
+    pool.allocateDirect(size).getOrElse(ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN))
   }
 
   override def asByteBuffer = {
@@ -119,7 +119,7 @@ class DirectByteBufferProvider extends ByteBufferProvider {
       bufList.foreach { buf =>
         comb.put(buf)
         // release to the pool
-        BufferPool.release(buf)
+        pool.release(buf)
       }
       comb.flip()
       comb

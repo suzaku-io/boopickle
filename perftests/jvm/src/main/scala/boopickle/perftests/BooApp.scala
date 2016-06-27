@@ -40,9 +40,7 @@ object BooApp extends App {
         s"""BufferPool:
            |  allocations = ${BufferPool.allocOk}
            |  misses      = ${BufferPool.allocMiss}
-           |  count       = ${BufferPool.poolCount}
-           |  size        = ${BufferPool.poolSize}
-           |  maxSize     = ${BufferPool.maxSize}""".stripMargin)
+           """.stripMargin)
     }
   }
 }

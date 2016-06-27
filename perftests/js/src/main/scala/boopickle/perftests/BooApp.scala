@@ -56,9 +56,7 @@ object BooApp extends js.JSApp {
         s"""BufferPool:
             |  allocations = ${BufferPool.allocOk}
             |  misses      = ${BufferPool.allocMiss}
-            |  count       = ${BufferPool.poolCount}
-            |  size        = ${BufferPool.poolSize}
-            |  maxSize     = ${BufferPool.maxSize}""".stripMargin)
+            """.stripMargin)
       ()
     }
     dom.window.setTimeout(() => runNext(Tests.suites), 10)

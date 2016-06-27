@@ -249,13 +249,13 @@ object PickleTests extends TestSuite {
         }
         'unicode1 {
           val bb = Pickle.intoBytes("“Life”")
-          assert(bb.limit == 11)
+          assert(bb.limit == 9)
           val s = Unpickle[String].fromBytes(bb)
           assert(s == "“Life”")
         }
         'unicode2 {
           val bb = Pickle.intoBytes("\uD834\uDF06泡菜")
-          assert(bb.limit == 4 + 3 + 2 + 2)
+          assert(bb.limit == 1 + 3 * 4)
           val s = Unpickle[String].fromBytes(bb)
           assert(s == "\uD834\uDF06泡菜")
         }
@@ -303,7 +303,7 @@ object PickleTests extends TestSuite {
         'deduplication {
           implicit def pstate = new PickleState(new EncoderSize, true, true)
           implicit def ustate: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSize(b), true, true)
-          val data = (0 until 10).map(i => s"testing${i/10}")
+          val data = (0 until 10).map(i => s"testing${i / 10}")
           val bb = Pickle.intoBytes(data)
           assert(bb.limit == 1 + 1 + 8 + 2 * 9)
           val udata = Unpickle[Seq[String]].fromBytes(bb)

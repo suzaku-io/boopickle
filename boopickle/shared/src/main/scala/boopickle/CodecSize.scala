@@ -4,19 +4,21 @@ import java.nio.charset.CharacterCodingException
 import java.nio.{ByteBuffer, ByteOrder}
 
 class DecoderSize(val buf: ByteBuffer) extends Decoder {
-  val stringCodec: StringCodecFuncs = StringCodec
+  val stringCodec: StringCodecBase = StringCodec
   /**
-   * Decodes a single byte
-   * @return
-   */
+    * Decodes a single byte
+    *
+    * @return
+    */
   def readByte: Byte = {
     buf.get
   }
 
   /**
-   * Decodes a UTF-8 encoded character (1-3 bytes) and produces a single UTF-16 character
-   * @return
-   */
+    * Decodes a UTF-8 encoded character (1-3 bytes) and produces a single UTF-16 character
+    *
+    * @return
+    */
   def readChar: Char = {
     val b0 = buf.get & 0xFF
     if (b0 < 0x80)
@@ -40,20 +42,21 @@ class DecoderSize(val buf: ByteBuffer) extends Decoder {
   }
 
   /**
-   * Decodes a 32-bit integer (1-5 bytes)
-   * <pre>
-   * 0XXX XXXX                            = 0 to 127
-   * 1000 XXXX  b0                        = 128 to 4095
-   * 1001 XXXX  b0                        = -1 to -4095
-   * 1010 XXXX  b0 b1                     = 4096 to 1048575
-   * 1011 XXXX  b0 b1                     = -4096 to -1048575
-   * 1100 XXXX  b0 b1 b2                  = 1048576 to 268435455
-   * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435455
-   * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
-   * 1111 ????                            = reserved for special codings
-   * </pre>
-   * @return
-   */
+    * Decodes a 32-bit integer (1-5 bytes)
+    * <pre>
+    * 0XXX XXXX                            = 0 to 127
+    * 1000 XXXX  b0                        = 128 to 4095
+    * 1001 XXXX  b0                        = -1 to -4095
+    * 1010 XXXX  b0 b1                     = 4096 to 1048575
+    * 1011 XXXX  b0 b1                     = -4096 to -1048575
+    * 1100 XXXX  b0 b1 b2                  = 1048576 to 268435455
+    * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435455
+    * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
+    * 1111 ????                            = reserved for special codings
+    * </pre>
+    *
+    * @return
+    */
   def readInt: Int = {
     val b = buf.get & 0xFF
     if ((b & 0x80) != 0) {
@@ -88,21 +91,22 @@ class DecoderSize(val buf: ByteBuffer) extends Decoder {
   }
 
   /**
-   * Decodes a 64-bit integer (1-9 bytes)
-   * <pre>
-   * 0XXX XXXX                            = 0 to 127
-   * 1000 XXXX  b0                        = 128 to 4095
-   * 1001 XXXX  b0                        = -1 to -4095
-   * 1010 XXXX  b0 b1                     = 4096 to 1048575
-   * 1011 XXXX  b0 b1                     = -4096 to -1048575
-   * 1100 XXXX  b0 b1 b2                  = 1048576 to 268435455
-   * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435455
-   * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
-   * 1110 0001  b0 b1 b2 b3 b4 b5 b6 b7   = anything larger
-   * 1111 ????                            = reserved for special codings
-   * </pre>
-   * @return
-   */
+    * Decodes a 64-bit integer (1-9 bytes)
+    * <pre>
+    * 0XXX XXXX                            = 0 to 127
+    * 1000 XXXX  b0                        = 128 to 4095
+    * 1001 XXXX  b0                        = -1 to -4095
+    * 1010 XXXX  b0 b1                     = 4096 to 1048575
+    * 1011 XXXX  b0 b1                     = -4096 to -1048575
+    * 1100 XXXX  b0 b1 b2                  = 1048576 to 268435455
+    * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435455
+    * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
+    * 1110 0001  b0 b1 b2 b3 b4 b5 b6 b7   = anything larger
+    * 1111 ????                            = reserved for special codings
+    * </pre>
+    *
+    * @return
+    */
   def readLong: Long = {
     val b = buf.get & 0xFF
     if (b != 0xE1) {
@@ -118,9 +122,10 @@ class DecoderSize(val buf: ByteBuffer) extends Decoder {
   }
 
   /**
-   * Decodes a 32-bit integer, or returns the first byte if it doesn't contain a valid encoding marker
-   * @return
-   */
+    * Decodes a 32-bit integer, or returns the first byte if it doesn't contain a valid encoding marker
+    *
+    * @return
+    */
   def readIntCode: Either[Byte, Int] = {
     val b = buf.get & 0xFF
     if ((b & 0x80) != 0) {
@@ -151,9 +156,10 @@ class DecoderSize(val buf: ByteBuffer) extends Decoder {
   }
 
   /**
-   * Decodes a 64-bit long, or returns the first byte if it doesn't contain a valid encoding marker
-   * @return
-   */
+    * Decodes a 64-bit long, or returns the first byte if it doesn't contain a valid encoding marker
+    *
+    * @return
+    */
   def readLongCode: Either[Byte, Long] = {
     val b = buf.get & 0xFF
     if (b != 0xE1) {
@@ -167,39 +173,42 @@ class DecoderSize(val buf: ByteBuffer) extends Decoder {
   }
 
   /**
-   * Decodes a 32-bit float (4 bytes)
-   * @return
-   */
+    * Decodes a 32-bit float (4 bytes)
+    *
+    * @return
+    */
   def readFloat: Float = {
     buf.getFloat
   }
 
   /**
-   * Decodes a 64-bit double (8 bytes)
-   * @return
-   */
+    * Decodes a 64-bit double (8 bytes)
+    *
+    * @return
+    */
   def readDouble: Double = {
     buf.getDouble
   }
 
   /**
-   * Decodes a UTF-8 encoded string
-   *
-   * @return
-   */
+    * Decodes a UTF-8 encoded string
+    *
+    * @return
+    */
   def readString: String = {
     // read string length
     val len = readInt
-    stringCodec.decodeUTF8(len, buf)
+    stringCodec.decodeFast(len, buf)
   }
 
   /**
-   * Decodes a UTF-8 encoded string whose length is already known
-   * @param len Length of the string (in bytes)
-   * @return
-   */
+    * Decodes a UTF-8 encoded string whose length is already known
+    *
+    * @param len Length of the string (in bytes)
+    * @return
+    */
   def readString(len: Int): String = {
-    stringCodec.decodeUTF8(len, buf)
+    stringCodec.decodeFast(len, buf)
   }
 
   def readByteBuffer: ByteBuffer = {
@@ -208,7 +217,7 @@ class DecoderSize(val buf: ByteBuffer) extends Decoder {
     if (sizeBO < 0)
       throw new IllegalArgumentException(s"Invalid size $sizeBO for ByteBuffer")
     val size = sizeBO >> 1
-    val byteOrder = if((sizeBO & 1) == 1) ByteOrder.BIG_ENDIAN else ByteOrder.LITTLE_ENDIAN
+    val byteOrder = if ((sizeBO & 1) == 1) ByteOrder.BIG_ENDIAN else ByteOrder.LITTLE_ENDIAN
     // create a copy (sharing content), set correct byte order
     val b = buf.slice().order(byteOrder)
     buf.position(buf.position + size)
@@ -233,7 +242,7 @@ class DecoderSize(val buf: ByteBuffer) extends Decoder {
   def readIntArray(len: Int): Array[Int] = {
     val array = new Array[Int](len)
     var i = 0
-    while(i < len) {
+    while (i < len) {
       array(i) = readInt
       i += 1
     }
@@ -265,30 +274,30 @@ class DecoderSize(val buf: ByteBuffer) extends Decoder {
     buf.position(buf.position + len * 8)
     array
   }
-
 }
 
 final class EncoderSize(bufferProvider: BufferProvider = DefaultByteBufferProvider.provider) extends Encoder {
-  val stringCodec: StringCodecFuncs = StringCodec
+  val stringCodec: StringCodecBase = StringCodec
 
   @inline private def alloc(size: Int): ByteBuffer = bufferProvider.alloc(size)
 
   /**
-   * Encodes a single byte
-   * @param b Byte to encode
-   * @return
-   */
+    * Encodes a single byte
+    *
+    * @param b Byte to encode
+    * @return
+    */
   def writeByte(b: Byte): Encoder = {
     alloc(1).put(b)
     this
   }
 
   /**
-   * Encodes a single character using UTF-8 encoding
-   *
-   * @param c Character to encode
-   * @return
-   */
+    * Encodes a single character using UTF-8 encoding
+    *
+    * @param c Character to encode
+    * @return
+    */
   def writeChar(c: Char): Encoder = {
     if (c < 0x80) {
       alloc(1).put(c.toByte)
@@ -309,20 +318,21 @@ final class EncoderSize(bufferProvider: BufferProvider = DefaultByteBufferProvid
   }
 
   /**
-   * Encodes an integer efficiently in 1 to 5 bytes
-   * <pre>
-   * 0XXX XXXX                            = 0 to 127
-   * 1000 XXXX  b0                        = 128 to 4095
-   * 1001 XXXX  b0                        = -1 to -4095
-   * 1010 XXXX  b0 b1                     = 4096 to 1048575
-   * 1011 XXXX  b0 b1                     = -4096 to -1048575
-   * 1100 XXXX  b0 b1 b2                  = 1048575 to 268435455
-   * 1101 XXXX  b0 b1 b2                  = -1048575 to -268435455
-   * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
-   * 1111 ????                            = reserved for special codings
-   * </pre>
-   * @param i Integer to encode
-   */
+    * Encodes an integer efficiently in 1 to 5 bytes
+    * <pre>
+    * 0XXX XXXX                            = 0 to 127
+    * 1000 XXXX  b0                        = 128 to 4095
+    * 1001 XXXX  b0                        = -1 to -4095
+    * 1010 XXXX  b0 b1                     = 4096 to 1048575
+    * 1011 XXXX  b0 b1                     = -4096 to -1048575
+    * 1100 XXXX  b0 b1 b2                  = 1048575 to 268435455
+    * 1101 XXXX  b0 b1 b2                  = -1048575 to -268435455
+    * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
+    * 1111 ????                            = reserved for special codings
+    * </pre>
+    *
+    * @param i Integer to encode
+    */
   def writeInt(i: Int): Encoder = {
     // check for a short number
     if (i >= 0 && i < 128) {
@@ -346,31 +356,33 @@ final class EncoderSize(bufferProvider: BufferProvider = DefaultByteBufferProvid
   }
 
   /**
-   * Encodes an integer in 32-bits
-   * @param i Integer to encode
-   * @return
-   */
+    * Encodes an integer in 32-bits
+    *
+    * @param i Integer to encode
+    * @return
+    */
   def writeRawInt(i: Int): Encoder = {
     alloc(4).putInt(i)
     this
   }
 
   /**
-   * Encodes a long efficiently in 1 to 9 bytes
-   * <pre>
-   * 0XXX XXXX                            = 0 to 127
-   * 1000 XXXX  b0                        = 128 to 4095
-   * 1001 XXXX  b0                        = -1 to -4096
-   * 1010 XXXX  b0 b1                     = 4096 to 1048575
-   * 1011 XXXX  b0 b1                     = -4096 to -1048575
-   * 1100 XXXX  b0 b1 b2                  = 1048576 to 268435455
-   * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435455
-   * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
-   * 1110 0001  b0 b1 b2 b3 b4 b5 b6 b7   = anything larger
-   * 1111 ????                            = reserved for special codings
-   * </pre>
-   * @param l Long to encode
-   */
+    * Encodes a long efficiently in 1 to 9 bytes
+    * <pre>
+    * 0XXX XXXX                            = 0 to 127
+    * 1000 XXXX  b0                        = 128 to 4095
+    * 1001 XXXX  b0                        = -1 to -4096
+    * 1010 XXXX  b0 b1                     = 4096 to 1048575
+    * 1011 XXXX  b0 b1                     = -4096 to -1048575
+    * 1100 XXXX  b0 b1 b2                  = 1048576 to 268435455
+    * 1101 XXXX  b0 b1 b2                  = -1048576 to -268435455
+    * 1110 0000  b0 b1 b2 b3               = MinInt to MaxInt
+    * 1110 0001  b0 b1 b2 b3 b4 b5 b6 b7   = anything larger
+    * 1111 ????                            = reserved for special codings
+    * </pre>
+    *
+    * @param l Long to encode
+    */
   def writeLong(l: Long): Encoder = {
     if (l <= Int.MaxValue && l >= Int.MinValue)
       writeInt(l.toInt)
@@ -381,10 +393,11 @@ final class EncoderSize(bufferProvider: BufferProvider = DefaultByteBufferProvid
   }
 
   /**
-   * Encodes a long in 64-bits
-   * @param l Long to encode
-   * @return
-   */
+    * Encodes a long in 64-bits
+    *
+    * @param l Long to encode
+    * @return
+    */
   def writeRawLong(l: Long): Encoder = {
     alloc(8).putLong(l)
     this
@@ -392,6 +405,7 @@ final class EncoderSize(bufferProvider: BufferProvider = DefaultByteBufferProvid
 
   /**
     * Writes either a code byte (0-15) or an Int
+    *
     * @param intCode Integer or a code byte
     */
   def writeIntCode(intCode: Either[Byte, Int]): Encoder = {
@@ -406,6 +420,7 @@ final class EncoderSize(bufferProvider: BufferProvider = DefaultByteBufferProvid
 
   /**
     * Writes either a code byte (0-15) or a Long
+    *
     * @param longCode Long or a code byte
     */
   def writeLongCode(longCode: Either[Byte, Long]): Encoder = {
@@ -419,51 +434,51 @@ final class EncoderSize(bufferProvider: BufferProvider = DefaultByteBufferProvid
   }
 
   /**
-   * Encodes a string using UTF8
-   *
-   * @param s String to encode
-   * @return
-   */
+    * Encodes a string using UTF8
+    *
+    * @param s String to encode
+    * @return
+    */
   def writeString(s: String): Encoder = {
-    val strBytes = stringCodec.encodeUTF8(s)
+    val strBytes = stringCodec.encodeFast(s)
     writeInt(strBytes.limit)
     alloc(strBytes.limit).put(strBytes)
     this
   }
 
   /**
-   * Encodes a float as 4 bytes
-   *
-   * @param f Float to encode
-   * @return
-   */
+    * Encodes a float as 4 bytes
+    *
+    * @param f Float to encode
+    * @return
+    */
   def writeFloat(f: Float): Encoder = {
     alloc(4).putFloat(f)
     this
   }
 
   /**
-   * Encodes a double as 8 bytes
-   *
-   * @param d Double to encode
-   * @return
-   */
+    * Encodes a double as 8 bytes
+    *
+    * @param d Double to encode
+    * @return
+    */
   def writeDouble(d: Double): Encoder = {
     alloc(8).putDouble(d)
     this
   }
 
   /**
-   * Encodes a ByteBuffer by writing its length and content
-   *
-   * @param bb ByteBuffer to encode
-   * @return
-   */
+    * Encodes a ByteBuffer by writing its length and content
+    *
+    * @param bb ByteBuffer to encode
+    * @return
+    */
   def writeByteBuffer(bb: ByteBuffer): Encoder = {
     bb.mark()
-    val byteOrder = if(bb.order() == ByteOrder.BIG_ENDIAN) 1 else 0
+    val byteOrder = if (bb.order() == ByteOrder.BIG_ENDIAN) 1 else 0
     // encode byte order as bit 0 in the length
-    writeInt(bb.remaining * 2 | byteOrder )
+    writeInt(bb.remaining * 2 | byteOrder)
     alloc(bb.remaining).put(bb)
     bb.reset()
     this
@@ -492,9 +507,9 @@ final class EncoderSize(bufferProvider: BufferProvider = DefaultByteBufferProvid
     */
   def writeFloatArray(fa: Array[Float]): Encoder = {
     writeRawInt(fa.length)
-    val bb = alloc(fa.length*4)
+    val bb = alloc(fa.length * 4)
     bb.asFloatBuffer().put(fa)
-    bb.position(bb.position + fa.length*4)
+    bb.position(bb.position + fa.length * 4)
     this
   }
 
@@ -505,21 +520,23 @@ final class EncoderSize(bufferProvider: BufferProvider = DefaultByteBufferProvid
     writeRawInt(da.length)
     // padding
     writeRawInt(0)
-    val bb = alloc(da.length*8)
+    val bb = alloc(da.length * 8)
     bb.asDoubleBuffer().put(da)
-    bb.position(bb.position + da.length*8)
+    bb.position(bb.position + da.length * 8)
     this
   }
 
   /**
-   * Completes the encoding and returns the ByteBuffer
-   * @return
-   */
+    * Completes the encoding and returns the ByteBuffer
+    *
+    * @return
+    */
   def asByteBuffer = bufferProvider.asByteBuffer
 
   /**
-   * Completes the encoding and returns a sequence of ByteBuffers
-   * @return
-   */
+    * Completes the encoding and returns a sequence of ByteBuffers
+    *
+    * @return
+    */
   def asByteBuffers = bufferProvider.asByteBuffers
 }
