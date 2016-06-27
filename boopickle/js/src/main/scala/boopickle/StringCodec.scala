@@ -109,10 +109,77 @@ object StringCodec extends StringCodecBase {
     TypedArrayBuffer.wrap(utf16encoder(str))
   }
 
+  override def decodeFast(len: Int, buf: ByteBuffer): String = {
+    if (buf.hasArray)
+      decodeFastArray(len, buf)
+    else
+      decodeFastTypedArray(len, buf)
+  }
 
-/*
-  override def decodeFast(len: Int, buf: ByteBuffer): String = decodeUTF16(len, buf)
+  override def encodeFast(s: String, bb: ByteBuffer): Unit = {
+    if (bb.hasArray)
+      encodeFastArray(s, bb)
+    else
+      encodeFastTypedArray(s, bb)
+  }
 
-  override def encodeFast(str: String): ByteBuffer = encodeUTF16(str)
-*/
+  protected def encodeFastTypedArray(s: String, bb: ByteBuffer): Unit = {
+    val len = s.length()
+    val buf = bb.typedArray()
+    var dst = bb.position()
+    var src = 0
+    var c: Char = ' '
+    // start by encoding ASCII only
+    while ((src < len) && {c = s.charAt(src); c < 0x80}) {
+      buf(dst) = c.toByte
+      src += 1
+      dst += 1
+    }
+
+    // next stage, encode also non-ASCII
+    while (src < len) {
+      c = s.charAt(src)
+      if (c < 0x80) {
+        buf(dst) = c.toByte
+        dst += 1
+      } else if (c < 0x4000) {
+        buf(dst) = (0x80 | (c & 0x3F)).toByte
+        buf(dst + 1) = (c >> 6 & 0xFF).toByte
+        dst += 2
+      } else {
+        buf(dst) = (0xC0 | (c & 0x3F)).toByte
+        buf(dst + 1) = (c >> 6 & 0xFF).toByte
+        buf(dst + 2) = (c >> 14).toByte
+        dst += 3
+      }
+      src += 1
+    }
+    bb.position(dst)
+  }
+
+  protected def decodeFastTypedArray(len: Int, buf: ByteBuffer): String = {
+    val cp = new js.Array[Short](len)
+    val src = buf.typedArray()
+    var offset = buf.position()
+    var dst = 0
+    while (dst < len) {
+      val b = src(offset) & 0xFF
+      offset += 1
+      if ((b & 0x80) == 0) {
+        cp(dst) = (b & 0x7F).toShort
+      } else if ((b & 0xC0) == 0x80) {
+        val b1 = src(offset) & 0xFF
+        offset += 1
+        cp(dst) = (b & 0x3F | (b1.toShort & 0xFF) << 6).toShort
+      } else {
+        val b1 = src(offset) & 0xFF
+        val b2 = src(offset + 1) & 0xFF
+        offset += 2
+        cp(dst) = (b & 0x3F | (b1.toShort & 0xFF) << 6 | (b2.toShort << 14)).toShort
+      }
+      dst += 1
+    }
+    buf.position(offset)
+    js.Dynamic.global.String.fromCharCode.applyDynamic("apply")(null, cp.jsSlice()).asInstanceOf[String]
+  }
 }

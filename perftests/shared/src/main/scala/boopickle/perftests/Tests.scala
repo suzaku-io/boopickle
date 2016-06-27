@@ -14,8 +14,7 @@ object Tests {
       UPickleRunners.encodeRunner(Event(42, true)),
       CirceRunners.encodeRunner(Event(42, true)),
       PushkaRunners.encodeRunner(Event(42, true))
-    ))
-    ,
+    )),
     PerfTestSuite("Decode single Event(42, true)", Seq(
       BooPickleRunners.decodeRunner(Event(42, true)),
       BooPickleSpeedRunners.decodeRunner(Event(42, true)),

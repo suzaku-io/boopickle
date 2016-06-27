@@ -290,9 +290,9 @@ final class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvi
     * @return
     */
   def writeString(s: String): Encoder = {
-    val strBytes = stringCodec.encodeFast(s)
-    writeInt(strBytes.limit)
-    alloc(strBytes.limit).put(strBytes)
+    writeInt(s.length)
+    val bb = alloc(s.length * 3)
+    stringCodec.encodeFast(s, bb)
     this
   }
 

@@ -104,8 +104,10 @@ object CodecTests extends TestSuite {
         val cp = Array.tabulate[Char](65536)(i => i.toChar)
         val str = new String(cp)
         val codec = new StringCodecFast {}
-        val bb = codec.encodeFast(str)
-        val res = codec.decodeFast(bb.limit(), bb)
+        val bb = ByteBuffer.allocate(cp.length * 3)
+        codec.encodeFast(str, bb)
+        bb.flip()
+        val res = codec.decodeFast(cp.length, bb)
         var i = 0
         while (i < str.length) {
           assert(res.charAt(i) == str.charAt(i))
@@ -115,8 +117,10 @@ object CodecTests extends TestSuite {
       'unicode {
         val str = "\u0c64\u866f\u6a55\ufffd"
         val codec = new StringCodecFast {}
-        val bb = codec.encodeFast(str)
-        val res = codec.decodeFast(bb.limit(), bb)
+        val bb = ByteBuffer.allocate(str.length * 3)
+        codec.encodeFast(str, bb)
+        bb.flip()
+        val res = codec.decodeFast(str.length, bb)
         assert(res == str)
       }
     }

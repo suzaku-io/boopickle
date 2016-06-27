@@ -1,5 +1,10 @@
 # Changes
 
+## 1.2.4-SNAPSHOT
+
+- Faster String coding using a custom UTF8ish codec
+- Better performing `BufferPool` on multi-threaded environments. Utilizes a lock-free ring buffer.
+
 ## 1.2.3
 
 Again some performance tuning. BooPickle now allows more control over choosing speed over size.

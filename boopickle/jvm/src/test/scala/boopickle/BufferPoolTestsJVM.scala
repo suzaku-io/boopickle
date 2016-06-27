@@ -18,7 +18,7 @@ object BufferPoolTestsJVM extends TestSuite {
             val bb2 = pool.allocate(ByteBufferProvider.expandSize).getOrElse(ByteBuffer.allocate(ByteBufferProvider.expandSize)).order(ByteOrder.LITTLE_ENDIAN)
             pool.release(bb1)
             pool.release(bb2)
-            //pool.release(ByteBuffer.allocate(ByteBufferProvider.initSize))
+            pool.release(ByteBuffer.allocate(ByteBufferProvider.initSize))
             i += 1
           }
         }
