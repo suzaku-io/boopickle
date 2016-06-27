@@ -112,17 +112,3 @@ private[boopickle] final class IdentMap3Plus(o1: AnyRef, o2: AnyRef, o3: AnyRef)
     hashTable = newTable
   }
 }
-
-object IdentMapHuge {
-
-  private[boopickle] class Identity(val hash: Int, val obj: AnyRef) {
-    override def hashCode(): Int = hash
-    override def equals(that: scala.Any): Boolean = that match {
-      case entry: Identity =>
-        entry.obj eq obj
-      case _ =>
-        false
-    }
-  }
-
-}

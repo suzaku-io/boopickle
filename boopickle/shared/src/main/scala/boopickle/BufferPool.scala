@@ -1,7 +1,6 @@
 package boopickle
 
-import java.nio.ByteBuffer
-
+import java.nio.{ByteBuffer, ByteOrder}
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReferenceArray}
 import java.util.concurrent.locks.Lock
@@ -209,13 +208,13 @@ object BufferPool {
         // do not take large buffers into the pool, as their reallocation is relatively cheap
         val bufSize = bb.capacity
         if (bufSize < maxBufferSize && bufSize >= poolEntrySize0) {
-          bb.clear()
           if (bufSize >= poolEntrySize1) {
             val aIdx = allocIdx1.get()
             val rIdx = releaseIdx1.get()
             val rNext = (rIdx + 1) % entryCount
             if (rNext != aIdx) {
               // try to release the buffer
+              bb.clear()
               pool1(rNext) = bb
               releaseIdx1.compareAndSet(rIdx, rNext)
             }
@@ -225,6 +224,7 @@ object BufferPool {
             val rNext = (rIdx + 1) % entryCount
             if (rNext != aIdx) {
               // try to release the buffer
+              bb.clear()
               pool0(rNext) = bb
               releaseIdx0.compareAndSet(rIdx, rNext)
             }

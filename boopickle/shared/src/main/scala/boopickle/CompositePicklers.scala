@@ -10,6 +10,80 @@ import scala.reflect.ClassTag
 class CompositePickler[A <: AnyRef] extends Pickler[A] {
 
   import Constants._
+
+  var picklerClasses = IdentMap.empty
+  val picklers = mutable.ArrayBuffer.empty[(Class[_], Pickler[_])]
+
+  override def pickle(obj: A)(implicit state: PickleState): Unit = {
+    if (obj == null) {
+      state.enc.writeInt(NullObject)
+    } else {
+      val clz = obj.getClass
+      picklerClasses(clz) match {
+        case None =>
+          throw new IllegalArgumentException(s"CompositePickler doesn't know class '${clz.getName}'.")
+        case Some(idx) =>
+          val pickler = picklers(idx - 2)._2
+          state.enc.writeInt(idx - 1)
+          pickler.asInstanceOf[Pickler[A]].pickle(obj)
+      }
+    }
+  }
+
+  override def unpickle(implicit state: UnpickleState): A = {
+    val idx = state.dec.readInt
+    if (idx == NullObject)
+      null.asInstanceOf[A]
+    else {
+      if (idx < 0 || idx > picklers.size)
+        throw new IllegalStateException(s"Index $idx is not defined in this CompositePickler")
+      picklers(idx - 1)._2.asInstanceOf[Pickler[A]].unpickle
+    }
+  }
+
+  private def addPickler[B](pickler: Pickler[B], tag: ClassTag[B]): Unit = {
+    val clz = tag.runtimeClass
+    picklerClasses = picklerClasses.updated(clz)
+    picklers.append((clz, pickler))
+  }
+
+  def addConcreteType[B <: A](implicit pickler: Pickler[B], tag: ClassTag[B]): CompositePickler[A] = {
+    addPickler(pickler, tag)
+    this
+  }
+
+  def addTransform[B <: A, C](transformTo: (B) => C, transformFrom: (C) => B)(implicit p: Pickler[C], tag: ClassTag[B]) = {
+    val pickler = p.xmap(transformFrom)(transformTo)
+    addPickler(pickler, tag)
+    this
+  }
+
+  def addException[B <: A with Throwable](ctor: (String) => B)(implicit tag: ClassTag[B]): CompositePickler[A] = {
+    import Default.stringPickler
+    val pickler = new Pickler[B] {
+      override def pickle(ex: B)(implicit state: PickleState): Unit = {
+        state.pickle(ex.getMessage)
+      }
+
+      override def unpickle(implicit state: UnpickleState): B = {
+        ctor(state.unpickle[String])
+      }
+    }
+    addPickler(pickler, tag)
+    this
+  }
+
+  def join[B <: A](implicit cp: CompositePickler[B]): CompositePickler[A] = {
+    picklers.appendAll(cp.picklers)
+    picklerClasses = IdentMap.empty
+    picklers.foreach(cp => picklerClasses = picklerClasses.updated(cp._1))
+    this
+  }
+}
+
+/*class CompositePickler[A <: AnyRef] extends Pickler[A] {
+
+  import Constants._
   import Default.stringPickler
 
   var picklerIdx = 0
@@ -78,8 +152,7 @@ class CompositePickler[A <: AnyRef] extends Pickler[A] {
     unpicklers.appendAll(cp.unpicklers)
     this
   }
-}
-
+}*/
 object CompositePickler {
   def apply[A <: AnyRef] = new CompositePickler[A]
 }
