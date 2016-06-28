@@ -252,6 +252,8 @@ object BufferPool {
       heapPool.release(bb)
   }
 
+  def isDisabled = disablePool
+
   def disable(): Unit = disablePool = true
 
   def enable(): Unit = disablePool = false

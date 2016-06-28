@@ -79,7 +79,10 @@ object ByteBufferProvider {
 
 class HeapByteBufferProvider extends ByteBufferProvider {
   override protected def allocate(size: Int) = {
-    pool.allocate(size).getOrElse(ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN))
+    if(pool.isDisabled)
+      ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
+    else
+      pool.allocate(size).getOrElse(ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN))
   }
 
   override def asByteBuffer = {
@@ -105,7 +108,10 @@ class HeapByteBufferProvider extends ByteBufferProvider {
 
 class DirectByteBufferProvider extends ByteBufferProvider {
   override protected def allocate(size: Int) = {
-    pool.allocateDirect(size).getOrElse(ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN))
+    if(pool.isDisabled)
+      ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN)
+    else
+      pool.allocateDirect(size).getOrElse(ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN))
   }
 
   override def asByteBuffer = {
