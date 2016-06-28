@@ -13,7 +13,7 @@ object PicklerMaterializersImpl {
     val name = TermName(c.freshName("TraitPickler"))
 
     q"""
-      implicit object $name extends boopickle.CompositePickler[$tpe] {
+      implicit object $name extends _root_.boopickle.CompositePickler[$tpe] {
         ..$concreteTypes
       }
       $name
@@ -99,15 +99,15 @@ object PicklerMaterializersImpl {
       }
 
       q"""
-          val ref = state.identityRefFor(value)
-          if(ref.isDefined) {
-            state.enc.writeInt(-ref.get)
-          } else {
-            state.enc.writeInt(0)
-            ..$pickleFields
-            state.addIdentityRef(value)
-          }
-        """
+        val ref = state.identityRefFor(value)
+        if(ref.isDefined) {
+          state.enc.writeInt(-ref.get)
+        } else {
+          state.enc.writeInt(0)
+          ..$pickleFields
+          state.addIdentityRef(value)
+        }
+      """
     }
 
     val unpickleLogic = if (sym.isModuleClass) {
@@ -124,25 +124,25 @@ object PicklerMaterializersImpl {
         q"""state.unpickle[$fieldTpe]"""
       }
       q"""
-          val ic = state.dec.readInt
-          if(ic == 0) {
-              val value = new $tpe(..$unpickledFields)
-              state.addIdentityRef(value)
-              value
-          } else if(ic < 0) {
-              state.identityFor[$tpe](-ic)
-          } else {
-              throw new IllegalArgumentException(s"Unknown object coding: $$ic")
-          }
-        """
+        val ic = state.dec.readInt
+        if(ic == 0) {
+          val value = new $tpe(..$unpickledFields)
+          state.addIdentityRef(value)
+          value
+        } else if(ic < 0) {
+          state.identityFor[$tpe](-ic)
+        } else {
+          throw new IllegalArgumentException(s"Unknown object coding: $$ic")
+        }
+      """
     }
 
     val name = TermName(c.freshName("Pickler"))
 
     val result = q"""
-      implicit object $name extends boopickle.Pickler[$tpe] {
-        override def pickle(value: $tpe)(implicit state: boopickle.PickleState): Unit = { $pickleLogic; () }
-        override def unpickle(implicit state: boopickle.UnpickleState): $tpe = $unpickleLogic
+      implicit object $name extends _root_.boopickle.Pickler[$tpe] {
+        override def pickle(value: $tpe)(implicit state: _root_.boopickle.PickleState): Unit = { $pickleLogic; () }
+        override def unpickle(implicit state: _root_.boopickle.UnpickleState): $tpe = $unpickleLogic
       }
       $name
     """
@@ -168,6 +168,6 @@ object PicklerMaterializersImpl {
 
     val name = TermName(c.freshName("x"))
 
-    c.typecheck(q"""(??? : $ttrait) match {case $name@$companion(..$matchArgs) => $name }""").tpe
+    c.typecheck(q"""(??? : $ttrait) match { case $name@$companion(..$matchArgs) => $name }""").tpe
   }
 }
