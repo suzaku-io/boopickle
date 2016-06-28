@@ -52,6 +52,18 @@ object TestData {
 
   val booksRandomID = books(genRandomId)
 
+  val largeStringSeq: Seq[String] = {
+    val r = new Random(0)
+    def genChar: Char = {
+      val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖabcdefghijklmnopqrstuvwxyzåäö0123456789?_-,.          !"
+      chars.charAt(r.nextInt(chars.length))
+    }
+    (0 until 1000).toVector.map { i =>
+      val len = (math.pow(r.nextDouble() * 10, 2) + 2).toInt
+      new String(Stream.continually(genChar).take(len).toArray)
+    }
+  }
+
   val largeIntSeq: Array[Int] = {
     val r = new Random(0)
     (for (i <- 0 until 10000) yield (1.0 / (1.0 + r.nextDouble() * 1e5) * 1e7).toInt).toArray

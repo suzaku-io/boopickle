@@ -29,13 +29,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"me.chrons" %% "boopickle" % "1.2.3"
+"me.chrons" %% "boopickle" % "1.2.4"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```scala
-"me.chrons" %%% "boopickle" % "1.2.3"
+"me.chrons" %%% "boopickle" % "1.2.4"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
@@ -404,7 +404,10 @@ val data = Pickle.intoBytes(fruits)
 BufferPool.release(data)
 ```
 
-The pool has a maximum size (currently 4M) to prevent it from locking down too much memory and it also only recycles relatively small buffers.
+The pool has a maximum size to prevent it from locking down too much memory and it also only recycles relatively small buffers.
+
+In a multi-threaded environment you may experience some slowdown if multiple threads are actively using `BufferPool`. In these cases it may make sense to
+disable pooling globally with `BufferPool.disable()`.
 
 ### Deduplication
 
@@ -443,8 +446,19 @@ then be used by the `Unpickle[A].fromBytes` function.
 
 ```scala
 implicit def pickleState: PickleState = new PickleState(new EncoderSpeed)
-implicit val unpickleState= (b: ByteBuffer) => new UnpickleState(new DecoderSpeed(b))
+implicit val unpickleState = (b: ByteBuffer) => new UnpickleState(new DecoderSpeed(b))
 ```
+
+### Tuning `ByteBuffer` performance
+
+In the browser BooPickle uses direct `ByteBuffer`s by default, as they perform much better. On the server JVM, however, heap buffers tend to be more
+efficient in many cases and are used by default. The `Encoder` constructor takes a `BufferProvider` argument and you can supply your
+own or use one of the two predefined ones: `DirectByteBufferProvider` and `HeapByteBufferProvider`. The `ByteBuffer`s *must* use
+little-endian ordering.
+
+When serializing large objects, BooPickle encodes them into multiple separate `ByteBuffer`s that are combined (copied) in the call to
+`intoBytes`. If you can handle a sequence of buffers (for example sending them over the network), you can use `intoByteBuffers` instead,
+which will avoid duplicating the serialized data.
 
 ## Performance testing
 
@@ -463,49 +477,58 @@ Both tests provide similar output, although there are small differences in the G
 
 In the browser (BooPickle! is using the speed optimized codec with deduplication disabled):
 ```
+15/16 : Encoding Seq[Book] with numerical IDs
+=============================================
+Library    ops/s      %          size       %          size.gz    %
+BooPickle  80880      41.8%      210        100%       193        100%
+BooPickle! 193416     100.0%     402        191%       210        109%
+Prickle    9172       4.7%       863        411%       272        141%
+uPickle    19372      10.0%      680        324%       233        121%
+Circe      10096      5.2%       680        324%       233        121%
+Pushka     29176      15.1%      680        324%       233        121%
+
 16/16 : Decoding Seq[Book] with numerical IDs
 =============================================
 Library    ops/s      %          size       %          size.gz    %
-BooPickle  33516      72.3%      287        100%       196        100%
-BooPickle! 46344      100.0%     636        222%       246        126%
-Prickle    1766       3.8%       863        301%       272        139%
-uPickle    9612       20.7%      680        237%       233        119%
-Circe      8432       18.2%      680        237%       233        119%
-Pushka     20320      43.8%      680        237%       233        119%
+BooPickle  85156      100.0%     210        100%       193        100%
+BooPickle! 73576      86.4%      402        191%       210        109%
+Prickle    1704       2.0%       863        411%       272        141%
+uPickle    8872       10.4%      680        324%       233        121%
+Circe      7204       8.5%       680        324%       233        121%
+Pushka     18044      21.2%      680        324%       233        121%
 ```
 
 Under JVM:
 ```
+15/16 : Encoding Seq[Book] with numerical IDs
+=============================================
+Library    ops/s      %          size       %          size.gz    %
+BooPickle  548684     57.6%      210        100%       188        100%
+BooPickle! 951836     100.0%     402        191%       205        109%
+Prickle    44360      4.7%       879        419%       276        147%
+uPickle    139328     14.6%      680        324%       234        124%
+Circe      52964      5.6%       680        324%       234        124%
+Pushka     151672     15.9%      680        324%       234        124%
+
 16/16 : Decoding Seq[Book] with numerical IDs
 =============================================
 Library    ops/s      %          size       %          size.gz    %
-BooPickle  498412     100.0%     287        100%       190        100%
-BooPickle! 484308     97.2%      402        140%       207        109%
-Prickle    5300       1.1%       879        306%       276        145%
-uPickle    83204      16.7%      680        237%       234        123%
-Circe      58764      11.8%      680        237%       234        123%
-Pushka     143112     28.7%      680        237%       234        123%
+BooPickle  732512     96.2%      210        100%       188        100%
+BooPickle! 761296     100.0%     402        191%       205        109%
+Prickle    5308       0.7%       879        419%       276        147%
+uPickle    88424      11.6%      680        324%       234        124%
+Circe      66248      8.7%       680        324%       234        124%
+Pushka     142252     18.7%      680        324%       234        124%
 ```
 
 Performance test suite measures how many encode or decode operations the library can do in one second and also checks the size of the raw
 and gzipped output. Relative speed and size are shown as percentages (bigger is better for speed, smaller is better for size). Typically
-BooPickle is 4 to 10 times faster than uPickle/Prickle in decoding and 2 to 5 times faster in encoding.
+BooPickle is 4 to 10 times faster than JSON pickling libraries in decoding and 2 to 5 times faster in encoding.
 
 ### Custom tests
 
 You can define your own tests by modifying the `Tests.scala` and `TestData.scala` source files. Just look at the examples provided
 and model your own data (as realistically as possible) to see which library works best for you.
-
-### Tuning performance
-
-In the browser BooPickle uses direct `ByteBuffer`s by default, as they perform much better. On the server JVM, however, heap buffers tend to be more 
-efficient in many cases and are used by default. The `Encoder` constructor takes a `BufferProvider` argument and you can supply your
-own or use one of the two predefined ones: `DirectByteBufferProvider` and `HeapByteBufferProvider`. The `ByteBuffer`s *must* use
-little-endian ordering.
-
-When serializing large objects, BooPickle encodes them into multiple separate `ByteBuffer`s that are combined (copied) in the call to
-`intoBytes`. If you can handle a sequence of buffers (for example sending them over the network), you can use `intoByteBuffers` instead,
-which will avoid duplicating the serialized data.
 
 ## Using BooPickle with Ajax
 

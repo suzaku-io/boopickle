@@ -158,7 +158,7 @@ object StringCodec extends StringCodecBase {
   }
 
   protected def decodeFastTypedArray(len: Int, buf: ByteBuffer): String = {
-    val cp = new js.Array[Short](len)
+    val cp = new js.Array[Int](len)
     val src = buf.typedArray()
     var offset = buf.position()
     var dst = 0
@@ -166,20 +166,21 @@ object StringCodec extends StringCodecBase {
       val b = src(offset) & 0xFF
       offset += 1
       if ((b & 0x80) == 0) {
-        cp(dst) = (b & 0x7F).toShort
+        cp(dst) = b
       } else if ((b & 0xC0) == 0x80) {
         val b1 = src(offset) & 0xFF
         offset += 1
-        cp(dst) = (b & 0x3F | (b1.toShort & 0xFF) << 6).toShort
+        cp(dst) = b & 0x3F | b1 << 6
       } else {
         val b1 = src(offset) & 0xFF
         val b2 = src(offset + 1) & 0xFF
         offset += 2
-        cp(dst) = (b & 0x3F | (b1.toShort & 0xFF) << 6 | (b2.toShort << 14)).toShort
+        cp(dst) = b & 0x3F | b1 << 6 | b2 << 14
       }
       dst += 1
     }
     buf.position(offset)
+    // for some reason, on Chrome, calling `cp.jsSlice` makes `fromCharCode` 2-3x faster!
     js.Dynamic.global.String.fromCharCode.applyDynamic("apply")(null, cp.jsSlice()).asInstanceOf[String]
   }
 }

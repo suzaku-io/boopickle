@@ -55,22 +55,23 @@ object Tests {
       CirceRunners.decodeRunner(TestData.largeDoubleSeq)
       //PushkaRunners.decodeRunner(TestData.largeDoubleSeq)
     )),
-    PerfTestSuite("Encode large Array[Float]", Seq(
-      BooPickleRunners.encodeRunner(TestData.largeFloatSeq),
-      BooPickleSpeedRunners.encodeRunner(TestData.largeFloatSeq),
-      //PrickleRunners.encodeRunner(TestData.largeFloatSeq),
-      UPickleRunners.encodeRunner(TestData.largeFloatSeq),
-      CirceRunners.encodeRunner(TestData.largeFloatSeq)
-      //PushkaRunners.encodeRunner(TestData.largeFloatSeq)
+    PerfTestSuite("Encode large Seq[String]", Seq(
+      BooPickleRunners.encodeRunner(TestData.largeStringSeq),
+      BooPickleSpeedRunners.encodeRunner(TestData.largeStringSeq),
+      PrickleRunners.encodeRunner(TestData.largeStringSeq),
+      UPickleRunners.encodeRunner(TestData.largeStringSeq),
+      CirceRunners.encodeRunner(TestData.largeStringSeq),
+      PushkaRunners.encodeRunner(TestData.largeStringSeq)
     )),
-    PerfTestSuite("Decode large Array[Float]", Seq(
-      BooPickleRunners.decodeRunner(TestData.largeFloatSeq),
-      BooPickleSpeedRunners.decodeRunner(TestData.largeFloatSeq),
-      //PrickleRunners.decodeRunner(TestData.largeFloatSeq),
-      UPickleRunners.decodeRunner(TestData.largeFloatSeq),
-      CirceRunners.decodeRunner(TestData.largeFloatSeq)
-      //PushkaRunners.decodeRunner(TestData.largeFloatSeq)
-    )),
+    PerfTestSuite("Decode large Seq[String]", Seq(
+      BooPickleRunners.decodeRunner(TestData.largeStringSeq),
+      BooPickleSpeedRunners.decodeRunner(TestData.largeStringSeq),
+      PrickleRunners.decodeRunner(TestData.largeStringSeq),
+      UPickleRunners.decodeRunner(TestData.largeStringSeq),
+      CirceRunners.decodeRunner(TestData.largeStringSeq),
+      PushkaRunners.decodeRunner(TestData.largeStringSeq)
+    ))
+    ,
     PerfTestSuite("Encode an object tree", Seq(
       BooPickleRunners.encodeRunner(tree),
       BooPickleSpeedRunners.encodeRunner(tree),
