@@ -22,8 +22,9 @@ val commonSettings = Seq(
   scalacOptions in Compile ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "utest" % "0.4.4" % "test",
-    "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
+    "com.lihaoyi" %%% "utest" % "0.4.4" % "test" cross CrossVersion.fullMapped(_ => "2.11"),
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
+    "com.github.japgolly.nyaya" %%% "nyaya-test" % "0.5.11" % "test" cross CrossVersion.fullMapped(_ => "2.11")
   )
 )
 
