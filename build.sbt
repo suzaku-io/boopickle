@@ -14,7 +14,6 @@ val commonSettings = Seq(
     "-unchecked",
     "-Xfatal-warnings",
     "-Xlint",
-    "-Yinline-warnings",
     "-Yno-adapted-args",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
@@ -23,8 +22,7 @@ val commonSettings = Seq(
   scalacOptions in Compile ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "utest" % "0.4.3" % "test",
-    "com.github.japgolly.nyaya" %%% "nyaya-test" % "0.5.11" % "test",
+    "com.lihaoyi" %%% "utest" % "0.4.4" % "test",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
 )
@@ -42,6 +40,7 @@ def preventPublication(p: Project) =
 lazy val boopickle = crossProject
   .settings(commonSettings: _*)
   .settings(
+    crossScalaVersions := Seq("2.11.8", "2.12.0"),
     name := "boopickle",
     scmInfo := Some(ScmInfo(
       url("https://github.com/ochrons/boopickle"),
@@ -73,7 +72,7 @@ lazy val boopickle = crossProject
         Some("releases" at nexus + "service/local/staging/deploy/maven2")
     }
   ).jsSettings(
-    // use NodeJS for testing, because we need stuff like TypedArrays
+  // use NodeJS for testing, because we need stuff like TypedArrays
     scalaJSUseRhino in Global := false,
     scalacOptions ++= (if (isSnapshot.value) Seq.empty
     else Seq({
@@ -120,6 +119,8 @@ trait TuplePicklers extends PicklerHelper {
 lazy val perftests = crossProject
   .settings(commonSettings: _*)
   .settings(
+    crossScalaVersions := Seq("2.11.8"),
+    scalaVersion := "2.11.8",
     name := "perftests",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
@@ -150,5 +151,8 @@ lazy val perftestsJVM = preventPublication(perftests.jvm)
   .dependsOn(boopickleJVM)
 
 lazy val root = preventPublication(project.in(file(".")))
-  .settings()
+  .settings(
+    crossScalaVersions := Seq("2.11.8", "2.12.0"),
+    scalaVersion := "2.11.8"
+  )
   .aggregate(boopickleJS, boopickleJVM, perftestsJS, perftestsJVM)

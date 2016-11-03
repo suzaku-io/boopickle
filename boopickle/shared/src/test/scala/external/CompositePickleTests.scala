@@ -39,6 +39,11 @@ object Tree {
   treePickler.addConcreteType[Node].addConcreteType[Leaf.type]
 }
 
+
+sealed trait Document extends Element
+
+sealed trait Attribute extends Element
+
 sealed trait Element
 
 object Element {
@@ -51,10 +56,6 @@ object Element {
   implicit val elementPickler = compositePickler[Element]
   elementPickler.join[Document].join[Attribute]
 }
-
-sealed trait Document extends Element
-
-sealed trait Attribute extends Element
 
 final case class WordDocument(text: String) extends Document
 

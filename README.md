@@ -21,7 +21,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 - Very efficient coding
 - Low memory usage, no intermediate structures needed
 - Zero dependencies
-- Scala 2.11
+- Scala 2.11/2.12
 - All modern browsers are supported (not IE9 and below, though)
 
 ## Getting started
