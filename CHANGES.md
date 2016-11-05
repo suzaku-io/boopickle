@@ -1,5 +1,10 @@
 # Changes
 
+## 1.2.5
+
+- Fixed an efficiency issue in `BufferPool` where it would not recycle all applicable buffers resulting in lower use of pooling
+- Scala 2.12 support
+
 ## 1.2.4
 
 - Faster String coding using a custom UTF8ish codec

@@ -1,6 +1,5 @@
 package boopickle
 
-import java.nio.charset.CharacterCodingException
 import java.nio.{ByteBuffer, ByteOrder}
 
 class DecoderSpeed(val buf: ByteBuffer) extends Decoder {

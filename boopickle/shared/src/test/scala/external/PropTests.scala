@@ -2,9 +2,10 @@ package external
 
 import boopickle.Default._
 import boopickle.{CompositePickler, Pickler}
-import japgolly.nyaya._
-import japgolly.nyaya.test.PropTest._
-import japgolly.nyaya.test._
+import nyaya.gen._
+import nyaya.prop.Prop
+import nyaya.test.PropTest._
+import nyaya.test._
 import utest._
 
 import scalaz.Equal
@@ -32,20 +33,20 @@ object PropTests extends TestSuite {
   }
   val genADT: Gen[ADT] = {
     import ADT._
-    import Gen.Covariance._
+
     val ga = Gen.int map A
     val gb = Gen.apply3(B)(Gen.char, Gen.long, Gen.char.option)
-    val gc = Gen.insert[C.type](C)
-    val gd = Gen.insert(D())
-    val gr: Gen[ADT.R] = Gen.insert(R(A(0)))
-    lazy val g: Gen[ADT] = Gen.oneofG(ga, gb, gc, gd, gr)
+    val gc = Gen.pure[C.type](C)
+    val gd = Gen.pure(D())
+    val gr: Gen[ADT.R] = Gen.pure(R(A(0)))
+    lazy val g: Gen[ADT] = Gen.chooseGen(ga, gb, gc, gd, gr)
     g
   }
 
   def crazy =
     for {
       a <- Gen.int.list.option
-      b <- Gen.char.triple.mapBy(Gen.alphanumericstring1)
+      b <- Gen.char.triple.mapBy(Gen.alphaNumeric.string1)
       c <- Gen.boolean.option either Gen.char.set
       d <- Gen.long.vector
     } yield (a,b,c,d)
@@ -56,7 +57,7 @@ object PropTests extends TestSuite {
     'int     - Gen.int          .mustSatisfy(prop)
     'long    - Gen.long         .mustSatisfy(prop)
     'char    - Gen.char         .mustSatisfy(prop)
-    'string  - Gen.unicodestring.mustSatisfy(prop)
+    'string  - Gen.unicode.string.mustSatisfy(prop)
     'float   - Gen.float        .mustSatisfy(prop)
     'double  - Gen.double       .mustSatisfy(prop)
     'short   - Gen.short        .mustSatisfy(prop)

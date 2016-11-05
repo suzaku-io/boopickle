@@ -43,7 +43,7 @@ abstract class ByteBufferProvider extends BufferProvider {
     currentBuf.flip()
     buffers = currentBuf :: buffers
     // replace current buffer with the new one, align to 16-byte border for small sizes
-    currentBuf = allocate((size + expandSize + 15) & ~15)
+    currentBuf = allocate((math.max(size, expandSize) & ~15) + 16)
   }
 
   @inline final def alloc(size: Int): ByteBuffer = {

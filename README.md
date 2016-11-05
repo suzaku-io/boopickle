@@ -3,7 +3,7 @@
 [![Join the chat at https://gitter.im/ochrons/boopickle](https://badges.gitter.im/ochrons/boopickle.svg)](https://gitter.im/ochrons/boopickle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 [![Build Status](https://travis-ci.org/ochrons/boopickle.svg?branch=master)](https://travis-ci.org/ochrons/boopickle)
-[![Scala.js](http://www.scala-js.org/assets/badges/scalajs-0.6.8.svg)](http://www.scala-js.org)
+[![Scala.js](https://www.scala-js.org/assets/badges/scalajs-0.6.13.svg)](http://www.scala-js.org)
 
 BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization (aka pickling) library that works on both Scala
 and [Scala.js](http://www.scala-js.org). It encodes into a binary format instead of the more customary JSON. A binary format brings efficiency 
@@ -21,7 +21,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 - Very efficient coding
 - Low memory usage, no intermediate structures needed
 - Zero dependencies
-- Scala 2.11
+- Scala 2.11/2.12
 - All modern browsers are supported (not IE9 and below, though)
 
 ## Getting started
@@ -29,13 +29,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"me.chrons" %% "boopickle" % "1.2.4"
+"me.chrons" %% "boopickle" % "1.2.5"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```scala
-"me.chrons" %%% "boopickle" % "1.2.4"
+"me.chrons" %%% "boopickle" % "1.2.5"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
@@ -577,7 +577,9 @@ Reading values from a `ByteBuffer` commonly changes its internal state (the `pos
 `ByteBuffer`. Similarly writing to one also changes its state. For example if you write data to a `ByteBuffer` and pass it as such to an unpickler, 
 it will not work. You need to call `flip()` first to reset its `position`.
 
-In BooPickle `ByteBuffer`s use little-endian ordering, which is not the default in the JVM, but is the native ordering in majority of target platforms.
+In BooPickle `ByteBuffer`s use little-endian ordering, which is not the default in the JVM, but is the native ordering in majority of target platforms. If you
+call `slice` or `duplicate` on buffers produced by BooPickle, they will default back to big-endian ordering. You must explicitly call
+`order(ByteOrder.LITTLE_ENDIAN)` to get them back to correct ordering.
 
 For more information, please refer to the [JDK documentation on ByteBuffers](http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html).
 

@@ -5,8 +5,7 @@ import java.util.UUID
 import scala.util.Random
 import pushka.annotation._
 
-@pushka
-case class Book(id: String, name: String, author: String, publicationYear: Int)
+@pushka case class Book(id: String, name: String, author: String, publicationYear: Int)
 
 @pushka
 case class Node(name: String, color: String, children: Seq[Node])
@@ -55,13 +54,14 @@ object TestData {
   val largeStringSeq: Seq[String] = {
     val r = new Random(0)
     def genChar: Char = {
-      val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖabcdefghijklmnopqrstuvwxyzåäö0123456789?_-,.          !"
+      val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅabcdefghijklmnopqrstuvwxyzö0123456789?_-,.          !"
       chars.charAt(r.nextInt(chars.length))
     }
-    (0 until 1000).toVector.map { i =>
+    val strings = (0 until 1000).toVector.map { i =>
       val len = (math.pow(r.nextDouble() * 10, 2) + 2).toInt
       new String(Stream.continually(genChar).take(len).toArray)
     }
+    strings
   }
 
   val largeIntSeq: Array[Int] = {
