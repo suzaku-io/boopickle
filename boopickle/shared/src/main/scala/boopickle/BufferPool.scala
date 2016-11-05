@@ -162,7 +162,7 @@ object BufferPool {
       } else if (minSize > poolEntrySize1) {
         allocMiss += 1
         None
-      } else if (minSize > poolEntrySize0) {
+      } else if (minSize > poolEntrySize0 || allocIdx0.get() == releaseIdx0.get()) {
         // allocate from pool1
         val aIdx = allocIdx1.get()
         val rIdx = releaseIdx1.get()

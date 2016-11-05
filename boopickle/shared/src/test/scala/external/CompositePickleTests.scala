@@ -41,6 +41,10 @@ object Tree {
 
 sealed trait Element
 
+sealed trait Document extends Element
+
+sealed trait Attribute extends Element
+
 object Element {
   implicit val documentPickler = compositePickler[Document]
   documentPickler.addConcreteType[WordDocument]
@@ -51,10 +55,6 @@ object Element {
   implicit val elementPickler = compositePickler[Element]
   elementPickler.join[Document].join[Attribute]
 }
-
-sealed trait Document extends Element
-
-sealed trait Attribute extends Element
 
 final case class WordDocument(text: String) extends Document
 
@@ -123,6 +123,11 @@ object CompositePickleTests extends TestSuite {
       val bb = Pickle.intoBytes(exs)
       val e = Unpickle[Seq[Throwable]].fromBytes(bb)
       assert(e.zip(exs).forall(x => x._1.getMessage == x._2.getMessage && x._1.getClass == x._2.getClass))
+    }
+    'AddClassTwice {
+      intercept[IllegalArgumentException] {
+        val fruitPickler = compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Banana]
+      }
     }
   }
 }

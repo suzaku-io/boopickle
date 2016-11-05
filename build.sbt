@@ -1,11 +1,11 @@
 import sbt._
 import Keys._
 import com.typesafe.sbt.pgp.PgpKeys._
-import org.scalajs.sbtplugin.OptimizerOptions
 
 val commonSettings = Seq(
   organization := "me.chrons",
   version := Version.library,
+  crossScalaVersions := Seq("2.11.8", "2.12.0"),
   scalaVersion := "2.11.8",
   scalacOptions := Seq(
     "-deprecation",
@@ -14,7 +14,6 @@ val commonSettings = Seq(
     "-unchecked",
     "-Xfatal-warnings",
     "-Xlint",
-    "-Yinline-warnings",
     "-Yno-adapted-args",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
@@ -23,18 +22,18 @@ val commonSettings = Seq(
   scalacOptions in Compile ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "utest" % "0.4.3" % "test",
-    "com.github.japgolly.nyaya" %%% "nyaya-test" % "0.5.11" % "test",
+    "com.lihaoyi" %%% "utest" % "0.4.4" % "test",
+    "com.github.japgolly.nyaya" %%% "nyaya-test" % "0.8.1" % "test",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
 )
 
 def preventPublication(p: Project) =
   p.settings(
-    publish :=(),
-    publishLocal :=(),
-    publishSigned :=(),
-    publishLocalSigned :=(),
+    publish := (),
+    publishLocal := (),
+    publishSigned := (),
+    publishLocalSigned := (),
     publishArtifact := false,
     publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
     packagedArtifacts := Map.empty)
@@ -73,16 +72,13 @@ lazy val boopickle = crossProject
         Some("releases" at nexus + "service/local/staging/deploy/maven2")
     }
   ).jsSettings(
-    // use NodeJS for testing, because we need stuff like TypedArrays
-    scalaJSUseRhino in Global := false,
     scalacOptions ++= (if (isSnapshot.value) Seq.empty
     else Seq({
       val a = baseDirectory.value.toURI.toString.replaceFirst("[^/]+/?$", "")
       val g = "https://raw.githubusercontent.com/ochrons/boopickle"
       s"-P:scalajs:mapSourceURI:$a->$g/v${version.value}/"
     }))
-  ).jvmSettings(
-  )
+  ).jvmSettings()
 
 lazy val boopickleJS = boopickle.js
 
@@ -121,14 +117,16 @@ lazy val perftests = crossProject
   .settings(commonSettings: _*)
   .settings(
     name := "perftests",
+    crossScalaVersions := Seq("2.11.8"),
+    scalaVersion := "2.11.8",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "upickle" % "0.3.7",
-      "com.github.benhutchison" %%% "prickle" % "1.1.10",
-      "com.github.fomkin" %%% "pushka-json" % "0.6.0",
-      "io.circe" %%% "circe-core" % "0.4.1",
-      "io.circe" %%% "circe-parser" % "0.4.1",
-      "io.circe" %%% "circe-generic" % "0.4.1"
+      "com.lihaoyi" %%% "upickle" % "0.4.3",
+      "com.github.benhutchison" %%% "prickle" % "1.1.12",
+      "com.github.fomkin" %%% "pushka-json" % "0.6.1",
+      "io.circe" %%% "circe-core" % "0.5.1",
+      "io.circe" %%% "circe-parser" % "0.5.1",
+      "io.circe" %%% "circe-generic" % "0.5.1"
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
@@ -136,8 +134,8 @@ lazy val perftests = crossProject
     bootSnippet := "BooApp().main();",
     // scalaJSOptimizerOptions in (Compile, fullOptJS) ~= { _.withUseClosureCompiler(false) },
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "0.9.0",
-      "com.lihaoyi" %%% "scalatags" % "0.5.5"
+      "org.scala-js" %%% "scalajs-dom" % "0.9.1",
+      "com.lihaoyi" %%% "scalatags" % "0.6.2"
     )
   )
 
@@ -150,5 +148,8 @@ lazy val perftestsJVM = preventPublication(perftests.jvm)
   .dependsOn(boopickleJVM)
 
 lazy val root = preventPublication(project.in(file(".")))
-  .settings()
-  .aggregate(boopickleJS, boopickleJVM, perftestsJS, perftestsJVM)
+  .settings(
+    crossScalaVersions := Seq("2.11.8", "2.12.0"),
+    scalaVersion := "2.11.8"
+  )
+  .aggregate(boopickleJS, boopickleJVM)
