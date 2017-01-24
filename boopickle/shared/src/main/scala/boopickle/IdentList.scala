@@ -2,7 +2,6 @@ package boopickle
 
 import scala.collection.mutable
 
-
 /**
   * Specialized fast and cheap to initialize identity list for unpickle state identifier refs
   */
@@ -33,8 +32,8 @@ private[boopickle] final class IdentList1Plus(o1: AnyRef) extends IdentList {
   import boopickle.IdentList.Entry
   var last: Entry = new Entry(o1, null)
   var head: Entry = last
-  var switchOver = false
-  var size = 0
+  var switchOver  = false
+  var size        = 0
 
   override def apply(idx: Int): AnyRef = {
     // first time something is looked up, we switch to the more efficient implementation
@@ -45,7 +44,7 @@ private[boopickle] final class IdentList1Plus(o1: AnyRef) extends IdentList {
       i += 1
       e = e.next
     }
-    if(e == null)
+    if (e == null)
       throw new IndexOutOfBoundsException
     e.obj
   }
@@ -87,4 +86,3 @@ private[boopickle] final class IdentListBig(first: IdentList.Entry, size: Int) e
     this
   }
 }
-

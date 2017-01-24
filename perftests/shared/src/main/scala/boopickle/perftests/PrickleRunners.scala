@@ -10,8 +10,8 @@ abstract class PrickleRunner[A](data: A) extends TestRunner[A](data) {
 
 object PrickleRunners {
 
-  def encodeRunner[A](data:A)(implicit p:Pickler[A], u:Unpickler[A]):PrickleRunner[A] = new PrickleRunner[A](data) {
-    var testData : A = _
+  def encodeRunner[A](data: A)(implicit p: Pickler[A], u: Unpickler[A]): PrickleRunner[A] = new PrickleRunner[A](data) {
+    var testData: A = _
 
     override def initialize = {
       testData = data
@@ -26,9 +26,9 @@ object PrickleRunners {
     }
   }
 
-  def decodeRunner[A](data:A)(implicit p:Pickler[A], u:Unpickler[A]):PrickleRunner[A] = new PrickleRunner[A](data) {
-    var testData : A = _
-    var s:String = _
+  def decodeRunner[A](data: A)(implicit p: Pickler[A], u: Unpickler[A]): PrickleRunner[A] = new PrickleRunner[A](data) {
+    var testData: A = _
+    var s: String   = _
 
     override def initialize = {
       testData = data

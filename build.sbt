@@ -3,13 +3,14 @@ import Keys._
 import com.typesafe.sbt.pgp.PgpKeys._
 
 val commonSettings = Seq(
-  organization := "me.chrons",
+  organization := "io.suzaku",
   version := Version.library,
-  crossScalaVersions := Seq("2.11.8", "2.12.0"),
-  scalaVersion := "2.11.8",
+  crossScalaVersions := Seq("2.11.8", "2.12.1"),
+  scalaVersion := "2.12.1",
   scalacOptions := Seq(
     "-deprecation",
-    "-encoding", "UTF-8",
+    "-encoding",
+    "UTF-8",
     "-feature",
     "-unchecked",
     "-Xfatal-warnings",
@@ -18,13 +19,14 @@ val commonSettings = Seq(
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
     "-Ywarn-value-discard",
-    "-Xfuture"),
+    "-Xfuture"
+  ),
   scalacOptions in Compile ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "utest" % "0.4.4" % "test",
-    "com.github.japgolly.nyaya" %%% "nyaya-test" % "0.8.1" % "test",
-    "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
+    "com.lihaoyi"               %%% "utest"       % "0.4.4"            % "test",
+    "com.github.japgolly.nyaya" %%% "nyaya-test"  % "0.8.1"            % "test",
+    "org.scala-lang"            % "scala-reflect" % scalaVersion.value % "provided"
   )
 )
 
@@ -36,16 +38,17 @@ def preventPublication(p: Project) =
     publishLocalSigned := (),
     publishArtifact := false,
     publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
-    packagedArtifacts := Map.empty)
+    packagedArtifacts := Map.empty
+  )
 
 lazy val boopickle = crossProject
   .settings(commonSettings: _*)
   .settings(
     name := "boopickle",
-    scmInfo := Some(ScmInfo(
-      url("https://github.com/ochrons/boopickle"),
-      "scm:git:git@github.com:ochrons/boopickle.git",
-      Some("scm:git:git@github.com:ochrons/boopickle.git"))),
+    scmInfo := Some(
+      ScmInfo(url("https://github.com/ochrons/boopickle"),
+              "scm:git:git@github.com:ochrons/boopickle.git",
+              Some("scm:git:git@github.com:ochrons/boopickle.git"))),
     publishMavenStyle := true,
     publishArtifact in Test := false,
     pomExtra :=
@@ -63,7 +66,9 @@ lazy val boopickle = crossProject
             <url>https://github.com/ochrons</url>
           </developer>
         </developers>,
-    pomIncludeRepository := { _ => false },
+    pomIncludeRepository := { _ =>
+      false
+    },
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
       if (isSnapshot.value)
@@ -71,14 +76,17 @@ lazy val boopickle = crossProject
       else
         Some("releases" at nexus + "service/local/staging/deploy/maven2")
     }
-  ).jsSettings(
+  )
+  .jsSettings(
     scalacOptions ++= (if (isSnapshot.value) Seq.empty
-    else Seq({
-      val a = baseDirectory.value.toURI.toString.replaceFirst("[^/]+/?$", "")
-      val g = "https://raw.githubusercontent.com/ochrons/boopickle"
-      s"-P:scalajs:mapSourceURI:$a->$g/v${version.value}/"
-    }))
-  ).jvmSettings()
+                       else
+                         Seq({
+                           val a = baseDirectory.value.toURI.toString.replaceFirst("[^/]+/?$", "")
+                           val g = "https://raw.githubusercontent.com/ochrons/boopickle"
+                           s"-P:scalajs:mapSourceURI:$a->$g/v${version.value}/"
+                         }))
+  )
+  .jvmSettings()
 
 lazy val boopickleJS = boopickle.js
 
@@ -93,10 +101,10 @@ from where they need to be copied to the `boopickle` source directory.
 generateTuples := {
   val picklers = (1 to 22).map { i =>
     def commaSeparated(s: Int => String, sep: String = ", ") = (1 to i).map(s).mkString(sep)
-    val picklerTypes = commaSeparated(j => s"T$j: P")
-    val typeTuple = if (i == 1) s"Tuple1[T1]" else s"(${commaSeparated(j => s"T$j")})"
-    val writes = commaSeparated(j => s"write[T$j](x._$j)", "; ")
-    val reads = commaSeparated(j => s"read[T$j]")
+    val picklerTypes                                         = commaSeparated(j => s"T$j: P")
+    val typeTuple                                            = if (i == 1) s"Tuple1[T1]" else s"(${commaSeparated(j => s"T$j")})"
+    val writes                                               = commaSeparated(j => s"write[T$j](x._$j)", "; ")
+    val reads                                                = commaSeparated(j => s"read[T$j]")
 
     s"""
   implicit def Tuple${i}Pickler[$picklerTypes] = new P[$typeTuple] {
@@ -104,13 +112,15 @@ generateTuples := {
     override def unpickle(implicit state: UnpickleState) = ${if (i == 1) s"Tuple1[T1]" else ""}($reads)
   }"""
   }
-  IO.write(baseDirectory.value / "target" / "TuplePicklers.scala",
+  IO.write(
+    baseDirectory.value / "target" / "TuplePicklers.scala",
     s"""package boopickle
 
 trait TuplePicklers extends PicklerHelper {
   ${picklers.mkString("\n")}
 }
-""")
+"""
+  )
 }
 
 lazy val perftests = crossProject
@@ -121,12 +131,12 @@ lazy val perftests = crossProject
     scalaVersion := "2.11.8",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "upickle" % "0.4.3",
-      "com.github.benhutchison" %%% "prickle" % "1.1.12",
-      "com.github.fomkin" %%% "pushka-json" % "0.6.1",
-      "io.circe" %%% "circe-core" % "0.5.1",
-      "io.circe" %%% "circe-parser" % "0.5.1",
-      "io.circe" %%% "circe-generic" % "0.5.1"
+      "com.lihaoyi"             %%% "upickle"       % "0.4.3",
+      "com.github.benhutchison" %%% "prickle"       % "1.1.12",
+      "com.github.fomkin"       %%% "pushka-json"   % "0.6.1",
+      "io.circe"                %%% "circe-core"    % "0.5.1",
+      "io.circe"                %%% "circe-parser"  % "0.5.1",
+      "io.circe"                %%% "circe-generic" % "0.5.1"
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
@@ -135,7 +145,7 @@ lazy val perftests = crossProject
     // scalaJSOptimizerOptions in (Compile, fullOptJS) ~= { _.withUseClosureCompiler(false) },
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "0.9.1",
-      "com.lihaoyi" %%% "scalatags" % "0.6.2"
+      "com.lihaoyi"  %%% "scalatags"   % "0.6.2"
     )
   )
 
@@ -148,8 +158,5 @@ lazy val perftestsJVM = preventPublication(perftests.jvm)
   .dependsOn(boopickleJVM)
 
 lazy val root = preventPublication(project.in(file(".")))
-  .settings(
-    crossScalaVersions := Seq("2.11.8", "2.12.0"),
-    scalaVersion := "2.11.8"
-  )
+  .settings()
   .aggregate(boopickleJS, boopickleJVM)

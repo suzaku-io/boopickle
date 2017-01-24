@@ -11,8 +11,8 @@ abstract class PushkaRunner[A](data: A) extends TestRunner[A](data) {
 
 object PushkaRunners {
 
-  def encodeRunner[A](data:A)(implicit p: Writer[A], u:Reader[A]):PushkaRunner[A] = new PushkaRunner[A](data) {
-    var testData : A = _
+  def encodeRunner[A](data: A)(implicit p: Writer[A], u: Reader[A]): PushkaRunner[A] = new PushkaRunner[A](data) {
+    var testData: A = _
 
     override def initialize = {
       testData = data
@@ -26,9 +26,9 @@ object PushkaRunners {
     }
   }
 
-  def decodeRunner[A](data:A)(implicit p:Writer[A], u:Reader[A]):PushkaRunner[A] = new PushkaRunner[A](data) {
-    var testData : A = _
-    var s:String = _
+  def decodeRunner[A](data: A)(implicit p: Writer[A], u: Reader[A]): PushkaRunner[A] = new PushkaRunner[A](data) {
+    var testData: A = _
+    var s: String   = _
 
     override def initialize = {
       testData = data

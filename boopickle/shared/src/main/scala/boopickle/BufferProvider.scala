@@ -6,6 +6,7 @@ import java.util
 import scala.collection.mutable
 
 trait BufferProvider {
+
   /**
     * Makes sure the ByteBuffer has enough space for new data. If not, allocates a new ByteBuffer
     * and returns it. The returned ByteBuffer must have little-endian ordering.
@@ -32,9 +33,9 @@ trait BufferProvider {
 
 abstract class ByteBufferProvider extends BufferProvider {
   import ByteBufferProvider._
-  protected val pool = BufferPool
+  protected val pool                      = BufferPool
   protected var buffers: List[ByteBuffer] = Nil
-  protected var currentBuf: ByteBuffer = allocate(initSize)
+  protected var currentBuf: ByteBuffer    = allocate(initSize)
 
   protected def allocate(size: Int): ByteBuffer
 
@@ -73,13 +74,13 @@ abstract class ByteBufferProvider extends BufferProvider {
 }
 
 object ByteBufferProvider {
-  final val initSize = 512
+  final val initSize   = 512
   final val expandSize = initSize * 8
 }
 
 class HeapByteBufferProvider extends ByteBufferProvider {
   override protected def allocate(size: Int) = {
-    if(pool.isDisabled)
+    if (pool.isDisabled)
       ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
     else
       pool.allocate(size).getOrElse(ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN))
@@ -92,7 +93,7 @@ class HeapByteBufferProvider extends ByteBufferProvider {
     else {
       // create a new buffer and combine all buffers into it
       val bufList = (currentBuf :: buffers).reverse
-      val comb = allocate(bufList.map(_.limit).sum)
+      val comb    = allocate(bufList.map(_.limit).sum)
       bufList.foreach { buf =>
         // use fast array copy
         scala.compat.Platform.arraycopy(buf.array, buf.arrayOffset, comb.array, comb.position, buf.limit)
@@ -108,7 +109,7 @@ class HeapByteBufferProvider extends ByteBufferProvider {
 
 class DirectByteBufferProvider extends ByteBufferProvider {
   override protected def allocate(size: Int) = {
-    if(pool.isDisabled)
+    if (pool.isDisabled)
       ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN)
     else
       pool.allocateDirect(size).getOrElse(ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN))
@@ -121,7 +122,7 @@ class DirectByteBufferProvider extends ByteBufferProvider {
     else {
       // create a new buffer and combine all buffers into it
       val bufList = (currentBuf :: buffers).reverse
-      val comb = allocate(bufList.map(_.limit).sum)
+      val comb    = allocate(bufList.map(_.limit).sum)
       bufList.foreach { buf =>
         comb.put(buf)
         // release to the pool

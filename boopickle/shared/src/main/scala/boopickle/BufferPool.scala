@@ -131,7 +131,7 @@ object BufferPool {
   def allocOk = heapPool.allocOk + directPool.allocOk
   def allocMiss = heapPool.allocMiss + directPool.allocMiss
 }
-*/
+ */
 
 object BufferPool {
 
@@ -140,20 +140,20 @@ object BufferPool {
   private final val poolEntrySize1 = ByteBufferProvider.expandSize + 16
   // maximum size of a ByteBuffer to be included in a pool
   private final val maxBufferSize = poolEntrySize1 * 2
-  private final val entryCount = 1024
+  private final val entryCount    = 1024
 
   private var disablePool = false
 
   final class Pool {
-    private val pool0 = new Array[ByteBuffer](entryCount)
-    private val pool1 = new Array[ByteBuffer](entryCount)
-    private val allocIdx0 = new AtomicInteger(0)
-    private val allocIdx1 = new AtomicInteger(0)
+    private val pool0       = new Array[ByteBuffer](entryCount)
+    private val pool1       = new Array[ByteBuffer](entryCount)
+    private val allocIdx0   = new AtomicInteger(0)
+    private val allocIdx1   = new AtomicInteger(0)
     private val releaseIdx0 = new AtomicInteger(0)
     private val releaseIdx1 = new AtomicInteger(0)
 
     // for collecting some performance characteristics
-    var allocOk = 0
+    var allocOk   = 0
     var allocMiss = 0
 
     def allocate(minSize: Int): Option[ByteBuffer] = {
@@ -164,8 +164,8 @@ object BufferPool {
         None
       } else if (minSize > poolEntrySize0 || allocIdx0.get() == releaseIdx0.get()) {
         // allocate from pool1
-        val aIdx = allocIdx1.get()
-        val rIdx = releaseIdx1.get()
+        val aIdx  = allocIdx1.get()
+        val rIdx  = releaseIdx1.get()
         val aNext = (aIdx + 1) % entryCount
         if (aIdx != rIdx) {
           // try to allocate
@@ -183,8 +183,8 @@ object BufferPool {
         }
       } else {
         // allocate from pool0
-        val aIdx = allocIdx0.get()
-        val rIdx = releaseIdx0.get()
+        val aIdx  = allocIdx0.get()
+        val rIdx  = releaseIdx0.get()
         val aNext = (aIdx + 1) % entryCount
         if (aIdx != rIdx) {
           // try to allocate
@@ -209,8 +209,8 @@ object BufferPool {
         val bufSize = bb.capacity
         if (bufSize < maxBufferSize && bufSize >= poolEntrySize0) {
           if (bufSize >= poolEntrySize1) {
-            val aIdx = allocIdx1.get()
-            val rIdx = releaseIdx1.get()
+            val aIdx  = allocIdx1.get()
+            val rIdx  = releaseIdx1.get()
             val rNext = (rIdx + 1) % entryCount
             if (rNext != aIdx) {
               // try to release the buffer
@@ -219,8 +219,8 @@ object BufferPool {
               releaseIdx1.compareAndSet(rIdx, rNext)
             }
           } else {
-            val aIdx = allocIdx0.get()
-            val rIdx = releaseIdx0.get()
+            val aIdx  = allocIdx0.get()
+            val rIdx  = releaseIdx0.get()
             val rNext = (rIdx + 1) % entryCount
             if (rNext != aIdx) {
               // try to release the buffer
@@ -234,7 +234,7 @@ object BufferPool {
     }
   }
 
-  val heapPool = new Pool
+  val heapPool   = new Pool
   val directPool = new Pool
 
   def allocate(minSize: Int): Option[ByteBuffer] = {
@@ -258,6 +258,6 @@ object BufferPool {
 
   def enable(): Unit = disablePool = false
 
-  def allocOk = heapPool.allocOk + directPool.allocOk
+  def allocOk   = heapPool.allocOk + directPool.allocOk
   def allocMiss = heapPool.allocMiss + directPool.allocMiss
 }

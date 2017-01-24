@@ -10,8 +10,8 @@ abstract class UPickleRunner[A](data: A) extends TestRunner[A](data) {
 
 object UPickleRunners {
 
-  def encodeRunner[A](data:A)(implicit p:Writer[A], u:Reader[A]):UPickleRunner[A] = new UPickleRunner[A](data) {
-    var testData : A = _
+  def encodeRunner[A](data: A)(implicit p: Writer[A], u: Reader[A]): UPickleRunner[A] = new UPickleRunner[A](data) {
+    var testData: A = _
 
     override def initialize = {
       testData = data
@@ -26,9 +26,9 @@ object UPickleRunners {
     }
   }
 
-  def decodeRunner[A](data:A)(implicit p:Writer[A], u:Reader[A]):UPickleRunner[A] = new UPickleRunner[A](data) {
-    var testData : A = _
-    var s:String = _
+  def decodeRunner[A](data: A)(implicit p: Writer[A], u: Reader[A]): UPickleRunner[A] = new UPickleRunner[A](data) {
+    var testData: A = _
+    var s: String   = _
 
     override def initialize = {
       testData = data

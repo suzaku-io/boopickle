@@ -12,7 +12,7 @@ class CompositePickler[A <: AnyRef] extends Pickler[A] {
   import Constants._
 
   var picklerClasses = IdentMap.empty
-  val picklers = mutable.ArrayBuffer.empty[(Class[_], Pickler[_])]
+  val picklers       = mutable.ArrayBuffer.empty[(Class[_], Pickler[_])]
 
   override def pickle(obj: A)(implicit state: PickleState): Unit = {
     if (obj == null) {
@@ -162,28 +162,28 @@ object CompositePickler {
 object ExceptionPickler {
   def empty = CompositePickler[Throwable]
   // generate base exception picklers
-  private lazy val basePicklers = CompositePickler[Throwable].
-    addException[Exception](m => new Exception(m)).
-    addException[RuntimeException](m => new RuntimeException(m)).
-    addException[MatchError](m => new MatchError(m)).
-    addException[UninitializedError](_ => new UninitializedError).
-    addException[UninitializedFieldError](m => new UninitializedFieldError(m)).
-    addException[NullPointerException](m => new NullPointerException(m)).
-    addException[ClassCastException](m => new ClassCastException(m)).
-    addException[IndexOutOfBoundsException](m => new IndexOutOfBoundsException(m)).
-    addException[ArrayIndexOutOfBoundsException](m => new ArrayIndexOutOfBoundsException(m)).
-    addException[StringIndexOutOfBoundsException](m => new StringIndexOutOfBoundsException(m)).
-    addException[UnsupportedOperationException](m => new UnsupportedOperationException(m)).
-    addException[IllegalArgumentException](m => new IllegalArgumentException(m)).
-    addException[IllegalStateException](m => new IllegalStateException(m)).
-    addException[NoSuchElementException](m => new NoSuchElementException(m)).
-    addException[NumberFormatException](m => new NumberFormatException(m)).
-    addException[ArithmeticException](m => new ArithmeticException(m)).
-    addException[InterruptedException](m => new InterruptedException(m))
+  private lazy val basePicklers = CompositePickler[Throwable]
+    .addException[Exception](m => new Exception(m))
+    .addException[RuntimeException](m => new RuntimeException(m))
+    .addException[MatchError](m => new MatchError(m))
+    .addException[UninitializedError](_ => new UninitializedError)
+    .addException[UninitializedFieldError](m => new UninitializedFieldError(m))
+    .addException[NullPointerException](m => new NullPointerException(m))
+    .addException[ClassCastException](m => new ClassCastException(m))
+    .addException[IndexOutOfBoundsException](m => new IndexOutOfBoundsException(m))
+    .addException[ArrayIndexOutOfBoundsException](m => new ArrayIndexOutOfBoundsException(m))
+    .addException[StringIndexOutOfBoundsException](m => new StringIndexOutOfBoundsException(m))
+    .addException[UnsupportedOperationException](m => new UnsupportedOperationException(m))
+    .addException[IllegalArgumentException](m => new IllegalArgumentException(m))
+    .addException[IllegalStateException](m => new IllegalStateException(m))
+    .addException[NoSuchElementException](m => new NoSuchElementException(m))
+    .addException[NumberFormatException](m => new NumberFormatException(m))
+    .addException[ArithmeticException](m => new ArithmeticException(m))
+    .addException[InterruptedException](m => new InterruptedException(m))
+
   /**
     * Provides simple (message only) pickling of most common Java/Scala exception types. This can be used
     * as a base for adding custom exception types.
     */
   def base = CompositePickler[Throwable].join(basePicklers)
 }
-

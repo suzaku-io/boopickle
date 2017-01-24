@@ -2,8 +2,8 @@ package boopickle
 
 import java.nio.ByteBuffer
 
-
 trait Decoder {
+
   /**
     * Decodes a single byte
     *
@@ -100,6 +100,7 @@ trait Decoder {
 }
 
 trait Encoder {
+
   /**
     * Encodes a single byte
     *

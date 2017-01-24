@@ -29,7 +29,7 @@ object CirceRunners {
 
   def decodeRunner[A](data: A)(implicit p: Encoder[A], u: Decoder[A]): CirceRunner[A] = new CirceRunner[A](data) {
     var testData: A = _
-    var s: String = _
+    var s: String   = _
 
     override def initialize = {
       testData = data

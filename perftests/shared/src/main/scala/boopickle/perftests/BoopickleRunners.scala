@@ -31,7 +31,7 @@ object BooPickleRunners {
   }
 
   def decodeRunner[A](data: A)(implicit p: Pickler[A]): BooRunner[A] = new BooRunner[A](data) {
-    var testData: A = _
+    var testData: A    = _
     var bb: ByteBuffer = _
 
     override def initialize = {

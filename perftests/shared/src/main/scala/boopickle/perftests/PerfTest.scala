@@ -3,21 +3,22 @@ package boopickle.perftests
 case class PerfTestSuite(name: String, runners: Seq[TestRunner[_]])
 
 abstract class TestRunner[A](val data: A) {
+
   /**
-   * Name of the runner
-   */
+    * Name of the runner
+    */
   def name: String
 
   /**
-   * Initialize runner, for example by encoding input data
-   *
-   * @return Encoded bytes
-   */
+    * Initialize runner, for example by encoding input data
+    *
+    * @return Encoded bytes
+    */
   def initialize: Array[Byte]
 
   /**
-   * Run the test case
-   */
+    * Run the test case
+    */
   def run(): Unit
 }
 
@@ -41,7 +42,7 @@ class PerfTester(suite: PerfTestSuite) {
     // analyze performance
     val counters = suite.runners.map { runner =>
       val startTime = System.currentTimeMillis()
-      var counter = 0
+      var counter   = 0
       while (System.currentTimeMillis() - startTime < testTime) {
         runner.run()
         runner.run()
