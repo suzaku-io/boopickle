@@ -24,3 +24,5 @@ out
 
 # GitBook
 doc/_book
+doc/node_modules/
+/_book

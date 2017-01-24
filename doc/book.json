@@ -1,0 +1,16 @@
+{
+  "gitbook": "3.2.x",
+  "plugins": ["editlink", "prism", "-highlight", "github"],
+  "pluginsConfig": {
+    "editlink": {
+      "base": "https://github.com/ochrons/boopickle/tree/master/doc",
+      "label": "Edit This Page"
+    },
+    "github": {
+      "url": "https://github.com/ochrons/boopickle/"
+    }
+  },
+  "variables": {
+    "version": "1.2.6"
+  }
+}

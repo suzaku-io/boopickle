@@ -1,0 +1,56 @@
+## Using BooPickle with Ajax
+
+For now, see [SPA tutorial](https://github.com/ochrons/scalajs-spa-tutorial) for example usage.
+
+## Known limitations
+
+BooPickle is first and foremost focused on optimization of the pickled data. This gives you good performance and small data size, but at the same
+time it also makes the protocol extremely fragile. Unlike JSON, which can survive quite easily from additional or missing data, the binary
+format employed by BooPickle will explode violently with even the slightest of change. Debugging the output of BooPickle is also very hard, first
+because it's in binary and second because many data types use exotic coding to reduce the size. For example an `Int` can be 1 to 5 bytes long. Since
+there is no type information included in the coding it's quite impossible to determine the structure of the data just by looking at the binary output.
+
+But because there is no type information, it is also possible to benefit from this. For example you can pickle a `Set[String]` but unpickle it
+as a `Vector[String]` because all collections use the same serialization format internally. Note, however, that this too is rather fragile, 
+especially for empty collections that occur multiple times in the data.
+
+If your data contains a lot of (non-repeating) strings, then BooPickle performance is not so hot (depending on browser) as it has to do
+UTF-8 coding itself. Several browsers provide a `TextDecoder` interface to do this efficiently, but it's still not as fast as with `JSON.parse`. On
+other browsers, BooPickle relies on Scala.js' implementation for coding UTF-8.
+
+Under Scala.js BooPickle depends indirectly on [typed arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays) 
+because direct `ByteBuffer`s are implemented with typed arrays. These may not be available on all JS platforms (most notably old Node.js, which has
+its own Buffers, and IE versions 9 and below). When testing code that uses BooPickle (and direct `ByteBuffer`s), make sure your tests are run under
+a recent version of Node.js as Rhino doesn't support typed arrays. Alternatively make sure your tests only use heap `ByteBuffer`s.
+ 
+## Common issues with ByteBuffers
+
+As many BooPickle users have run into issues with `ByteBuffers`, here is a bit of advice on how to work with them. If you need to get data out of a 
+`ByteBuffer`, for example into an `Array[Byte]` the safest way is to use the `get(array: Array[Byte])` method. Even when the `ByteBuffer` is
+backed with an `Array[Byte]` and you could access that directly with `array()`, it's very easy to make mistakes with positions, array offsets and limits.
+
+Reading values from a `ByteBuffer` commonly changes its internal state (the `position`), so you cannot treat it as identical to the original
+`ByteBuffer`. Similarly writing to one also changes its state. For example if you write data to a `ByteBuffer` and pass it as such to an unpickler, 
+it will not work. You need to call `flip()` first to reset its `position`.
+
+In BooPickle `ByteBuffer`s use little-endian ordering, which is not the default in the JVM, but is the native ordering in majority of target platforms. If you
+call `slice` or `duplicate` on buffers produced by BooPickle, they will default back to big-endian ordering. You must explicitly call
+`order(ByteOrder.LITTLE_ENDIAN)` to get them back to correct ordering.
+
+For more information, please refer to the [JDK documentation on ByteBuffers](http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html).
+
+### Using ByteBuffers in network communication
+
+BooPickle is commonly used in client/server communication, so it is important to be able to use `ByteBuffer`s efficiently in the protocol. On the JVM
+side things are usually quite simple as many communication methods already accept `ByteBuffer` type directly. Sometimes you do need to convert the
+data into an `Array[Byte]` using following piece of code:
+
+```scala
+val data = Array.ofDim[Byte](buffer.remaining())
+buffer.get(data)
+```
+
+Conversion in the other direction is trivial with the help of `ByteBuffer.wrap()` method.
+
+On the JS side things are a bit more complicated due to the use of JavaScript `ArrayBuffer` underneath the `ByteBuffer`.
+

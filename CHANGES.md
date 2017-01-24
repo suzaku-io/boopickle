@@ -1,5 +1,10 @@
 # Changes
 
+## 1.2.6
+
+- Moved under io.suzaku organization
+- Documentation now in GitBook format
+
 ## 1.2.5
 
 - Fixed an efficiency issue in `BufferPool` where it would not recycle all applicable buffers resulting in lower use of pooling
