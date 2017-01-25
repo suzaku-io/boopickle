@@ -9,3 +9,4 @@ touch .nojekyll
 git add .
 git commit -am "update book"
 git push git@github.com:ochrons/boopickle gh-pages --force
+cd ..

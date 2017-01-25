@@ -46,13 +46,13 @@ lazy val boopickle = crossProject
   .settings(
     name := "boopickle",
     scmInfo := Some(
-      ScmInfo(url("https://github.com/ochrons/boopickle"),
-              "scm:git:git@github.com:ochrons/boopickle.git",
-              Some("scm:git:git@github.com:ochrons/boopickle.git"))),
+      ScmInfo(url("https://github.com/suzaku-io/boopickle"),
+              "scm:git:git@github.com:suzaku-io/boopickle.git",
+              Some("scm:git:git@github.com:suzaku-io/boopickle.git"))),
     publishMavenStyle := true,
     publishArtifact in Test := false,
     pomExtra :=
-      <url>https://github.com/ochrons/boopickle</url>
+      <url>https://github.com/suzaku-io/boopickle</url>
         <licenses>
           <license>
             <name>MIT license</name>
@@ -82,7 +82,7 @@ lazy val boopickle = crossProject
                        else
                          Seq({
                            val a = baseDirectory.value.toURI.toString.replaceFirst("[^/]+/?$", "")
-                           val g = "https://raw.githubusercontent.com/ochrons/boopickle"
+                           val g = "https://raw.githubusercontent.com/suzaku-io/boopickle"
                            s"-P:scalajs:mapSourceURI:$a->$g/v${version.value}/"
                          }))
   )
@@ -158,5 +158,5 @@ lazy val perftestsJVM = preventPublication(perftests.jvm)
   .dependsOn(boopickleJVM)
 
 lazy val root = preventPublication(project.in(file(".")))
-  .settings()
+  .settings(commonSettings: _*)
   .aggregate(boopickleJS, boopickleJVM)

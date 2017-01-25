@@ -15,7 +15,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 - Serialization support for all primitives, collections, options, tuples and case classes (including class hierarchies)
 - User-definable custom serializers
 - Transforming serializers to simplify serializing non-case classes
-- Handles [references and deduplication of identical objects](#references)
+- Handles references and deduplication of identical objects
 - Very fast
 - Very efficient coding
 - Low memory usage, no intermediate structures needed

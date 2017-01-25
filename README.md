@@ -16,7 +16,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 - Serialization support for all primitives, collections, options, tuples and case classes (including class hierarchies)
 - User-definable custom serializers
 - Transforming serializers to simplify serializing non-case classes
-- Handles [references and deduplication of identical objects](#references)
+- Handles references and deduplication of identical objects
 - Very fast
 - Very efficient coding
 - Low memory usage, no intermediate structures needed
@@ -29,13 +29,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"me.chrons" %% "boopickle" % "1.2.5"
+"io.suzaku" %% "boopickle" % "1.2.6"
 ```
 
 On a Scala.js project the dependency looks like this
 
 ```scala
-"me.chrons" %%% "boopickle" % "1.2.5"
+"io.suzaku" %%% "boopickle" % "1.2.6"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
@@ -61,7 +61,7 @@ val helloWorld = Unpickle[Seq[String]].fromBytes(buf)
 
 ## Documentation
 
-Read the [full documentation](https://ochrons.github.io/boopickle)
+Read the [full documentation](https://boopickle.suzaku.io)
 
 ## Change history
 

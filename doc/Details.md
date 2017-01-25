@@ -59,7 +59,7 @@ trait MaterializePicklerFallback {
 
 If no other implicit pickler can be found, the compiler will call the `materializePickler` macro function in the hope of generating a suitable one.
 
-The [macro code](https://github.com/ochrons/boopickle/blob/master/boopickle/shared/src/main/scala/boopickle/PicklerMaterializersImpl.scala) starts
+The [macro code](https://github.com/suzaku-io/boopickle/blob/master/boopickle/shared/src/main/scala/boopickle/PicklerMaterializersImpl.scala) starts
 by checking that the given type is valid for pickling (a sealed trait or a case class). Next step is building the code for pickling individual fields
 of the case class, which is surprisingly simple. Scala macros use a concept called quasiquotes (`q"""code goes here"""`) to easily generate code.
 
