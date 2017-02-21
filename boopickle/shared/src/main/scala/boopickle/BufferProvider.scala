@@ -69,7 +69,7 @@ abstract class ByteBufferProvider extends BufferProvider {
 
   def asByteBuffers = {
     currentBuf.flip()
-    (currentBuf :: buffers).toVector
+    (currentBuf :: buffers).reverse.toVector
   }
 }
 
