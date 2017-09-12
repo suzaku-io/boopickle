@@ -1,8 +1,6 @@
 package boopickle
 
-import scala.language.experimental.macros
-import scala.reflect.api.Symbols
-import scala.reflect.macros.{Universe, blackbox}
+import scala.reflect.macros.blackbox
 
 object PicklerMaterializersImpl {
 

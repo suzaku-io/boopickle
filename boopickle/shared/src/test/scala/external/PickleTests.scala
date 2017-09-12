@@ -544,7 +544,7 @@ object PickleTests extends TestSuite {
           assert(r._1 == data._1)
           assert(r._3 == data._3)
           assert(rd == "Testing")
-          val a = Array.empty[Int]
+          Array.empty[Int]
         }
       }
       'IdentityDeduplication - {

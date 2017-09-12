@@ -1,6 +1,6 @@
 package boopickle
 
-import java.nio.{ByteBuffer, CharBuffer}
+import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
 object StringCodec extends StringCodecBase {
@@ -23,10 +23,4 @@ object StringCodec extends StringCodecBase {
   override def encodeUTF16(str: String): ByteBuffer = {
     ByteBuffer.wrap(str.getBytes(StandardCharsets.UTF_16LE))
   }
-  /*
-
-  override def decodeFast(len: Int, buf: ByteBuffer): String = decodeUTF8(len, buf)
-
-  override def encodeFast(str: String): ByteBuffer = encodeUTF8(str)
- */
 }

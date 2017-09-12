@@ -1,9 +1,6 @@
 package boopickle
 
 import java.nio.{ByteBuffer, ByteOrder}
-import java.util
-
-import scala.collection.mutable
 
 trait BufferProvider {
 

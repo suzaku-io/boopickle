@@ -93,7 +93,6 @@ object CompositePickleTests extends TestSuite {
       assert(u == errors)
     }
     'Recursive {
-      import Tree._
       val tree: Tree = Node(1, Seq(Node(2, Seq(Leaf, Node(3, Seq(Leaf, Leaf)), Node(5, Seq(Leaf, Leaf))))))
       val bb         = Pickle.intoBytes(tree)
       val u          = Unpickle[Tree].fromBytes(bb)
@@ -127,7 +126,7 @@ object CompositePickleTests extends TestSuite {
     }
     'AddClassTwice {
       intercept[IllegalArgumentException] {
-        val fruitPickler = compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Banana]
+        compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Banana]
       }
     }
   }

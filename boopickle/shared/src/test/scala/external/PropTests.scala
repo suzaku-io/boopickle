@@ -1,5 +1,8 @@
 package external
 
+// removed until Nyaya is compatible with Scala.js 1.0
+
+/*
 import boopickle.Default._
 import boopickle.{CompositePickler, Pickler}
 import nyaya.gen._
@@ -76,3 +79,4 @@ object PropTests extends TestSuite {
     'crazy - crazy.mustSatisfy(prop)
   }
 }
+*/

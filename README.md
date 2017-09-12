@@ -1,8 +1,8 @@
 # BooPickle
 
-[![Join the chat at https://gitter.im/ochrons/boopickle](https://badges.gitter.im/ochrons/boopickle.svg)](https://gitter.im/ochrons/boopickle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/ochrons/boopickle](https://badges.gitter.im/suzaku-io/boopickle.svg)](https://gitter.im/suzaku-io/boopickle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-[![Build Status](https://travis-ci.org/ochrons/boopickle.svg?branch=master)](https://travis-ci.org/ochrons/boopickle)
+[![Build Status](https://travis-ci.org/suzaku-io/boopickle.svg?branch=master)](https://travis-ci.org/ochrons/boopickle)
 [![Scala.js](https://www.scala-js.org/assets/badges/scalajs-0.6.13.svg)](http://www.scala-js.org)
 
 BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization (aka pickling) library that works on both Scala
@@ -74,17 +74,3 @@ BooPickle was created and is maintained by [Otto Chrons](https://github.com/ochr
 Special thanks to Li Haoyi and Ben Hutchison for their pickling libraries, which provided more than inspiration to BooPickle.
 
 Contributors: @japgolly, @FlorianKirmaier, @guersam, @akshaal, @cquiroz
-
-## MIT License
-
-Copyright (c) 2015, Otto Chrons (otto@chrons.me)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of 
-the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS 
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER 
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

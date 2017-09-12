@@ -5,8 +5,8 @@ import com.typesafe.sbt.pgp.PgpKeys._
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
-  crossScalaVersions := Seq("2.11.8", "2.12.1"),
-  scalaVersion := "2.12.1",
+  crossScalaVersions := Seq("2.11.11", "2.12.3"),
+  scalaVersion := "2.12.3",
   scalacOptions := Seq(
     "-deprecation",
     "-encoding",
@@ -15,6 +15,7 @@ val commonSettings = Seq(
     "-unchecked",
     "-Xfatal-warnings",
     "-Xlint",
+    "-Xlint:-unused",
     "-Yno-adapted-args",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
@@ -24,8 +25,8 @@ val commonSettings = Seq(
   scalacOptions in Compile ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi"               %%% "utest"       % "0.4.4"            % "test",
-    "com.github.japgolly.nyaya" %%% "nyaya-test"  % "0.8.1"            % "test",
+    "com.lihaoyi"               %%% "utest"       % "0.5.3"            % "test",
+    // "com.github.japgolly.nyaya" %%% "nyaya-test"  % "0.8.1"            % "test",
     "org.scala-lang"            % "scala-reflect" % scalaVersion.value % "provided"
   )
 )
@@ -157,6 +158,6 @@ lazy val perftestsJVM = preventPublication(perftests.jvm)
   )
   .dependsOn(boopickleJVM)
 
-lazy val root = preventPublication(project.in(file(".")))
+lazy val booPickleRoot = preventPublication(project.in(file(".")))
   .settings(commonSettings: _*)
   .aggregate(boopickleJS, boopickleJVM)
