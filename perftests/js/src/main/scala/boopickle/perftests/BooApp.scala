@@ -5,18 +5,18 @@ import org.scalajs.dom
 import org.scalajs.dom.html
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSExport, JSName}
+import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel, JSGlobal, JSName}
 import scala.scalajs.js.typedarray.Uint8Array
 import scalatags.JsDom.all._
 
-@JSName("Zlib.Gzip")
+@JSGlobal("Zlib.Gzip")
 @js.native
 class Gzip(data: js.Array[Byte]) extends js.Object {
   def compress(): Uint8Array = js.native
 }
 
-@JSExport("BooApp")
-object BooApp extends js.JSApp {
+@JSExportTopLevel("BooApp")
+object BooApp {
 
   import scala.scalajs.js.JSConverters._
 

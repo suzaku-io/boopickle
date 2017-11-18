@@ -130,7 +130,7 @@ object PicklerMaterializersImpl {
         } else if(ic < 0) {
           state.identityFor[$tpe](-ic)
         } else {
-          throw new IllegalArgumentException(s"Unknown object coding: $$ic")
+          state.codingError(ic)
         }
       """
     }

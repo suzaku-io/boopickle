@@ -6,9 +6,9 @@ import scala.collection.mutable
   * Specialized fast and cheap to initialize identity list for unpickle state identifier refs
   */
 abstract class IdentList {
-  def apply(idx: Int): AnyRef
+  @noinline def apply(idx: Int): AnyRef
 
-  def updated(obj: AnyRef): IdentList
+  @noinline def updated(obj: AnyRef): IdentList
 }
 
 object IdentList {

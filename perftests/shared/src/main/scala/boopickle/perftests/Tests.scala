@@ -1,7 +1,6 @@
 package boopickle.perftests
 
 import boopickle.Default._
-import pushka.json._
 import io.circe.generic.auto._
 
 object Tests {
@@ -15,7 +14,6 @@ object Tests {
         PrickleRunners.encodeRunner(Event(42, true)),
         UPickleRunners.encodeRunner(Event(42, true)),
         CirceRunners.encodeRunner(Event(42, true)),
-        PushkaRunners.encodeRunner(Event(42, true))
       )
     ),
     PerfTestSuite(
@@ -26,7 +24,6 @@ object Tests {
         PrickleRunners.decodeRunner(Event(42, true)),
         UPickleRunners.decodeRunner(Event(42, true)),
         CirceRunners.decodeRunner(Event(42, true)),
-        PushkaRunners.decodeRunner(Event(42, true))
       )
     ),
     PerfTestSuite(
@@ -37,7 +34,6 @@ object Tests {
         // PrickleRunners.encodeRunner(TestData.largeIntSeq),
         UPickleRunners.encodeRunner(TestData.largeIntSeq),
         CirceRunners.encodeRunner(TestData.largeIntSeq)
-        // PushkaRunners.encodeRunner(TestData.largeIntSeq)
       )
     ),
     PerfTestSuite(
@@ -48,7 +44,6 @@ object Tests {
         // PrickleRunners.decodeRunner(TestData.largeIntSeq),
         UPickleRunners.decodeRunner(TestData.largeIntSeq),
         CirceRunners.decodeRunner(TestData.largeIntSeq)
-        // PushkaRunners.decodeRunner(TestData.largeIntSeq)
       )
     ),
     PerfTestSuite(
@@ -59,7 +54,6 @@ object Tests {
         //PrickleRunners.encodeRunner(TestData.largeDoubleSeq),
         UPickleRunners.encodeRunner(TestData.largeDoubleSeq),
         CirceRunners.encodeRunner(TestData.largeDoubleSeq)
-        //PushkaRunners.encodeRunner(TestData.largeDoubleSeq)
       )
     ),
     PerfTestSuite(
@@ -70,7 +64,6 @@ object Tests {
         //PrickleRunners.decodeRunner(TestData.largeDoubleSeq),
         UPickleRunners.decodeRunner(TestData.largeDoubleSeq),
         CirceRunners.decodeRunner(TestData.largeDoubleSeq)
-        //PushkaRunners.decodeRunner(TestData.largeDoubleSeq)
       )
     ),
     PerfTestSuite(
@@ -81,7 +74,6 @@ object Tests {
         PrickleRunners.encodeRunner(TestData.largeStringSeq),
         UPickleRunners.encodeRunner(TestData.largeStringSeq),
         CirceRunners.encodeRunner(TestData.largeStringSeq),
-        PushkaRunners.encodeRunner(TestData.largeStringSeq)
       )
     ),
     PerfTestSuite(
@@ -92,7 +84,6 @@ object Tests {
         PrickleRunners.decodeRunner(TestData.largeStringSeq),
         UPickleRunners.decodeRunner(TestData.largeStringSeq),
         CirceRunners.decodeRunner(TestData.largeStringSeq),
-        PushkaRunners.decodeRunner(TestData.largeStringSeq)
       )
     ),
     PerfTestSuite(
@@ -103,7 +94,6 @@ object Tests {
         PrickleRunners.encodeRunner(tree),
         UPickleRunners.encodeRunner(tree),
         CirceRunners.encodeRunner(tree),
-        PushkaRunners.encodeRunner(tree)
       )
     ),
     PerfTestSuite(
@@ -114,7 +104,6 @@ object Tests {
         PrickleRunners.decodeRunner(tree),
         UPickleRunners.decodeRunner(tree),
         CirceRunners.decodeRunner(tree),
-        PushkaRunners.decodeRunner(tree)
       )
     ),
     PerfTestSuite(
@@ -125,7 +114,6 @@ object Tests {
         PrickleRunners.encodeRunner(TestData.largeStringIntMap),
         UPickleRunners.encodeRunner(TestData.largeStringIntMap),
         CirceRunners.encodeRunner(TestData.largeStringIntMap),
-        PushkaRunners.encodeRunner(TestData.largeStringIntMap)
       )
     ),
     PerfTestSuite(
@@ -136,7 +124,6 @@ object Tests {
         PrickleRunners.decodeRunner(TestData.largeStringIntMap),
         UPickleRunners.decodeRunner(TestData.largeStringIntMap),
         CirceRunners.decodeRunner(TestData.largeStringIntMap),
-        PushkaRunners.decodeRunner(TestData.largeStringIntMap)
       )
     ),
     PerfTestSuite(
@@ -147,7 +134,6 @@ object Tests {
         PrickleRunners.encodeRunner(TestData.booksRandomID),
         UPickleRunners.encodeRunner(TestData.booksRandomID),
         CirceRunners.encodeRunner(TestData.booksRandomID),
-        PushkaRunners.encodeRunner(TestData.booksRandomID)
       )
     ),
     PerfTestSuite(
@@ -158,7 +144,6 @@ object Tests {
         PrickleRunners.decodeRunner(TestData.booksRandomID),
         UPickleRunners.decodeRunner(TestData.booksRandomID),
         CirceRunners.decodeRunner(TestData.booksRandomID),
-        PushkaRunners.decodeRunner(TestData.booksRandomID)
       )
     ),
     PerfTestSuite(
@@ -169,7 +154,6 @@ object Tests {
         PrickleRunners.encodeRunner(TestData.booksNumId),
         UPickleRunners.encodeRunner(TestData.booksNumId),
         CirceRunners.encodeRunner(TestData.booksNumId),
-        PushkaRunners.encodeRunner(TestData.booksNumId)
       )
     ),
     PerfTestSuite(
@@ -180,7 +164,6 @@ object Tests {
         PrickleRunners.decodeRunner(TestData.booksNumId),
         UPickleRunners.decodeRunner(TestData.booksNumId),
         CirceRunners.decodeRunner(TestData.booksNumId),
-        PushkaRunners.decodeRunner(TestData.booksNumId)
       )
     )
   )

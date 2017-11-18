@@ -547,7 +547,11 @@ final class UnpickleState(val dec: Decoder, deduplicate: Boolean = true, dedupIm
     */
   private[this] var identityRefs: IdentList = EmptyIdentList
 
-  @inline def identityFor[A <: AnyRef](ref: Int): A = {
+  @noinline def codingError(code: Int): Nothing = {
+    throw new IllegalArgumentException(s"Unknown object coding: $code")
+  }
+
+  @noinline def identityFor[A <: AnyRef](ref: Int): A = {
     if (ref < 2)
       null.asInstanceOf[A]
     else if (!deduplicate)
@@ -565,7 +569,7 @@ final class UnpickleState(val dec: Decoder, deduplicate: Boolean = true, dedupIm
     */
   private[this] var immutableRefs: IdentList = EmptyIdentList
 
-  @inline def immutableFor[A <: AnyRef](ref: Int): A = {
+  @noinline def immutableFor[A <: AnyRef](ref: Int): A = {
     if (ref < 2)
       null.asInstanceOf[A]
     else if (dedupImmutable)

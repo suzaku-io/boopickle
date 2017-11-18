@@ -2,6 +2,9 @@ import sbt._
 import Keys._
 import com.typesafe.sbt.pgp.PgpKeys._
 
+scalafmtOnCompile in ThisBuild := true
+scalafmtVersion in ThisBuild := "1.3.0"
+
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
@@ -25,9 +28,9 @@ val commonSettings = Seq(
   scalacOptions in Compile ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi"               %%% "utest"       % "0.5.3"            % "test",
+    "com.lihaoyi" %%% "utest" % "0.5.3" % "test",
     // "com.github.japgolly.nyaya" %%% "nyaya-test"  % "0.8.1"            % "test",
-    "org.scala-lang"            % "scala-reflect" % scalaVersion.value % "provided"
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
 )
 
@@ -56,8 +59,8 @@ lazy val boopickle = crossProject
       <url>https://github.com/suzaku-io/boopickle</url>
         <licenses>
           <license>
-            <name>MIT license</name>
-            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <name>Apache 2.0 license</name>
+            <url>http://www.opensource.org/licenses/Apache-2.0</url>
           </license>
         </licenses>
         <developers>
@@ -128,29 +131,26 @@ lazy val perftests = crossProject
   .settings(commonSettings: _*)
   .settings(
     name := "perftests",
-    crossScalaVersions := Seq("2.11.8"),
-    scalaVersion := "2.11.8",
+    scalaVersion := "2.12.3",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
-      "com.lihaoyi"             %%% "upickle"       % "0.4.3",
-      "com.github.benhutchison" %%% "prickle"       % "1.1.12",
-      "com.github.fomkin"       %%% "pushka-json"   % "0.6.1",
-      "io.circe"                %%% "circe-core"    % "0.5.1",
-      "io.circe"                %%% "circe-parser"  % "0.5.1",
-      "io.circe"                %%% "circe-generic" % "0.5.1"
+      "com.lihaoyi"             %%% "upickle"       % "0.4.4",
+      "com.github.benhutchison" %%% "prickle"       % "1.1.14",
+      "io.circe"                %%% "circe-core"    % "0.8.0",
+      "io.circe"                %%% "circe-parser"  % "0.8.0",
+      "io.circe"                %%% "circe-generic" % "0.8.0"
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
   .jsSettings(
-    bootSnippet := "BooApp().main();",
-    // scalaJSOptimizerOptions in (Compile, fullOptJS) ~= { _.withUseClosureCompiler(false) },
+    scalaJSOptimizerOptions in (Compile, fullOptJS) ~= { _.withUseClosureCompiler(false) },
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "0.9.1",
       "com.lihaoyi"  %%% "scalatags"   % "0.6.2"
     )
   )
 
-lazy val perftestsJS = preventPublication(perftests.js).settings(workbenchSettings: _*).dependsOn(boopickleJS)
+lazy val perftestsJS = preventPublication(perftests.js).enablePlugins(WorkbenchPlugin).dependsOn(boopickleJS)
 
 lazy val perftestsJVM = preventPublication(perftests.jvm)
   .settings(

@@ -3,14 +3,11 @@ package boopickle.perftests
 import java.util.UUID
 
 import scala.util.Random
-import pushka.annotation._
 
-@pushka case class Book(id: String, name: String, author: String, publicationYear: Int)
+case class Book(id: String, name: String, author: String, publicationYear: Int)
 
-@pushka
 case class Node(name: String, color: String, children: Seq[Node])
 
-@pushka
 case class Event(i: Int, b: Boolean)
 
 object TestData {

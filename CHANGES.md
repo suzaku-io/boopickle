@@ -1,5 +1,11 @@
 # Changes
 
+## 1.2.7-SNAPSHOT
+
+- Optimized size of generated JS code by marking some common methods as `@noinline`
+- Removed generation of unnecessary calls to `boopickle.Default` object in picklers by making everything `def` instead of `val`
+- Updated performance tests to use latest versions of different picklers, dropped Pushka
+
 ## 1.2.6
 
 - Moved under io.suzaku organization
