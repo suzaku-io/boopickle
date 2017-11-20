@@ -11,7 +11,7 @@ object BufferPoolTestsJVM extends TestSuite {
       val pool  = BufferPool
       val count = 100000
       def runner = new Runnable {
-        override def run(): Unit = {
+        override def run(): Any = {
           var i = 0
           while (i < count) {
             val bb1 = pool

@@ -10,12 +10,15 @@ case class Node(name: String, color: String, children: Seq[Node])
 
 case class Event(i: Int, b: Boolean)
 
-object TestData {
-  val uuids = {
+class TestData {
+  lazy val event = Event(42, false)
+
+  lazy val uuids = {
     val r = new Random(0)
     (0 until 100).map(_ => new UUID(r.nextLong(), r.nextLong()).toString)
   }
   var uuidIdx = 0
+
   def genUUID = {
     uuidIdx = (uuidIdx + 1) % uuids.size
     uuids(uuidIdx)
@@ -42,13 +45,13 @@ object TestData {
     "R" + uuids(uuidIdx).replaceAll("-", ":").substring(0, 10)
   }
 
-  val booksNumId = books(genNumId)
+  lazy val booksNumId = books(genNumId)
 
-  val booksUUID = books(genUUID)
+  lazy val booksUUID = books(genUUID)
 
-  val booksRandomID = books(genRandomId)
+  lazy val booksRandomID = books(genRandomId)
 
-  val largeStringSeq: Seq[String] = {
+  lazy val largeStringSeq: Seq[String] = {
     val r = new Random(0)
     def genChar: Char = {
       val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅabcdefghijklmnopqrstuvwxyzö0123456789?_-,.          !"
@@ -61,22 +64,22 @@ object TestData {
     strings
   }
 
-  val largeIntSeq: Array[Int] = {
+  lazy val largeIntSeq: Array[Int] = {
     val r = new Random(0)
     (for (i <- 0 until 10000) yield (1.0 / (1.0 + r.nextDouble() * 1e5) * 1e7).toInt).toArray
   }
 
-  val largeStringIntMap: Map[String, Int] = {
+  lazy val largeStringIntMap: Map[String, Int] = {
     val r = new Random(0)
     (for (i <- 0 until 10000) yield s"ID$i" -> (1.0 / (1.0 + r.nextDouble() * 1e5) * 1e7).toInt).toMap
   }
 
-  val largeFloatSeq: Array[Float] = {
+  lazy val largeFloatSeq: Array[Float] = {
     val r = new Random(0)
     (for (i <- 0 until 8000) yield ((r.nextDouble() - 0.1) * 1e6).toFloat).toArray
   }
 
-  val largeDoubleSeq: Array[Double] = {
+  lazy val largeDoubleSeq: Array[Double] = {
     val r = new Random(0)
     (for (i <- 0 until 8000) yield (r.nextDouble() - 0.1) * 1e6).toArray
   }
@@ -88,3 +91,5 @@ object TestData {
     Node(genRandomId, colors(r.nextInt(colors.size)), Vector.tabulate(childrenCount)(_ => genTree(maxChildren, maxDepth - 1, r)))
   }
 }
+
+object TestData extends TestData

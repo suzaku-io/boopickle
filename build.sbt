@@ -8,8 +8,8 @@ scalafmtVersion in ThisBuild := "1.3.0"
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
-  crossScalaVersions := Seq("2.11.11", "2.12.3"),
-  scalaVersion := "2.12.3",
+  crossScalaVersions := Seq("2.11.11", "2.12.4"),
+  scalaVersion := "2.12.4",
   scalacOptions := Seq(
     "-deprecation",
     "-encoding",
@@ -131,17 +131,18 @@ lazy val perftests = crossProject
   .settings(commonSettings: _*)
   .settings(
     name := "perftests",
-    scalaVersion := "2.12.3",
+    scalaVersion := "2.12.4",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
-      "com.lihaoyi"             %%% "upickle"       % "0.4.4",
-      "com.github.benhutchison" %%% "prickle"       % "1.1.14",
-      "io.circe"                %%% "circe-core"    % "0.8.0",
-      "io.circe"                %%% "circe-parser"  % "0.8.0",
-      "io.circe"                %%% "circe-generic" % "0.8.0"
+      "com.lihaoyi"       %%% "upickle"       % "0.4.4",
+      "com.typesafe.play" %%% "play-json"     % "2.6.7",
+      "io.circe"          %%% "circe-core"    % "0.8.0",
+      "io.circe"          %%% "circe-parser"  % "0.8.0",
+      "io.circe"          %%% "circe-generic" % "0.8.0"
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
+  .enablePlugins(JmhPlugin)
   .jsSettings(
     scalaJSOptimizerOptions in (Compile, fullOptJS) ~= { _.withUseClosureCompiler(false) },
     libraryDependencies ++= Seq(

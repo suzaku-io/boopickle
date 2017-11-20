@@ -2,8 +2,13 @@ package boopickle.perftests
 
 import boopickle.Default._
 import io.circe.generic.auto._
+import play.api.libs.json._
 
 object Tests {
+  implicit val eventFormat: OFormat[Event] = Json.format[Event]
+  implicit val bookFormat: OFormat[Book] = Json.format[Book]
+  implicit val nodeFormat: OFormat[Node] = Json.format[Node]
+
   val tree = TestData.genTree(5, 3)
   val suites = Seq(
     PerfTestSuite(
@@ -11,9 +16,9 @@ object Tests {
       Seq(
         BooPickleRunners.encodeRunner(Event(42, true)),
         BooPickleSpeedRunners.encodeRunner(Event(42, true)),
-        PrickleRunners.encodeRunner(Event(42, true)),
         UPickleRunners.encodeRunner(Event(42, true)),
         CirceRunners.encodeRunner(Event(42, true)),
+        PlayJsonRunners.encodeRunner(Event(42, true)),
       )
     ),
     PerfTestSuite(
@@ -21,9 +26,9 @@ object Tests {
       Seq(
         BooPickleRunners.decodeRunner(Event(42, true)),
         BooPickleSpeedRunners.decodeRunner(Event(42, true)),
-        PrickleRunners.decodeRunner(Event(42, true)),
         UPickleRunners.decodeRunner(Event(42, true)),
         CirceRunners.decodeRunner(Event(42, true)),
+        PlayJsonRunners.decodeRunner(Event(42, true)),
       )
     ),
     PerfTestSuite(
@@ -31,9 +36,9 @@ object Tests {
       Seq(
         BooPickleRunners.encodeRunner(TestData.largeIntSeq),
         BooPickleSpeedRunners.encodeRunner(TestData.largeIntSeq),
-        // PrickleRunners.encodeRunner(TestData.largeIntSeq),
         UPickleRunners.encodeRunner(TestData.largeIntSeq),
-        CirceRunners.encodeRunner(TestData.largeIntSeq)
+        CirceRunners.encodeRunner(TestData.largeIntSeq),
+        PlayJsonRunners.encodeRunner(TestData.largeIntSeq),
       )
     ),
     PerfTestSuite(
@@ -41,19 +46,20 @@ object Tests {
       Seq(
         BooPickleRunners.decodeRunner(TestData.largeIntSeq),
         BooPickleSpeedRunners.decodeRunner(TestData.largeIntSeq),
-        // PrickleRunners.decodeRunner(TestData.largeIntSeq),
         UPickleRunners.decodeRunner(TestData.largeIntSeq),
-        CirceRunners.decodeRunner(TestData.largeIntSeq)
+        CirceRunners.decodeRunner(TestData.largeIntSeq),
+        PlayJsonRunners.decodeRunner(TestData.largeIntSeq),
       )
     ),
+/*
     PerfTestSuite(
       "Encode large Array[Double]",
       Seq(
         BooPickleRunners.encodeRunner(TestData.largeDoubleSeq),
         BooPickleSpeedRunners.encodeRunner(TestData.largeDoubleSeq),
-        //PrickleRunners.encodeRunner(TestData.largeDoubleSeq),
         UPickleRunners.encodeRunner(TestData.largeDoubleSeq),
-        CirceRunners.encodeRunner(TestData.largeDoubleSeq)
+        CirceRunners.encodeRunner(TestData.largeDoubleSeq),
+        PlayJsonRunners.encodeRunner(TestData.largeDoubleSeq),
       )
     ),
     PerfTestSuite(
@@ -61,9 +67,9 @@ object Tests {
       Seq(
         BooPickleRunners.decodeRunner(TestData.largeDoubleSeq),
         BooPickleSpeedRunners.decodeRunner(TestData.largeDoubleSeq),
-        //PrickleRunners.decodeRunner(TestData.largeDoubleSeq),
         UPickleRunners.decodeRunner(TestData.largeDoubleSeq),
-        CirceRunners.decodeRunner(TestData.largeDoubleSeq)
+        CirceRunners.decodeRunner(TestData.largeDoubleSeq),
+        PlayJsonRunners.decodeRunner(TestData.largeDoubleSeq),
       )
     ),
     PerfTestSuite(
@@ -71,9 +77,8 @@ object Tests {
       Seq(
         BooPickleRunners.encodeRunner(TestData.largeStringSeq),
         BooPickleSpeedRunners.encodeRunner(TestData.largeStringSeq),
-        PrickleRunners.encodeRunner(TestData.largeStringSeq),
         UPickleRunners.encodeRunner(TestData.largeStringSeq),
-        CirceRunners.encodeRunner(TestData.largeStringSeq),
+        PlayJsonRunners.encodeRunner(TestData.largeStringSeq),
       )
     ),
     PerfTestSuite(
@@ -81,9 +86,8 @@ object Tests {
       Seq(
         BooPickleRunners.decodeRunner(TestData.largeStringSeq),
         BooPickleSpeedRunners.decodeRunner(TestData.largeStringSeq),
-        PrickleRunners.decodeRunner(TestData.largeStringSeq),
         UPickleRunners.decodeRunner(TestData.largeStringSeq),
-        CirceRunners.decodeRunner(TestData.largeStringSeq),
+        PlayJsonRunners.decodeRunner(TestData.largeStringSeq),
       )
     ),
     PerfTestSuite(
@@ -91,9 +95,9 @@ object Tests {
       Seq(
         BooPickleRunners.encodeRunner(tree),
         BooPickleSpeedRunners.encodeRunner(tree),
-        PrickleRunners.encodeRunner(tree),
         UPickleRunners.encodeRunner(tree),
         CirceRunners.encodeRunner(tree),
+        PlayJsonRunners.encodeRunner(tree),
       )
     ),
     PerfTestSuite(
@@ -101,9 +105,9 @@ object Tests {
       Seq(
         BooPickleRunners.decodeRunner(tree),
         BooPickleSpeedRunners.decodeRunner(tree),
-        PrickleRunners.decodeRunner(tree),
         UPickleRunners.decodeRunner(tree),
         CirceRunners.decodeRunner(tree),
+        PlayJsonRunners.decodeRunner(tree),
       )
     ),
     PerfTestSuite(
@@ -111,9 +115,9 @@ object Tests {
       List(
         BooPickleRunners.encodeRunner(TestData.largeStringIntMap),
         BooPickleSpeedRunners.encodeRunner(TestData.largeStringIntMap),
-        PrickleRunners.encodeRunner(TestData.largeStringIntMap),
         UPickleRunners.encodeRunner(TestData.largeStringIntMap),
         CirceRunners.encodeRunner(TestData.largeStringIntMap),
+        PlayJsonRunners.encodeRunner(TestData.largeStringIntMap),
       )
     ),
     PerfTestSuite(
@@ -121,9 +125,9 @@ object Tests {
       List(
         BooPickleRunners.decodeRunner(TestData.largeStringIntMap),
         BooPickleSpeedRunners.decodeRunner(TestData.largeStringIntMap),
-        PrickleRunners.decodeRunner(TestData.largeStringIntMap),
         UPickleRunners.decodeRunner(TestData.largeStringIntMap),
         CirceRunners.decodeRunner(TestData.largeStringIntMap),
+        PlayJsonRunners.decodeRunner(TestData.largeStringIntMap),
       )
     ),
     PerfTestSuite(
@@ -131,9 +135,9 @@ object Tests {
       Seq(
         BooPickleRunners.encodeRunner(TestData.booksRandomID),
         BooPickleSpeedRunners.encodeRunner(TestData.booksRandomID),
-        PrickleRunners.encodeRunner(TestData.booksRandomID),
         UPickleRunners.encodeRunner(TestData.booksRandomID),
         CirceRunners.encodeRunner(TestData.booksRandomID),
+        PlayJsonRunners.encodeRunner(TestData.booksRandomID),
       )
     ),
     PerfTestSuite(
@@ -141,9 +145,9 @@ object Tests {
       Seq(
         BooPickleRunners.decodeRunner(TestData.booksRandomID),
         BooPickleSpeedRunners.decodeRunner(TestData.booksRandomID),
-        PrickleRunners.decodeRunner(TestData.booksRandomID),
         UPickleRunners.decodeRunner(TestData.booksRandomID),
         CirceRunners.decodeRunner(TestData.booksRandomID),
+        PlayJsonRunners.decodeRunner(TestData.booksRandomID),
       )
     ),
     PerfTestSuite(
@@ -151,9 +155,9 @@ object Tests {
       Seq(
         BooPickleRunners.encodeRunner(TestData.booksNumId),
         BooPickleSpeedRunners.encodeRunner(TestData.booksNumId),
-        PrickleRunners.encodeRunner(TestData.booksNumId),
         UPickleRunners.encodeRunner(TestData.booksNumId),
         CirceRunners.encodeRunner(TestData.booksNumId),
+        PlayJsonRunners.encodeRunner(TestData.booksNumId),
       )
     ),
     PerfTestSuite(
@@ -161,10 +165,11 @@ object Tests {
       Seq(
         BooPickleRunners.decodeRunner(TestData.booksNumId),
         BooPickleSpeedRunners.decodeRunner(TestData.booksNumId),
-        PrickleRunners.decodeRunner(TestData.booksNumId),
         UPickleRunners.decodeRunner(TestData.booksNumId),
         CirceRunners.decodeRunner(TestData.booksNumId),
+        PlayJsonRunners.decodeRunner(TestData.booksNumId),
       )
     )
+*/
   )
 }

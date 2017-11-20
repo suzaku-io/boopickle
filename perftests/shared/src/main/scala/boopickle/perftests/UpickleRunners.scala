@@ -20,7 +20,7 @@ object UPickleRunners {
       res.getBytes(StandardCharsets.UTF_8)
     }
 
-    override def run(): Unit = {
+    override def run(): Any = {
       write(testData)
       ()
     }
@@ -36,7 +36,7 @@ object UPickleRunners {
       s.getBytes(StandardCharsets.UTF_8)
     }
 
-    override def run(): Unit = {
+    override def run(): Any = {
       read[A](s)
       ()
     }

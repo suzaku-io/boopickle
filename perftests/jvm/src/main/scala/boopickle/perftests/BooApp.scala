@@ -5,9 +5,11 @@ import java.util.zip.GZIPOutputStream
 
 import boopickle.BufferPool
 
-object BooApp extends App {
+object BooApp {
 
-  runTests()
+  def main(args: Array[String]): Unit = {
+    runTests()
+  }
 
   def runTests(): Unit = {
     Tests.suites.zipWithIndex.foreach {

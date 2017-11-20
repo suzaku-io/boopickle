@@ -4,6 +4,9 @@ import java.nio.charset.StandardCharsets
 
 import io.circe._
 import io.circe.syntax._
+import io.circe.parser._
+import io.circe.generic.semiauto._
+import org.openjdk.jmh.annotations.Benchmark
 
 abstract class CirceRunner[A](data: A) extends TestRunner[A](data) {
   override def name = "Circe"
@@ -21,7 +24,7 @@ object CirceRunners {
       res.getBytes(StandardCharsets.UTF_8)
     }
 
-    override def run(): Unit = {
+    override def run(): Any = {
       testData.asJson.noSpaces
       ()
     }
@@ -37,9 +40,27 @@ object CirceRunners {
       s.getBytes(StandardCharsets.UTF_8)
     }
 
-    override def run(): Unit = {
+    override def run(): Any = {
       u.decodeJson(parser.parse(s).toOption.get)
       ()
     }
+  }
+}
+
+trait CirceCoding { self: TestData =>
+  private implicit val eventEncoder: Encoder[Event] = deriveEncoder[Event]
+  private lazy val eventDecoder = deriveDecoder[Event]
+
+  private lazy val eventJson = event.asJson.noSpaces
+
+  @Benchmark
+  def circeEventDecode: Event = {
+    val event = eventDecoder.decodeJson(parse(eventJson).right.get).right.get
+    event
+  }
+
+  @Benchmark
+  def circeEventEncode: String = {
+    eventEncoder(event).noSpaces
   }
 }
