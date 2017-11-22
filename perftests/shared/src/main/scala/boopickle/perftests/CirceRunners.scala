@@ -20,7 +20,6 @@ object CirceRunners {
     override def initialize = {
       testData = data
       val res = testData.asJson.noSpaces
-      // println(res)
       res.getBytes(StandardCharsets.UTF_8)
     }
 
@@ -52,15 +51,36 @@ trait CirceCoding { self: TestData =>
   private lazy val eventDecoder = deriveDecoder[Event]
 
   private lazy val eventJson = event.asJson.noSpaces
+  private lazy val intsJson = largeIntSeq.asJson.noSpaces
+  private lazy val doublesJson = largeDoubleSeq.asJson.noSpaces
 
   @Benchmark
   def circeEventDecode: Event = {
-    val event = eventDecoder.decodeJson(parse(eventJson).right.get).right.get
-    event
+    eventDecoder.decodeJson(parse(eventJson).right.get).right.get
   }
 
   @Benchmark
   def circeEventEncode: String = {
     eventEncoder(event).noSpaces
+  }
+
+  @Benchmark
+  def circeIntArrayDecode: Array[Int] = {
+    decode[Array[Int]](intsJson).right.get
+  }
+
+  @Benchmark
+  def circeIntArrayEncode: String = {
+    largeIntSeq.asJson.noSpaces
+  }
+
+  @Benchmark
+  def circeDoubleArrayDecode: Array[Double] = {
+    decode[Array[Double]](doublesJson).right.get
+  }
+
+  @Benchmark
+  def circeDoubleArrayEncode: String = {
+    largeDoubleSeq.asJson.noSpaces
   }
 }

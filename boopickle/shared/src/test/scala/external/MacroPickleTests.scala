@@ -56,7 +56,7 @@ object MacroPickleTests extends TestSuite {
 
   case object V2 extends Version(2)
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     // must import pickler from the companion object, otherwise scalac will try to use a macro to generate it
     import MyTrait._
     'CaseClasses - {

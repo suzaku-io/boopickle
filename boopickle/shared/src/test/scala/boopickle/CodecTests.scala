@@ -39,7 +39,7 @@ object CodecTests extends TestSuite {
     }
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'Byte - {
       val data = Seq[Byte](0, 1, -128, 127, -1)
       runCodec[Byte](data, (e, x) => { e.writeByte(x); () }, (d, x) => d.readByte == x)

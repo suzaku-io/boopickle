@@ -4,7 +4,7 @@ import boopickle.IdentMap3Plus.Entry
 import utest._
 
 object IdentMapTests extends TestSuite {
-  override def tests = TestSuite {
+  override def tests = Tests {
     'IdentMap - {
       'empty {
         val m = IdentMap.empty

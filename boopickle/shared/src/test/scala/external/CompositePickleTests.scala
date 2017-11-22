@@ -61,7 +61,7 @@ final case class WordDocument(text: String) extends Document
 final case class OwnerAttribute(owner: String, parent: Element) extends Attribute
 
 object CompositePickleTests extends TestSuite {
-  override def tests = TestSuite {
+  override def tests = Tests {
     'CaseClassHierarchySeq {
       implicit val fruitPickler = compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
 

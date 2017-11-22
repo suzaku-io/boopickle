@@ -6,12 +6,12 @@ import utest._
 
 object BufferPoolTestsJVM extends TestSuite {
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'MultiThread {
       val pool  = BufferPool
       val count = 100000
       def runner = new Runnable {
-        override def run(): Any = {
+        override def run(): Unit = {
           var i = 0
           while (i < count) {
             val bb1 = pool

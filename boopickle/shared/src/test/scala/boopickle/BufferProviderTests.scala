@@ -10,10 +10,10 @@ import boopickle.Default._
 
 object BufferProviderTests extends TestSuite {
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'asByteBuffersProperOrder {
 
-      val input: Seq[Banana] = Iterator.tabulate(100)(_ => Banana(Random.nextDouble)).toVector
+      val input: Seq[Banana] = Iterator.tabulate(1000)(_ => Banana(Random.nextDouble)).toVector
       val bbs = Pickle.intoByteBuffers(input)
       assert(bbs.size > 1)
 

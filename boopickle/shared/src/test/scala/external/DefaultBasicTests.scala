@@ -30,7 +30,7 @@ object DefaultBasicTests extends TestSuite {
     pickler.addConcreteType[TT1].addConcreteType[TT2].addConcreteType[TT3]
   }
 
-  override def tests = TestSuite {
+  override def tests = Tests {
     'Trait {
       val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
       val bb              = Pickle.intoBytes(t)

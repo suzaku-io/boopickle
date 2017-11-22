@@ -163,6 +163,13 @@ object StringCodec extends StringCodecBase {
     bb.position(dst)
   }
 
+  private def charArray2String(chars: js.Array[Int], offset: Int, len: Int): String = {
+    // for some reason, on Chrome, calling `cp.jsSlice` makes `fromCharCode` 2-3x faster!
+    js.Dynamic.global.String.fromCharCode
+      .applyDynamic("apply")(null, chars.jsSlice(offset, offset + len))
+      .asInstanceOf[String]
+  }
+
   protected def decodeFastTypedArray(len: Int, buf: ByteBuffer): String = {
     val cp     = new js.Array[Int](len)
     val src    = buf.typedArray()
@@ -186,7 +193,18 @@ object StringCodec extends StringCodecBase {
       dst += 1
     }
     buf.position(offset)
-    // for some reason, on Chrome, calling `cp.jsSlice` makes `fromCharCode` 2-3x faster!
-    js.Dynamic.global.String.fromCharCode.applyDynamic("apply")(null, cp.jsSlice()).asInstanceOf[String]
+
+    // for really long strings, convert in pieces to avoid JS engine overflows
+    if (len > 4096) {
+      offset = 0
+      var s = ""
+      while (offset < len) {
+        s += charArray2String(cp, offset, math.min(4096, len - offset))
+        offset += 4096
+      }
+      s
+    } else {
+      charArray2String(cp, 0, len)
+    }
   }
 }

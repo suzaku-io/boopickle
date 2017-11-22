@@ -5,12 +5,8 @@ import com.typesafe.sbt.pgp.PgpKeys._
 scalafmtOnCompile in ThisBuild := true
 scalafmtVersion in ThisBuild := "1.3.0"
 
-val commonSettings = Seq(
-  organization := "io.suzaku",
-  version := Version.library,
-  crossScalaVersions := Seq("2.11.11", "2.12.4"),
-  scalaVersion := "2.12.4",
-  scalacOptions := Seq(
+def scalacOptionsVersion(v: String) = {
+  Seq(
     "-deprecation",
     "-encoding",
     "UTF-8",
@@ -18,13 +14,23 @@ val commonSettings = Seq(
     "-unchecked",
     "-Xfatal-warnings",
     "-Xlint",
-    "-Xlint:-unused",
     "-Yno-adapted-args",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
     "-Ywarn-value-discard",
     "-Xfuture"
-  ),
+  ) ++ (CrossVersion.partialVersion(v) match {
+    case Some((2, 12)) => Seq("-Xlint:-unused")
+    case _             => Nil
+  })
+}
+
+val commonSettings = Seq(
+  organization := "io.suzaku",
+  version := Version.library,
+  crossScalaVersions := Seq("2.11.11", "2.12.4"),
+  scalaVersion := "2.12.4",
+  scalacOptions := scalacOptionsVersion(scalaVersion.value),
   scalacOptions in Compile ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(

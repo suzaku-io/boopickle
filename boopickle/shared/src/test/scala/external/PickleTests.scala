@@ -21,7 +21,7 @@ object PickleTests extends TestSuite {
     loop()
   }
 
-  def tests = TestSuite {
+  def tests = Tests {
     'sizeCodec - {
       implicit def pstate = new PickleState(new EncoderSize)
       implicit def ustate = (b: ByteBuffer) => new UnpickleState(new DecoderSize(b))

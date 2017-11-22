@@ -7,7 +7,7 @@ import boopickle.Default._
 import utest._
 
 object PerfTests extends TestSuite {
-  def tests = TestSuite {
+  def tests = Tests {
     'Performance - {
       case class Test(i: Int, s: String)
       // generate data
