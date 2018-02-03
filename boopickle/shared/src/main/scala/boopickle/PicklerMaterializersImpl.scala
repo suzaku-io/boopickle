@@ -59,6 +59,22 @@ object PicklerMaterializersImpl {
     result
   }
 
+  private def pickleValueClass(c: blackbox.Context)(tpe: c.universe.Type): c.universe.Tree = {
+    import c.universe._
+
+    val parameter = tpe.typeSymbol.asClass
+      .primaryConstructor
+      .typeSignatureIn(tpe)
+      .paramLists.head.head
+
+    val parameterType = parameter.typeSignature
+    val parameterTerm = parameter.name.toTermName
+
+    q"""
+      _root_.boopickle.Default.transformPickler[$tpe, $parameterType](v => new $tpe(v))(v => v.$parameterTerm)
+    """
+  }
+
   def materializePickler[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[Pickler[T]] = {
     import c.universe._
 
@@ -73,6 +89,11 @@ object PicklerMaterializersImpl {
     // special handling of sealed traits
     if ((sym.isTrait || sym.isAbstract) && !sym.fullName.toString.startsWith("scala")) {
       return c.Expr[Pickler[T]](pickleSealedTrait(c)(tpe))
+    }
+
+    // special handling of value classes
+    if (sym.isDerivedValueClass) {
+      return c.Expr[Pickler[T]](pickleValueClass(c)(tpe))
     }
 
     if (!sym.isCaseClass) {
