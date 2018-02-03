@@ -56,6 +56,12 @@ object MacroPickleTests extends TestSuite {
 
   case object V2 extends Version(2)
 
+  class ValueClass(val value: Int) extends AnyVal
+
+  sealed trait ValueTrait[T] extends Any
+
+  case class ValueTraitClass[T](val value: T) extends AnyVal with ValueTrait[T]
+
   override def tests = Tests {
     // must import pickler from the companion object, otherwise scalac will try to use a macro to generate it
     import MyTrait._
@@ -144,6 +150,18 @@ object MacroPickleTests extends TestSuite {
         val x: A1Trait[Double] = A1[Double](2.0)
         val bb                 = Pickle.intoBytes(x)
         val u                  = Unpickle[A1Trait[Double]].fromBytes(bb)
+        assert(x == u)
+      }
+      'ValueClass {
+        val x: ValueClass = new ValueClass(3)
+        val bb            = Pickle.intoBytes(x)
+        val u             = Unpickle[ValueClass].fromBytes(bb)
+        assert(x == u)
+      }
+      'TraitAndValueClass {
+        val x: ValueTrait[Int] = ValueTraitClass[Int](3)
+        val bb                 = Pickle.intoBytes(x)
+        val u                  = Unpickle[ValueTrait[Int]].fromBytes(bb)
         assert(x == u)
       }
     }

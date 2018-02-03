@@ -7,7 +7,7 @@ import scala.reflect.ClassTag
   * Encodes a class belonging to a type hierarchy. Type is identified by the index in the `picklers` sequence, so care
   * must be taken to ensure picklers are added in the same order.
   */
-class CompositePickler[A <: AnyRef] extends Pickler[A] {
+class CompositePickler[A] extends Pickler[A] {
 
   import Constants._
 
@@ -85,7 +85,7 @@ class CompositePickler[A <: AnyRef] extends Pickler[A] {
 }
 
 object CompositePickler {
-  def apply[A <: AnyRef] = new CompositePickler[A]
+  def apply[A] = new CompositePickler[A]
 }
 
 object ExceptionPickler {
