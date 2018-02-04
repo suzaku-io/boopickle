@@ -40,6 +40,50 @@ val commonSettings = Seq(
   )
 )
 
+val releaseSettings = Seq(
+  scmInfo := Some(
+    ScmInfo(url("https://github.com/suzaku-io/boopickle"),
+            "scm:git:git@github.com:suzaku-io/boopickle.git",
+            Some("scm:git:git@github.com:suzaku-io/boopickle.git"))),
+  publishMavenStyle := true,
+  publishArtifact in Test := false,
+  pomExtra :=
+    <url>https://github.com/suzaku-io/boopickle</url>
+      <licenses>
+        <license>
+          <name>Apache 2.0 license</name>
+          <url>http://www.opensource.org/licenses/Apache-2.0</url>
+        </license>
+      </licenses>
+      <developers>
+        <developer>
+          <id>ochrons</id>
+          <name>Otto Chrons</name>
+          <url>https://github.com/ochrons</url>
+        </developer>
+      </developers>,
+  pomIncludeRepository := { _ =>
+    false
+  },
+  publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  }
+)
+
+val sourceMapSettings = Seq(
+  scalacOptions ++= (if (isSnapshot.value) Seq.empty
+                     else
+                       Seq({
+                         val a = baseDirectory.value.toURI.toString.replaceFirst("[^/]+/?$", "")
+                         val g = "https://raw.githubusercontent.com/suzaku-io/boopickle"
+                         s"-P:scalajs:mapSourceURI:$a->$g/v${version.value}/"
+                       }))
+)
+
 def preventPublication(p: Project) =
   p.settings(
     publish := (),
@@ -52,55 +96,35 @@ def preventPublication(p: Project) =
   )
 
 lazy val boopickle = crossProject
-  .settings(commonSettings: _*)
+  .settings(commonSettings)
+  .settings(releaseSettings)
   .settings(
-    name := "boopickle",
-    scmInfo := Some(
-      ScmInfo(url("https://github.com/suzaku-io/boopickle"),
-              "scm:git:git@github.com:suzaku-io/boopickle.git",
-              Some("scm:git:git@github.com:suzaku-io/boopickle.git"))),
-    publishMavenStyle := true,
-    publishArtifact in Test := false,
-    pomExtra :=
-      <url>https://github.com/suzaku-io/boopickle</url>
-        <licenses>
-          <license>
-            <name>Apache 2.0 license</name>
-            <url>http://www.opensource.org/licenses/Apache-2.0</url>
-          </license>
-        </licenses>
-        <developers>
-          <developer>
-            <id>ochrons</id>
-            <name>Otto Chrons</name>
-            <url>https://github.com/ochrons</url>
-          </developer>
-        </developers>,
-    pomIncludeRepository := { _ =>
-      false
-    },
-    publishTo := {
-      val nexus = "https://oss.sonatype.org/"
-      if (isSnapshot.value)
-        Some("snapshots" at nexus + "content/repositories/snapshots")
-      else
-        Some("releases" at nexus + "service/local/staging/deploy/maven2")
-    }
+    name := "boopickle"
   )
-  .jsSettings(
-    scalacOptions ++= (if (isSnapshot.value) Seq.empty
-                       else
-                         Seq({
-                           val a = baseDirectory.value.toURI.toString.replaceFirst("[^/]+/?$", "")
-                           val g = "https://raw.githubusercontent.com/suzaku-io/boopickle"
-                           s"-P:scalajs:mapSourceURI:$a->$g/v${version.value}/"
-                         }))
-  )
+  .jsSettings(sourceMapSettings)
   .jvmSettings()
 
 lazy val boopickleJS = boopickle.js
 
 lazy val boopickleJVM = boopickle.jvm
+
+lazy val shapeless = crossProject
+  .crossType(CrossType.Pure)
+  .dependsOn(boopickle)
+  .settings(commonSettings)
+  .settings(releaseSettings)
+  .settings(
+    name := "boopickle-shapeless",
+    libraryDependencies ++= Seq(
+      "com.chuusai" %%% "shapeless" % "2.3.3"
+    )
+  )
+  .jsSettings(sourceMapSettings)
+  .jvmSettings()
+
+lazy val shapelessJS = shapeless.js
+
+lazy val shapelessJVM = shapeless.jvm
 
 lazy val generateTuples = taskKey[Unit]("Generates source code for pickling tuples")
 
@@ -134,7 +158,7 @@ trait TuplePicklers extends PicklerHelper {
 }
 
 lazy val perftests = crossProject
-  .settings(commonSettings: _*)
+  .settings(commonSettings)
   .settings(
     name := "perftests",
     scalaVersion := "2.12.4",
@@ -166,5 +190,5 @@ lazy val perftestsJVM = preventPublication(perftests.jvm)
   .dependsOn(boopickleJVM)
 
 lazy val booPickleRoot = preventPublication(project.in(file(".")))
-  .settings(commonSettings: _*)
-  .aggregate(boopickleJS, boopickleJVM)
+  .settings(commonSettings)
+  .aggregate(boopickleJS, boopickleJVM, shapelessJS, shapelessJVM)

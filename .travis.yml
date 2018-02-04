@@ -8,7 +8,7 @@ jdk:
 node_js:
 - 8
 script:
-- sbt ++$TRAVIS_SCALA_VERSION boopickleJVM/test boopickleJS/test
+- sbt ++$TRAVIS_SCALA_VERSION boopickleJVM/test boopickleJS/test shapelessJVM/test shapelessJS/test
 # Tricks to avoid unnecessary cache updates, from
 # http://www.scala-sbt.org/0.13/docs/Travis-CI-with-sbt.html
 - find $HOME/.sbt -name "*.lock" | xargs rm
