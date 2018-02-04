@@ -52,7 +52,7 @@ object PicklerMaterializersImpl {
       if (s.typeParams.isEmpty) {
         q"""addConcreteType[$s]"""
       } else {
-        val t = unifyCaseClassWithTrait(c)(tpe, s)
+        val t = unifyClassWithTrait(c)(tpe, s)
         q"""addConcreteType[$t]"""
       }
     }
@@ -169,26 +169,12 @@ object PicklerMaterializersImpl {
     c.Expr[Pickler[T]](result)
   }
 
-  def unifyCaseClassWithTrait(c: blackbox.Context)(ttrait: c.universe.Type, caseclass: c.universe.ClassSymbol) = {
+  private def unifyClassWithTrait(c: blackbox.Context)(ttrait: c.universe.Type, classSym: c.universe.ClassSymbol) = {
     import c.universe._
 
-    val companion = caseclass.companion
+    val tclass = classSym.toType
+    val traitSeenFromClass = tclass.baseType(ttrait.typeSymbol)
 
-    val apply = companion.typeSignature.member(TermName("apply"))
-
-    if (apply == NoSymbol) {
-      c.abort(
-        c.enclosingPosition,
-        s"Don't know how to pickle case class $caseclass in trait $ttrait; it's generic and its companion has no `apply` method"
-      )
-    }
-
-    val matchArgs = apply.asMethod.paramLists.flatten.map { arg =>
-      pq"_"
-    }
-
-    val name = TermName(c.freshName("x"))
-
-    c.typecheck(q"""(??? : $ttrait) match { case $name@$companion(..$matchArgs) => $name }""").tpe
+    tclass.substituteTypes(traitSeenFromClass.typeArgs.map(_.typeSymbol), ttrait.typeArgs)
   }
 }

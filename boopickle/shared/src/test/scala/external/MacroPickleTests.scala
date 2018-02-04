@@ -56,11 +56,17 @@ object MacroPickleTests extends TestSuite {
 
   case object V2 extends Version(2)
 
-  class ValueClass(val value: Int) extends AnyVal
+  case class ValueClass(value: Int) extends AnyVal
 
   sealed trait ValueTrait[T] extends Any
 
-  case class ValueTraitClass[T](val value: T) extends AnyVal with ValueTrait[T]
+  class ValueTraitClass[T](val value: T) extends AnyVal with ValueTrait[T]
+
+  sealed trait MultiT[S, T, O]
+
+  case class Multi[S,T](s: S, t: T) extends MultiT[S, T, String]
+
+  case class Multi2[S,T](s: S, t: T) extends MultiT[S, T, String]
 
   override def tests = Tests {
     // must import pickler from the companion object, otherwise scalac will try to use a macro to generate it
@@ -153,15 +159,21 @@ object MacroPickleTests extends TestSuite {
         assert(x == u)
       }
       'ValueClass {
-        val x: ValueClass = new ValueClass(3)
+        val x: ValueClass = ValueClass(3)
         val bb            = Pickle.intoBytes(x)
         val u             = Unpickle[ValueClass].fromBytes(bb)
         assert(x == u)
       }
       'TraitAndValueClass {
-        val x: ValueTrait[Int] = ValueTraitClass[Int](3)
+        val x: ValueTrait[Int] = new ValueTraitClass[Int](3)
         val bb                 = Pickle.intoBytes(x)
         val u                  = Unpickle[ValueTrait[Int]].fromBytes(bb)
+        assert(x == u)
+      }
+      'MultipleGenerics {
+        val x: MultiT[Int,Double,String] = Multi[Int,Double](1, 2.0)
+        val bb                 = Pickle.intoBytes(x)
+        val u                  = Unpickle[MultiT[Int,Double,String]].fromBytes(bb)
         assert(x == u)
       }
     }
