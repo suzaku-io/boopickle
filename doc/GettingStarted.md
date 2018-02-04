@@ -2,11 +2,11 @@
 
 Add following dependency declaration to your Scala project 
 
-<pre><code class="lang-scala">"me.chrons" %% "boopickle" % "{{ book.version }}"</code></pre>
+<pre><code class="lang-scala">"io.suzaku" %% "boopickle" % "{{ book.version }}"</code></pre>
 
 On a Scala.js project the dependency looks like this
 
-<pre><code class="lang-scala">"me.chrons" %%% "boopickle" % "{{ book.version }}"</code></pre>
+<pre><code class="lang-scala">"io.suzaku" %%% "boopickle" % "{{ book.version }}"</code></pre>
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
 
