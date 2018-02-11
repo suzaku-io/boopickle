@@ -3,6 +3,12 @@
 By default, BooPickle encodes zero type information, which makes it impossible to directly encode a class hierarchy like below and decode it
 just by specifying the parent type `Fruit`.
 
+As this is such a common situation, BooPickle provides a helper class `CompositePickler` to build a custom pickler for composite types. For the case
+above, all you need to do is to define an implicit pickler like this, utilizing the `compositePickler` function from `Default`:
+
+Now you can freely pickle any `Fruit` and when unpickling, BooPickle will know what type to decode.
+
+{% scalafiddle prefix="import boopickle.Default._", template="Show"%}
 ```scala
 trait Fruit {
   val weight: Double
@@ -20,28 +26,22 @@ case class Kiwi(weight: Double) extends Fruit {
 case class Carambola(weight: Double) extends Fruit {
   def color = "yellow"
 }
-```
 
-As this is such a common situation, BooPickle provides a helper class `CompositePickler` to build a custom pickler for composite types. For the case
-above, all you need to do is to define an implicit pickler like this, utilizing the `compositePickler` function from `Default`:
-
-```scala
 implicit val fruitPickler = compositePickler[Fruit].
   addConcreteType[Banana].
   addConcreteType[Kiwi].
   addConcreteType[Carambola]
-```
 
-Now you can freely pickle any `Fruit` and when unpickling, BooPickle will know what type to decode.
-
-```scala
 val fruits: Seq[Fruit] = Seq(Kiwi(0.5), Kiwi(0.6), Carambola(5.0), Banana(1.2))
 val bb = Pickle.intoBytes(fruits)
-.
-.
+show(bb)
+
 val u = Unpickle[Seq[Fruit]].fromBytes(bb)
+println(u)
+
 assert(u == fruits)
 ```
+{% endscalafiddle %}
 
 Note that internally `CompositePickler` encodes types using indices, so they must be specified in the same order on both sides!
 

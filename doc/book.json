@@ -1,13 +1,17 @@
 {
   "gitbook": "3.2.x",
-  "plugins": ["editlink", "prism", "-highlight", "github"],
+  "plugins": ["editlink", "prism", "-highlight", "github", "scalafiddle"],
   "pluginsConfig": {
     "editlink": {
-      "base": "https://github.com/ochrons/boopickle/tree/master/doc",
+      "base": "https://github.com/suzaku-io/boopickle/tree/master/doc",
       "label": "Edit This Page"
     },
     "github": {
-      "url": "https://github.com/ochrons/boopickle/"
+      "url": "https://github.com/suzaku-io/boopickle/"
+    },
+    "scalafiddle": {
+      "dependency": "io.suzaku %%% boopickle % 1.2.6",
+      "scalaFiddleUrl": "http://localhost:8880/"
     }
   },
   "variables": {

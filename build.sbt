@@ -5,8 +5,12 @@ import com.typesafe.sbt.pgp.PgpKeys._
 scalafmtOnCompile in ThisBuild := true
 scalafmtVersion in ThisBuild := "1.3.0"
 
-def scalacOptionsVersion(v: String) = {
-  Seq(
+val commonSettings = Seq(
+  organization := "io.suzaku",
+  version := Version.library,
+  crossScalaVersions := Seq("2.11.11", "2.12.4"),
+  scalaVersion := "2.12.4",
+  scalacOptions := Seq(
     "-deprecation",
     "-encoding",
     "UTF-8",
@@ -19,18 +23,10 @@ def scalacOptionsVersion(v: String) = {
     "-Ywarn-numeric-widen",
     "-Ywarn-value-discard",
     "-Xfuture"
-  ) ++ (CrossVersion.partialVersion(v) match {
+  ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 12)) => Seq("-Xlint:-unused")
     case _             => Nil
-  })
-}
-
-val commonSettings = Seq(
-  organization := "io.suzaku",
-  version := Version.library,
-  crossScalaVersions := Seq("2.11.11", "2.12.4"),
-  scalaVersion := "2.12.4",
-  scalacOptions := scalacOptionsVersion(scalaVersion.value),
+  }),
   scalacOptions in Compile ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
@@ -135,10 +131,11 @@ from where they need to be copied to the `boopickle` source directory.
 generateTuples := {
   val picklers = (1 to 22).map { i =>
     def commaSeparated(s: Int => String, sep: String = ", ") = (1 to i).map(s).mkString(sep)
-    val picklerTypes                                         = commaSeparated(j => s"T$j: P")
-    val typeTuple                                            = if (i == 1) s"Tuple1[T1]" else s"(${commaSeparated(j => s"T$j")})"
-    val writes                                               = commaSeparated(j => s"write[T$j](x._$j)", "; ")
-    val reads                                                = commaSeparated(j => s"read[T$j]")
+
+    val picklerTypes = commaSeparated(j => s"T$j: P")
+    val typeTuple    = if (i == 1) s"Tuple1[T1]" else s"(${commaSeparated(j => s"T$j")})"
+    val writes       = commaSeparated(j => s"write[T$j](x._$j)", "; ")
+    val reads        = commaSeparated(j => s"read[T$j]")
 
     s"""
   implicit def Tuple${i}Pickler[$picklerTypes] = new P[$typeTuple] {

@@ -1,0 +1,4 @@
+val result = {
+////
+}
+println(result)
