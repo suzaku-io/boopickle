@@ -185,7 +185,7 @@ lazy val perftestsJS = preventPublication(perftests.js).enablePlugins(WorkbenchP
 
 lazy val perftestsJVM = preventPublication(perftests.jvm)
   .settings(
-    libraryDependencies += "io.circe" %% "circe-jawn" % "0.2.1"
+    libraryDependencies += "io.circe" %% "circe-jawn" % "0.8.0"
   )
   .dependsOn(boopickleJVM)
 
