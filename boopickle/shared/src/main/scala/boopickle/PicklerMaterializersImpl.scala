@@ -117,7 +117,10 @@ object PicklerMaterializersImpl {
         q"""state.pickle[$fieldTpe](value.${accessor.name})"""
       }
 
-      q"""
+      if (sym.isDerivedValueClass)
+        q"..$pickleFields"
+      else
+        q"""
         val ref = state.identityRefFor(value)
         if(ref.isDefined) {
           state.enc.writeInt(-ref.get)
@@ -142,7 +145,10 @@ object PicklerMaterializersImpl {
         val fieldTpe = accessor.typeSignatureIn(tpe).finalResultType
         q"""state.unpickle[$fieldTpe]"""
       }
-      q"""
+      if (sym.isDerivedValueClass)
+        q"new $tpe(..$unpickledFields)"
+      else
+        q"""
         val ic = state.dec.readInt
         if(ic == 0) {
           val value = new $tpe(..$unpickledFields)
