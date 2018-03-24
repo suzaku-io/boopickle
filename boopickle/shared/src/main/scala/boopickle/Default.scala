@@ -153,8 +153,5 @@ object Default
   */
 object DefaultBasic extends Base with BasicImplicitPicklers with TransformPicklers with TuplePicklers {
 
-  object PicklerGenerator {
-    def generatePickler[T]: Pickler[T] = macro PicklerMaterializersImpl.materializePickler[T]
-  }
-
+  def generatePickler[T]: Pickler[T] = macro PicklerMaterializersImpl.materializePickler[T]
 }
