@@ -30,7 +30,7 @@ val commonSettings = Seq(
   scalacOptions in Compile ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "utest" % "0.5.3" % "test",
+    "com.lihaoyi" %%% "utest" % "0.6.3" % "test",
     // "com.github.japgolly.nyaya" %%% "nyaya-test"  % "0.8.1"            % "test",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
@@ -161,11 +161,11 @@ lazy val perftests = crossProject
     scalaVersion := "2.12.4",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
-      "com.lihaoyi"       %%% "upickle"       % "0.4.4",
-      "com.typesafe.play" %%% "play-json"     % "2.6.7",
-      "io.circe"          %%% "circe-core"    % "0.8.0",
-      "io.circe"          %%% "circe-parser"  % "0.8.0",
-      "io.circe"          %%% "circe-generic" % "0.8.0"
+      "com.lihaoyi"       %%% "upickle"       % "0.5.1",
+      "com.typesafe.play" %%% "play-json"     % "2.6.9",
+      "io.circe"          %%% "circe-core"    % "0.9.2",
+      "io.circe"          %%% "circe-parser"  % "0.9.2",
+      "io.circe"          %%% "circe-generic" % "0.9.2"
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
@@ -173,8 +173,8 @@ lazy val perftests = crossProject
   .jsSettings(
     scalaJSOptimizerOptions in (Compile, fullOptJS) ~= { _.withUseClosureCompiler(false) },
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "0.9.1",
-      "com.lihaoyi"  %%% "scalatags"   % "0.6.2"
+      "org.scala-js" %%% "scalajs-dom" % "0.9.5",
+      "com.lihaoyi"  %%% "scalatags"   % "0.6.7"
     )
   )
 

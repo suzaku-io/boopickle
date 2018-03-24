@@ -3,11 +3,15 @@ package boopickle.perftests
 import boopickle.Default._
 import io.circe.generic.auto._
 import play.api.libs.json._
+import upickle.default._
 
 object Tests {
   implicit val eventFormat: OFormat[Event] = Json.format[Event]
   implicit val bookFormat: OFormat[Book] = Json.format[Book]
   implicit val nodeFormat: OFormat[Node] = Json.format[Node]
+  implicit val eventUpickle: ReadWriter[Event] = macroRW
+  implicit val eventNode: ReadWriter[Node] = macroRW
+  implicit val eventBook: ReadWriter[Book] = macroRW
 
   val tree = TestData.genTree(5, 3)
   val suites = Seq(
@@ -51,7 +55,6 @@ object Tests {
         PlayJsonRunners.decodeRunner(TestData.largeIntSeq),
       )
     ),
-/*
     PerfTestSuite(
       "Encode large Array[Double]",
       Seq(
@@ -78,6 +81,7 @@ object Tests {
         BooPickleRunners.encodeRunner(TestData.largeStringSeq),
         BooPickleSpeedRunners.encodeRunner(TestData.largeStringSeq),
         UPickleRunners.encodeRunner(TestData.largeStringSeq),
+        CirceRunners.encodeRunner(TestData.largeStringSeq),
         PlayJsonRunners.encodeRunner(TestData.largeStringSeq),
       )
     ),
@@ -87,6 +91,7 @@ object Tests {
         BooPickleRunners.decodeRunner(TestData.largeStringSeq),
         BooPickleSpeedRunners.decodeRunner(TestData.largeStringSeq),
         UPickleRunners.decodeRunner(TestData.largeStringSeq),
+        CirceRunners.decodeRunner(TestData.largeStringSeq),
         PlayJsonRunners.decodeRunner(TestData.largeStringSeq),
       )
     ),
@@ -170,6 +175,5 @@ object Tests {
         PlayJsonRunners.decodeRunner(TestData.booksNumId),
       )
     )
-*/
   )
 }

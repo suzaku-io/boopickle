@@ -81,7 +81,7 @@ On the JVM you can run the tests simply with the `run` command and the output wi
 test at least twice to ensure JVM has optimized the code properly.
 
 On the JS side, you'll need to use `fullOptJS` and `package` to compile the code into JavaScript and then run it in your browser at
-[http://localhost:12345/perftests/js/target/scala-2.11/classes/index.html](http://localhost:12345/perftests/js/target/scala-2.11/classes/index.html) 
+[http://localhost:12345/perftests/js/target/scala-2.12/classes/index.html](http://localhost:12345/perftests/js/target/scala-2.12/classes/index.html) 
 To ensure good results, run the tests at least twice in the browser.
 
 Both tests provide similar output, although there are small differences in the Gzipped sizes due to the use of different libraries.
@@ -90,23 +90,21 @@ In the browser (BooPickle! is using the speed optimized codec with deduplication
 ```
 15/16 : Encoding Seq[Book] with numerical IDs
 =============================================
-Library    ops/s      %          size       %          size.gz    %
-BooPickle  80880      41.8%      210        100%       193        100%
-BooPickle! 193416     100.0%     402        191%       210        109%
-Prickle    9172       4.7%       863        411%       272        141%
-uPickle    19372      10.0%      680        324%       233        121%
-Circe      10096      5.2%       680        324%       233        121%
-Pushka     29176      15.1%      680        324%       233        121%
+Library    ops/s      %          size       %          size.gz    %         
+BooPickle  78104      41.2%      210        100%       193        100%      
+BooPickle! 189536     100.0%     402        191%       210        109%      
+uPickle    22824      12.0%      680        324%       233        121%      
+Circe      24977      13.2%      680        324%       233        121%      
+Play JSON  10560      5.6%       680        324%       233        121%      
 
 16/16 : Decoding Seq[Book] with numerical IDs
 =============================================
-Library    ops/s      %          size       %          size.gz    %
-BooPickle  85156      100.0%     210        100%       193        100%
-BooPickle! 73576      86.4%      402        191%       210        109%
-Prickle    1704       2.0%       863        411%       272        141%
-uPickle    8872       10.4%      680        324%       233        121%
-Circe      7204       8.5%       680        324%       233        121%
-Pushka     18044      21.2%      680        324%       233        121%
+Library    ops/s      %          size       %          size.gz    %         
+BooPickle  149996     100.0%     210        100%       193        100%      
+BooPickle! 126592     84.4%      402        191%       210        109%      
+uPickle    10790      7.2%       680        324%       233        121%      
+Circe      10600      7.1%       680        324%       233        121%      
+Play JSON  7821       5.2%       680        324%       233        121%      ```
 ```
 
 Under JVM:
@@ -114,22 +112,24 @@ Under JVM:
 15/16 : Encoding Seq[Book] with numerical IDs
 =============================================
 Library    ops/s      %          size       %          size.gz    %
-BooPickle  548684     57.6%      210        100%       188        100%
-BooPickle! 951836     100.0%     402        191%       205        109%
-Prickle    44360      4.7%       879        419%       276        147%
-uPickle    139328     14.6%      680        324%       234        124%
-Circe      52964      5.6%       680        324%       234        124%
-Pushka     151672     15.9%      680        324%       234        124%
+BooPickle  628246     57,7%      210        100%       188        100%
+BooPickle! 1089448    100,0%     402        191%       205        109%
+uPickle    98301      9,0%       680        324%       234        124%
+Circe      141695     13,0%      680        324%       234        124%
+Play JSON  81771      7,5%       680        324%       234        124%
+
+BufferPool:
+  allocations = 31600590
+  misses      = 223355
 
 16/16 : Decoding Seq[Book] with numerical IDs
 =============================================
 Library    ops/s      %          size       %          size.gz    %
-BooPickle  732512     96.2%      210        100%       188        100%
-BooPickle! 761296     100.0%     402        191%       205        109%
-Prickle    5308       0.7%       879        419%       276        147%
-uPickle    88424      11.6%      680        324%       234        124%
-Circe      66248      8.7%       680        324%       234        124%
-Pushka     142252     18.7%      680        324%       234        124%
+BooPickle  737017     96,6%      210        100%       188        100%
+BooPickle! 762602     100,0%     402        191%       205        109%
+uPickle    65767      8,6%       680        324%       234        124%
+Circe      145578     19,1%      680        324%       234        124%
+Play JSON  35194      4,6%       680        324%       234        124%
 ```
 
 Performance test suite measures how many encode or decode operations the library can do in one second and also checks the size of the raw
