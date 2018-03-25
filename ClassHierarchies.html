@@ -1,0 +1,492 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Class hierarchies · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-prism/prism.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="AdvancedPickling.html" />
+    
+    
+    <link rel="prev" href="GettingStarted.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="GettingStarted.html">
+            
+                <a href="GettingStarted.html">
+            
+                    
+                    Getting started
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.3" data-path="ClassHierarchies.html">
+            
+                <a href="ClassHierarchies.html">
+            
+                    
+                    Class hierarchies
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="AdvancedPickling.html">
+            
+                <a href="AdvancedPickling.html">
+            
+                    
+                    Advanced pickling
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="Shapeless.html">
+            
+                <a href="Shapeless.html">
+            
+                    
+                    Shapeless bindings
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="Optimization.html">
+            
+                <a href="Optimization.html">
+            
+                    
+                    Optimization
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="Details.html">
+            
+                <a href="Details.html">
+            
+                    
+                    Internal details
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8" data-path="Misc.html">
+            
+                <a href="Misc.html">
+            
+                    
+                    Miscellaneous
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Class hierarchies</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="class-hierarchies">Class hierarchies</h1>
+<p>By default, BooPickle encodes zero type information, which makes it impossible to directly encode a class hierarchy like below and decode it
+just by specifying the parent type <code>Fruit</code>.</p>
+<p>As this is such a common situation, BooPickle provides a helper class <code>CompositePickler</code> to build a custom pickler for composite types. For the case
+above, all you need to do is to define an implicit pickler like this, utilizing the <code>compositePickler</code> function from <code>Default</code>:</p>
+<p>Now you can freely pickle any <code>Fruit</code> and when unpickling, BooPickle will know what type to decode.</p>
+<p><div data-scalafiddle="" data-template="Show" data-prefix="import boopickle.Default._" data-dependency="io.suzaku %%% boopickle % 1.3.0"><pre><code class="lang-scala"><span class="token keyword">trait</span> Fruit <span class="token punctuation">{</span>
+  <span class="token keyword">val</span> weight<span class="token operator">:</span> <span class="token builtin">Double</span>
+  <span class="token keyword">def</span> color<span class="token operator">:</span> <span class="token builtin">String</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">case</span> <span class="token keyword">class</span> Banana<span class="token punctuation">(</span>weight<span class="token operator">:</span> <span class="token builtin">Double</span><span class="token punctuation">)</span> <span class="token keyword">extends</span> Fruit <span class="token punctuation">{</span>
+  <span class="token keyword">def</span> color <span class="token operator">=</span> <span class="token string">&quot;yellow&quot;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">case</span> <span class="token keyword">class</span> Kiwi<span class="token punctuation">(</span>weight<span class="token operator">:</span> <span class="token builtin">Double</span><span class="token punctuation">)</span> <span class="token keyword">extends</span> Fruit <span class="token punctuation">{</span>
+  <span class="token keyword">def</span> color <span class="token operator">=</span> <span class="token string">&quot;brown&quot;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">case</span> <span class="token keyword">class</span> Carambola<span class="token punctuation">(</span>weight<span class="token operator">:</span> <span class="token builtin">Double</span><span class="token punctuation">)</span> <span class="token keyword">extends</span> Fruit <span class="token punctuation">{</span>
+  <span class="token keyword">def</span> color <span class="token operator">=</span> <span class="token string">&quot;yellow&quot;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">implicit</span> <span class="token keyword">val</span> fruitPickler <span class="token operator">=</span> compositePickler<span class="token punctuation">[</span>Fruit<span class="token punctuation">]</span><span class="token punctuation">.</span>
+  addConcreteType<span class="token punctuation">[</span>Banana<span class="token punctuation">]</span><span class="token punctuation">.</span>
+  addConcreteType<span class="token punctuation">[</span>Kiwi<span class="token punctuation">]</span><span class="token punctuation">.</span>
+  addConcreteType<span class="token punctuation">[</span>Carambola<span class="token punctuation">]</span>
+
+<span class="token keyword">val</span> fruits<span class="token operator">:</span> Seq<span class="token punctuation">[</span>Fruit<span class="token punctuation">]</span> <span class="token operator">=</span> Seq<span class="token punctuation">(</span>Kiwi<span class="token punctuation">(</span><span class="token number">0.5</span><span class="token punctuation">)</span><span class="token punctuation">,</span> Kiwi<span class="token punctuation">(</span><span class="token number">0.6</span><span class="token punctuation">)</span><span class="token punctuation">,</span> Carambola<span class="token punctuation">(</span><span class="token number">5.0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> Banana<span class="token punctuation">(</span><span class="token number">1.2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">val</span> bb <span class="token operator">=</span> Pickle<span class="token punctuation">.</span>intoBytes<span class="token punctuation">(</span>fruits<span class="token punctuation">)</span>
+show<span class="token punctuation">(</span>bb<span class="token punctuation">)</span>
+
+<span class="token keyword">val</span> u <span class="token operator">=</span> Unpickle<span class="token punctuation">[</span>Seq<span class="token punctuation">[</span>Fruit<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">.</span>fromBytes<span class="token punctuation">(</span>bb<span class="token punctuation">)</span>
+println<span class="token punctuation">(</span>u<span class="token punctuation">)</span>
+
+assert<span class="token punctuation">(</span>u <span class="token operator">==</span> fruits<span class="token punctuation">)</span>
+</code></pre>
+</div></p>
+<p>Note that internally <code>CompositePickler</code> encodes types using indices, so they must be specified in the same order on both sides!</p>
+<p>BooPickle needs to know the type when pickling to deserialize to the correct type, thus this fails</p>
+<pre><code class="lang-scala"><span class="token keyword">val</span> b <span class="token operator">=</span> Banana<span class="token punctuation">(</span><span class="token number">1.0</span><span class="token punctuation">)</span>
+<span class="token keyword">val</span> bb <span class="token operator">=</span> Pickle<span class="token punctuation">.</span>intoBytes<span class="token punctuation">(</span>b<span class="token punctuation">)</span>
+assert<span class="token punctuation">(</span>Unpickle<span class="token punctuation">[</span>Banana<span class="token punctuation">]</span><span class="token punctuation">.</span>fromBytes<span class="token punctuation">(</span>bb<span class="token punctuation">)</span> <span class="token operator">==</span> b<span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// This produces Banana</span>
+<span class="token keyword">val</span> bb2 <span class="token operator">=</span> Pickle<span class="token punctuation">.</span>intoBytes<span class="token punctuation">(</span>b<span class="token punctuation">)</span>
+assert<span class="token punctuation">(</span>Unpickle<span class="token punctuation">[</span>Fruit<span class="token punctuation">]</span><span class="token punctuation">.</span>fromBytes<span class="token punctuation">(</span>bb2<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// This produces null</span>
+</code></pre>
+<p>Instead when pickling declare the parent type</p>
+<pre><code class="lang-scala"><span class="token keyword">val</span> f<span class="token operator">:</span> Fruit <span class="token operator">=</span> Banana<span class="token punctuation">(</span><span class="token number">1.0</span><span class="token punctuation">)</span>
+<span class="token keyword">val</span> bf <span class="token operator">=</span> Pickle<span class="token punctuation">.</span>intoBytes<span class="token punctuation">(</span>f<span class="token punctuation">)</span>
+assert<span class="token punctuation">(</span>Unpickle<span class="token punctuation">[</span>Fruit<span class="token punctuation">]</span><span class="token punctuation">.</span>fromBytes<span class="token punctuation">(</span>bf<span class="token punctuation">)</span> <span class="token operator">==</span> f<span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// This produces a Fruit</span>
+</code></pre>
+<h3 id="recursive-composite-types">Recursive composite types</h3>
+<p>If you have a recursive composite type (a sub type has a reference to the super type), you need to build the <code>CompositePickler</code> in two steps,
+as shown below.</p>
+<pre><code class="lang-scala"><span class="token keyword">sealed</span> <span class="token keyword">trait</span> Tree
+<span class="token keyword">case</span> <span class="token keyword">object</span> Leaf <span class="token keyword">extends</span> Tree
+<span class="token keyword">case</span> <span class="token keyword">class</span> Node<span class="token punctuation">(</span>value<span class="token operator">:</span> <span class="token builtin">Int</span><span class="token punctuation">,</span> children<span class="token operator">:</span>Seq<span class="token punctuation">[</span>Tree<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token keyword">extends</span> Tree
+
+<span class="token keyword">object</span> Tree <span class="token punctuation">{</span>
+  <span class="token keyword">implicit</span> <span class="token keyword">val</span> treePickler <span class="token operator">=</span> compositePickler<span class="token punctuation">[</span>Tree<span class="token punctuation">]</span>
+  treePickler<span class="token punctuation">.</span>addConcreteType<span class="token punctuation">[</span>Node<span class="token punctuation">]</span><span class="token punctuation">.</span>addConcreteType<span class="token punctuation">[</span>Leaf<span class="token punctuation">.</span><span class="token keyword">type</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>This is because the compiler must find a pickler for <code>Tree</code> when it&apos;s building a pickler for <code>Node</code>.</p>
+<h3 id="automatic-generation-of-hierarchy-picklers">Automatic generation of hierarchy picklers</h3>
+<p>If your type hierarchy is <code>sealed</code> then you can take advantage of the automatic pickler generation feature of BooPickle. A macro automatically generates
+the required <code>CompositePickler</code> for you, as long as the trait is <code>sealed</code>. For example lets change the <code>Fruit</code> trait to be sealed, so that compiler
+knows all its descendants will be defined in the same file and the macro can find them.</p>
+<pre><code class="lang-scala"><span class="token keyword">sealed</span> <span class="token keyword">trait</span> Fruit <span class="token punctuation">{</span>
+  <span class="token keyword">val</span> weight<span class="token operator">:</span> <span class="token builtin">Double</span>
+  <span class="token keyword">def</span> color<span class="token operator">:</span> <span class="token builtin">String</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>Now you can directly pickle your fruits without manually defining a <code>CompositePickler</code>.</p>
+<pre><code class="lang-scala"><span class="token keyword">val</span> fruits<span class="token operator">:</span> Seq<span class="token punctuation">[</span>Fruit<span class="token punctuation">]</span> <span class="token operator">=</span> Seq<span class="token punctuation">(</span>Kiwi<span class="token punctuation">(</span><span class="token number">0.5</span><span class="token punctuation">)</span><span class="token punctuation">,</span> Kiwi<span class="token punctuation">(</span><span class="token number">0.6</span><span class="token punctuation">)</span><span class="token punctuation">,</span> Carambola<span class="token punctuation">(</span><span class="token number">5.0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> Banana<span class="token punctuation">(</span><span class="token number">1.2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">val</span> bb <span class="token operator">=</span> Pickle<span class="token punctuation">.</span>intoBytes<span class="token punctuation">(</span>fruits<span class="token punctuation">)</span>
+<span class="token punctuation">.</span>
+<span class="token punctuation">.</span>
+<span class="token keyword">val</span> u <span class="token operator">=</span> Unpickle<span class="token punctuation">[</span>Seq<span class="token punctuation">[</span>Fruit<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">.</span>fromBytes<span class="token punctuation">(</span>bb<span class="token punctuation">)</span>
+assert<span class="token punctuation">(</span>u <span class="token operator">==</span> fruits<span class="token punctuation">)</span>
+</code></pre>
+<p>Note that for some hierarchies the automatic generation may not work (due to Scala compiler limitations), but you can always fall back to the
+manually defined <code>CompositePickler</code>.</p>
+<p>Also note that due to the way macros generate picklers, each time you need an implicit instance of the pickler, new classes (and <code>.class</code> files)
+will be generated. And not just for the top level trait, but for all implementing classes as well. If you have a large class hierarchy, this adds up
+rather quickly! Below you can see the results of pickling a trait twice in the code.</p>
+<pre><code> Size   Name
+ 2,798  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitPickler$macro$25$2$CCPickler$macro$26$2$.class
+ 2,798  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitPickler$macro$33$2$CCPickler$macro$34$2$.class
+ 3,498  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitPickler$macro$25$2$CCPickler$macro$27$2$.class
+ 3,498  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitPickler$macro$33$2$CCPickler$macro$35$2$.class
+ 4,789  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$14$TraitPickler$macro$25$2$.class
+ 4,789  MacroPickleTests$$anonfun$tests$8$$anonfun$apply$1$$anonfun$apply$16$TraitPickler$macro$33$2$.class
+</code></pre><p>If this becomes an issue, you can avoid it by storing implicit picklers in the companion object of the trait. This way the code is generated only once
+and used whenever you need a pickler for your <code>Fruit</code>.</p>
+<pre><code class="lang-scala"><span class="token keyword">object</span> Fruit <span class="token punctuation">{</span>
+  <span class="token keyword">implicit</span> <span class="token keyword">val</span> pickler<span class="token operator">:</span> Pickler<span class="token punctuation">[</span>Fruit<span class="token punctuation">]</span> <span class="token operator">=</span> generatePickler<span class="token punctuation">[</span>Fruit<span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// must import the companion object, otherwise the implicit macro has higher precedence and will generate another pickler!</span>
+<span class="token keyword">import</span> Fruit<span class="token punctuation">.</span>_
+<span class="token keyword">val</span> fruits<span class="token operator">:</span> Seq<span class="token punctuation">[</span>Fruit<span class="token punctuation">]</span> <span class="token operator">=</span> Seq<span class="token punctuation">(</span>Kiwi<span class="token punctuation">(</span><span class="token number">0.5</span><span class="token punctuation">)</span><span class="token punctuation">,</span> Kiwi<span class="token punctuation">(</span><span class="token number">0.6</span><span class="token punctuation">)</span><span class="token punctuation">,</span> Carambola<span class="token punctuation">(</span><span class="token number">5.0</span><span class="token punctuation">)</span><span class="token punctuation">,</span> Banana<span class="token punctuation">(</span><span class="token number">1.2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">val</span> bb <span class="token operator">=</span> Pickle<span class="token punctuation">.</span>intoBytes<span class="token punctuation">(</span>fruits<span class="token punctuation">)</span>
+</code></pre>
+<p>You can prevent the implicit use of the pickler generator macro by importing <code>boopickle.DefaultBasic._</code> instead of 
+<code>boopickle.Default._</code> as this will leave the implicit macro code out. Then you can provide specific implicit picklers for your 
+case classes or class hierarchies.</p>
+<pre><code class="lang-scala"><span class="token keyword">import</span> boopickle<span class="token punctuation">.</span>DefaultBasic<span class="token punctuation">.</span>_
+<span class="token keyword">object</span> Fruit <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">// use macro explicitly to generate the pickler</span>
+  <span class="token keyword">implicit</span> <span class="token keyword">val</span> pickler<span class="token operator">:</span> Pickler<span class="token punctuation">[</span>Fruit<span class="token punctuation">]</span> <span class="token operator">=</span> generatePickler<span class="token punctuation">[</span>Fruit<span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>In this case you don&apos;t need to <code>import Fruit._</code> because there is no implicit macro to compete with your pickler in the companion object.</p>
+<p>Note that when not using implicit macro picklers, you must pay special attention to the creation order of picklers in more complex situations like below.</p>
+<pre><code class="lang-scala"><span class="token keyword">import</span> boopickle<span class="token punctuation">.</span>DefaultBasic<span class="token punctuation">.</span>_
+<span class="token keyword">sealed</span> <span class="token keyword">trait</span> MyTrait
+
+<span class="token keyword">case</span> <span class="token keyword">class</span> TT1<span class="token punctuation">(</span>i<span class="token operator">:</span> <span class="token builtin">Int</span><span class="token punctuation">)</span> <span class="token keyword">extends</span> MyTrait
+
+<span class="token keyword">case</span> <span class="token keyword">class</span> TT2<span class="token punctuation">(</span>s<span class="token operator">:</span> <span class="token builtin">String</span><span class="token punctuation">,</span> next<span class="token operator">:</span> MyTrait<span class="token punctuation">)</span> <span class="token keyword">extends</span> MyTrait
+
+<span class="token keyword">class</span> TT3<span class="token punctuation">(</span><span class="token keyword">val</span> i<span class="token operator">:</span> <span class="token builtin">Int</span><span class="token punctuation">,</span> <span class="token keyword">val</span> s<span class="token operator">:</span> <span class="token builtin">String</span><span class="token punctuation">)</span> <span class="token keyword">extends</span> MyTrait
+
+<span class="token keyword">object</span> MyTrait <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">// picklers must be created in correct order, because TT2 depends on MyTrait</span>
+  <span class="token keyword">implicit</span> <span class="token keyword">val</span> pickler <span class="token operator">=</span> compositePickler<span class="token punctuation">[</span>MyTrait<span class="token punctuation">]</span>
+  <span class="token comment" spellcheck="true">// use macro explicitly to generate picklers for TT1 and TT2</span>
+  <span class="token keyword">implicit</span> <span class="token keyword">val</span> pickler1 <span class="token operator">=</span> generatePickler<span class="token punctuation">[</span>TT1<span class="token punctuation">]</span>
+  <span class="token keyword">implicit</span> <span class="token keyword">val</span> pickler2 <span class="token operator">=</span> generatePickler<span class="token punctuation">[</span>TT2<span class="token punctuation">]</span>
+  <span class="token comment" spellcheck="true">// a pickler for TT3 cannot be generated by macro, so use a transform pickler</span>
+  <span class="token keyword">implicit</span> <span class="token keyword">val</span> pickler3 <span class="token operator">=</span> transformPickler<span class="token punctuation">[</span>TT3<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token builtin">Int</span><span class="token punctuation">,</span> <span class="token builtin">String</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">(</span>t <span class="token keyword">=&gt;</span> <span class="token punctuation">(</span>t<span class="token punctuation">.</span>i<span class="token punctuation">,</span> t<span class="token punctuation">.</span>s<span class="token punctuation">)</span><span class="token punctuation">,</span> t <span class="token keyword">=&gt;</span> <span class="token keyword">new</span> TT3<span class="token punctuation">(</span>t<span class="token punctuation">.</span>_1<span class="token punctuation">,</span> t<span class="token punctuation">.</span>_2<span class="token punctuation">)</span><span class="token punctuation">)</span>
+  pickler<span class="token punctuation">.</span>addConcreteType<span class="token punctuation">[</span>TT1<span class="token punctuation">]</span><span class="token punctuation">.</span>addConcreteType<span class="token punctuation">[</span>TT2<span class="token punctuation">]</span><span class="token punctuation">.</span>addConcreteType<span class="token punctuation">[</span>TT3<span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="complex-type-hierarchies">Complex type hierarchies</h3>
+<p>When you have more complex type hierarchies with multiple levels of traits, you might need picklers for each type level. A simple example to illustrate:</p>
+<pre><code class="lang-scala"><span class="token keyword">sealed</span> <span class="token keyword">trait</span> Element
+
+<span class="token keyword">sealed</span> <span class="token keyword">trait</span> Document <span class="token keyword">extends</span> Element
+
+<span class="token keyword">sealed</span> <span class="token keyword">trait</span> Attribute <span class="token keyword">extends</span> Element
+
+<span class="token keyword">final</span> <span class="token keyword">case</span> <span class="token keyword">class</span> WordDocument<span class="token punctuation">(</span>text<span class="token operator">:</span><span class="token builtin">String</span><span class="token punctuation">)</span> <span class="token keyword">extends</span> Document
+
+<span class="token keyword">final</span> <span class="token keyword">case</span> <span class="token keyword">class</span> OwnerAttribute<span class="token punctuation">(</span>owner<span class="token operator">:</span> <span class="token builtin">String</span><span class="token punctuation">,</span> parent<span class="token operator">:</span> Element<span class="token punctuation">)</span> <span class="token keyword">extends</span> Attribute
+</code></pre>
+<p>Building a <code>CompositePickler</code> for <code>Element</code> with the two implementation classes doesn&apos;t actually give you a pickler for <code>Document</code> nor <code>Attribute</code>. So
+you need to define those picklers separately, duplicating the implementation classes. For this purpose <code>CompositePickler</code> allows you to join existing
+composite picklers to form a new one.</p>
+<pre><code class="lang-scala"><span class="token keyword">object</span> Element <span class="token punctuation">{</span>
+  <span class="token keyword">implicit</span> <span class="token keyword">val</span> documentPickler <span class="token operator">=</span> compositePickler<span class="token punctuation">[</span>Document<span class="token punctuation">]</span>
+  documentPickler<span class="token punctuation">.</span>addConcreteType<span class="token punctuation">[</span>WordDocument<span class="token punctuation">]</span>
+
+  <span class="token keyword">implicit</span> <span class="token keyword">val</span> attributePickler <span class="token operator">=</span> compositePickler<span class="token punctuation">[</span>Attribute<span class="token punctuation">]</span>
+  attributePickler<span class="token punctuation">.</span>addConcreteType<span class="token punctuation">[</span>OwnerAttribute<span class="token punctuation">]</span>
+
+  <span class="token keyword">implicit</span> <span class="token keyword">val</span> elementPickler <span class="token operator">=</span> compositePickler<span class="token punctuation">[</span>Element<span class="token punctuation">]</span>
+  elementPickler<span class="token punctuation">.</span>join<span class="token punctuation">[</span>Document<span class="token punctuation">]</span><span class="token punctuation">.</span>join<span class="token punctuation">[</span>Attribute<span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>With these picklers you may now pickle any trait. Note, however, that you must use the same <code>CompositePickler</code> when unpickling. You cannot pickle with <code>Element</code> 
+and unpickle with <code>Attribute</code> even if the actual class was <code>OwnerAttribute</code> because internal indexes are different for each composite pickler.</p>
+<script defer src="https://embed.scalafiddle.io/integration.js"></script>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="GettingStarted.html" class="navigation navigation-prev " aria-label="Previous page: Getting started">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="AdvancedPickling.html" class="navigation navigation-next " aria-label="Next page: Advanced pickling">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Class hierarchies","level":"1.3","depth":1,"next":{"title":"Advanced pickling","level":"1.4","depth":1,"path":"AdvancedPickling.md","ref":"AdvancedPickling.md","articles":[]},"previous":{"title":"Getting started","level":"1.2","depth":1,"path":"GettingStarted.md","ref":"GettingStarted.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"3.2.x","theme":"default","variables":{"version":"1.3.0"},"plugins":["editlink","prism","-highlight","github","scalafiddle"],"pluginsConfig":{"prism":{},"scalafiddle":{"dependency":"io.suzaku %%% boopickle % 1.3.0"},"github":{"url":"https://github.com/suzaku-io/boopickle/"},"editlink":{"label":"Edit This Page","multilingual":false,"base":"https://github.com/suzaku-io/boopickle/tree/master/doc"},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"ClassHierarchies.md","mtime":"2018-03-24T18:17:02.673Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2018-03-25T20:16:51.885Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-editlink/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-github/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

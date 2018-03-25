@@ -1,0 +1,360 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Miscellaneous · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-prism/prism.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    
+    <link rel="prev" href="Details.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="GettingStarted.html">
+            
+                <a href="GettingStarted.html">
+            
+                    
+                    Getting started
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="ClassHierarchies.html">
+            
+                <a href="ClassHierarchies.html">
+            
+                    
+                    Class hierarchies
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="AdvancedPickling.html">
+            
+                <a href="AdvancedPickling.html">
+            
+                    
+                    Advanced pickling
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="Shapeless.html">
+            
+                <a href="Shapeless.html">
+            
+                    
+                    Shapeless bindings
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="Optimization.html">
+            
+                <a href="Optimization.html">
+            
+                    
+                    Optimization
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="Details.html">
+            
+                <a href="Details.html">
+            
+                    
+                    Internal details
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.8" data-path="Misc.html">
+            
+                <a href="Misc.html">
+            
+                    
+                    Miscellaneous
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Miscellaneous</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h2 id="using-boopickle-with-ajax">Using BooPickle with Ajax</h2>
+<p>For now, see <a href="https://github.com/ochrons/scalajs-spa-tutorial" target="_blank">SPA tutorial</a> for example usage.</p>
+<h2 id="known-limitations">Known limitations</h2>
+<p>BooPickle is first and foremost focused on optimization of the pickled data. This gives you good performance and small data size, but at the same
+time it also makes the protocol extremely fragile. Unlike JSON, which can survive quite easily from additional or missing data, the binary
+format employed by BooPickle will explode violently with even the slightest of change. Debugging the output of BooPickle is also very hard, first
+because it&apos;s in binary and second because many data types use exotic coding to reduce the size. For example an <code>Int</code> can be 1 to 5 bytes long. Since
+there is no type information included in the coding it&apos;s quite impossible to determine the structure of the data just by looking at the binary output.</p>
+<p>But because there is no type information, it is also possible to benefit from this. For example you can pickle a <code>Set[String]</code> but unpickle it
+as a <code>Vector[String]</code> because all collections use the same serialization format internally. Note, however, that this too is rather fragile, 
+especially for empty collections that occur multiple times in the data.</p>
+<p>If your data contains a lot of (non-repeating) strings, then BooPickle performance is not so hot (depending on browser) as it has to do
+UTF-8 coding itself. Several browsers provide a <code>TextDecoder</code> interface to do this efficiently, but it&apos;s still not as fast as with <code>JSON.parse</code>. On
+other browsers, BooPickle relies on Scala.js&apos; implementation for coding UTF-8.</p>
+<p>Under Scala.js BooPickle depends indirectly on <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays" target="_blank">typed arrays</a> 
+because direct <code>ByteBuffer</code>s are implemented with typed arrays. These may not be available on all JS platforms (most notably old Node.js, which has
+its own Buffers, and IE versions 9 and below). When testing code that uses BooPickle (and direct <code>ByteBuffer</code>s), make sure your tests are run under
+a recent version of Node.js as Rhino doesn&apos;t support typed arrays. Alternatively make sure your tests only use heap <code>ByteBuffer</code>s.</p>
+<h2 id="common-issues-with-bytebuffers">Common issues with ByteBuffers</h2>
+<p>As many BooPickle users have run into issues with <code>ByteBuffers</code>, here is a bit of advice on how to work with them. If you need to get data out of a 
+<code>ByteBuffer</code>, for example into an <code>Array[Byte]</code> the safest way is to use the <code>get(array: Array[Byte])</code> method. Even when the <code>ByteBuffer</code> is
+backed with an <code>Array[Byte]</code> and you could access that directly with <code>array()</code>, it&apos;s very easy to make mistakes with positions, array offsets and limits.</p>
+<p>Reading values from a <code>ByteBuffer</code> commonly changes its internal state (the <code>position</code>), so you cannot treat it as identical to the original
+<code>ByteBuffer</code>. Similarly writing to one also changes its state. For example if you write data to a <code>ByteBuffer</code> and pass it as such to an unpickler, 
+it will not work. You need to call <code>flip()</code> first to reset its <code>position</code>.</p>
+<p>In BooPickle <code>ByteBuffer</code>s use little-endian ordering, which is not the default in the JVM, but is the native ordering in majority of target platforms. If you
+call <code>slice</code> or <code>duplicate</code> on buffers produced by BooPickle, they will default back to big-endian ordering. You must explicitly call
+<code>order(ByteOrder.LITTLE_ENDIAN)</code> to get them back to correct ordering.</p>
+<p>For more information, please refer to the <a href="http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html" target="_blank">JDK documentation on ByteBuffers</a>.</p>
+<h3 id="using-bytebuffers-in-network-communication">Using ByteBuffers in network communication</h3>
+<p>BooPickle is commonly used in client/server communication, so it is important to be able to use <code>ByteBuffer</code>s efficiently in the protocol. On the JVM
+side things are usually quite simple as many communication methods already accept <code>ByteBuffer</code> type directly. Sometimes you do need to convert the
+data into an <code>Array[Byte]</code> using following piece of code:</p>
+<pre><code class="lang-scala"><span class="token keyword">val</span> data <span class="token operator">=</span> Array<span class="token punctuation">.</span>ofDim<span class="token punctuation">[</span><span class="token builtin">Byte</span><span class="token punctuation">]</span><span class="token punctuation">(</span>buffer<span class="token punctuation">.</span>remaining<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+buffer<span class="token punctuation">.</span>get<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+</code></pre>
+<p>Conversion in the other direction is trivial with the help of <code>ByteBuffer.wrap()</code> method.</p>
+<p>On the JS side things are a bit more complicated due to the use of JavaScript <code>ArrayBuffer</code> underneath the <code>ByteBuffer</code>.</p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="Details.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Internal details">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Miscellaneous","level":"1.8","depth":1,"previous":{"title":"Internal details","level":"1.7","depth":1,"path":"Details.md","ref":"Details.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"3.2.x","theme":"default","variables":{"version":"1.3.0"},"plugins":["editlink","prism","-highlight","github","scalafiddle"],"pluginsConfig":{"prism":{},"scalafiddle":{"dependency":"io.suzaku %%% boopickle % 1.3.0"},"github":{"url":"https://github.com/suzaku-io/boopickle/"},"editlink":{"label":"Edit This Page","multilingual":false,"base":"https://github.com/suzaku-io/boopickle/tree/master/doc"},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"Misc.md","mtime":"2017-01-25T22:35:16.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2018-03-25T20:16:51.885Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-editlink/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-github/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

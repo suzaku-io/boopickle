@@ -1,0 +1,432 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Optimization · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-prism/prism.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="Details.html" />
+    
+    
+    <link rel="prev" href="Shapeless.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="GettingStarted.html">
+            
+                <a href="GettingStarted.html">
+            
+                    
+                    Getting started
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="ClassHierarchies.html">
+            
+                <a href="ClassHierarchies.html">
+            
+                    
+                    Class hierarchies
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="AdvancedPickling.html">
+            
+                <a href="AdvancedPickling.html">
+            
+                    
+                    Advanced pickling
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="Shapeless.html">
+            
+                <a href="Shapeless.html">
+            
+                    
+                    Shapeless bindings
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.6" data-path="Optimization.html">
+            
+                <a href="Optimization.html">
+            
+                    
+                    Optimization
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="Details.html">
+            
+                <a href="Details.html">
+            
+                    
+                    Internal details
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8" data-path="Misc.html">
+            
+                <a href="Misc.html">
+            
+                    
+                    Miscellaneous
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Optimization</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="optimizations-strategies">Optimizations strategies</h1>
+<h2 id="buffer-pooling">Buffer pooling</h2>
+<p>When BooPickle codecs allocate <code>ByteBuffer</code>s they do it via <code>BufferProvider</code> classes. The default implementations for both heap and direct buffers utilize
+the <code>BufferPool</code> object for recycling buffers. Buffer providers automatically release intermediate <code>ByteBuffer</code>s back to the pool when their contents
+is copied to a new buffer. To improve pool performance, you should release buffers that are not used anymore by calling <code>BufferPool.release</code>. Only
+buffers allocated through the <code>BufferProvider</code> should be released to the pool.</p>
+<pre><code class="lang-scala"><span class="token keyword">val</span> data <span class="token operator">=</span> Pickle<span class="token punctuation">.</span>intoBytes<span class="token punctuation">(</span>fruits<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">// send data to client</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true">// release buffer back to pool</span>
+BufferPool<span class="token punctuation">.</span>release<span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+</code></pre>
+<p>The pool has a maximum size to prevent it from locking down too much memory and it also only recycles relatively small buffers.</p>
+<p>In a multi-threaded environment you may experience some slowdown if multiple threads are actively using <code>BufferPool</code>. In these cases it may make sense to
+disable pooling globally with <code>BufferPool.disable()</code>.</p>
+<h2 id="deduplication">Deduplication</h2>
+<p>BooPickle supports deduplication of pickled case classes and strings. If you know your data won&apos;t have duplicates, you can enhance performance by disabling it
+by setting the <code>deduplicate</code> and <code>dedupImmutable</code> parameters in <code>PickleState</code> and <code>UnpickleState</code> constructors to <code>false</code>. The effect of deduplication is that
+when the same object is encountered again while pickling, only a reference is stored. When unpickling the reference is used instead of unpickling the object
+again. This saves space and enhances performance if your data contains a lot of copies of same objects.</p>
+<p>There are two different methods of deduplication. First one compares object identities directly and the second compares object contents. The first one can be
+used for any objects but the second is safe to use only with immutable objects because only a single instance is created when unpickling and is used for all
+references. In the provided picklers immutable deduplication is used only for <code>String</code>s, but you can use it in your own picklers if you have immutable data that
+is duplicated a lot.</p>
+<p>Note that deduplication can severely affect pickling performance (not that much unpickling), especially if you are pickling a lot of non-duplicated objects in
+one go.</p>
+<p>To implicitly provide non-deduplicating <code>PickleState</code> and <code>UnpickleState</code>, use following code.</p>
+<pre><code class="lang-scala"><span class="token keyword">implicit</span> <span class="token keyword">def</span> pickleState <span class="token operator">=</span> <span class="token keyword">new</span> PickleState<span class="token punctuation">(</span><span class="token keyword">new</span> EncoderSize<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span>
+<span class="token keyword">implicit</span> <span class="token keyword">val</span> unpickleState <span class="token operator">=</span> <span class="token punctuation">(</span>bb<span class="token operator">:</span> ByteBuffer<span class="token punctuation">)</span> <span class="token keyword">=&gt;</span> <span class="token keyword">new</span> UnpickleState<span class="token punctuation">(</span><span class="token keyword">new</span> DecoderSize<span class="token punctuation">(</span>bb<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="codecs">Codecs</h2>
+<p>Originally BooPickle had a single codec optimized for both size and speed. From 1.2.0 onwards there are now two codecs, the original one optimized
+for size and a new codec optimized for speed (especially in the browser).</p>
+<p>The speed oriented codec (<code>EncodeSpeed</code> and <code>DecodeSpeed</code>) works reliably only within a single application as it may dynamically choose different
+encoding methods based on the environment. You should therefore not use it in network communication.</p>
+<p>The codec is chosen as part of building an instance of <code>PickleState</code> and <code>UnpickleState</code>, which implicitly chooses the size optimized codec by
+default. To override this you can either manually create the instances of pickle states, or define an implicit to override the defaults. For
+<code>UnpickleState</code> you need to define a function taking a <code>ByteBuffer</code> and returning an instance of <code>UnpickleState</code> as in the example below. This will
+then be used by the <code>Unpickle[A].fromBytes</code> function.</p>
+<pre><code class="lang-scala"><span class="token keyword">implicit</span> <span class="token keyword">def</span> pickleState<span class="token operator">:</span> PickleState <span class="token operator">=</span> <span class="token keyword">new</span> PickleState<span class="token punctuation">(</span><span class="token keyword">new</span> EncoderSpeed<span class="token punctuation">)</span>
+<span class="token keyword">implicit</span> <span class="token keyword">val</span> unpickleState <span class="token operator">=</span> <span class="token punctuation">(</span>b<span class="token operator">:</span> ByteBuffer<span class="token punctuation">)</span> <span class="token keyword">=&gt;</span> <span class="token keyword">new</span> UnpickleState<span class="token punctuation">(</span><span class="token keyword">new</span> DecoderSpeed<span class="token punctuation">(</span>b<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="tuning-bytebuffer-performance">Tuning <code>ByteBuffer</code> performance</h2>
+<p>In the browser BooPickle uses direct <code>ByteBuffer</code>s by default, as they perform much better. On the server JVM, however, heap buffers tend to be more
+efficient in many cases and are used by default. The <code>Encoder</code> constructor takes a <code>BufferProvider</code> argument and you can supply your
+own or use one of the two predefined ones: <code>DirectByteBufferProvider</code> and <code>HeapByteBufferProvider</code>. The <code>ByteBuffer</code>s <em>must</em> use
+little-endian ordering.</p>
+<p>When serializing large objects, BooPickle encodes them into multiple separate <code>ByteBuffer</code>s that are combined (copied) in the call to
+<code>intoBytes</code>. If you can handle a sequence of buffers (for example sending them over the network), you can use <code>intoByteBuffers</code> instead,
+which will avoid duplicating the serialized data.</p>
+<h2 id="performance-testing">Performance testing</h2>
+<p>As one of the main design goals of BooPickle was performance (both in execution speed as in data size), the project includes a sub-project for comparing
+BooPickle performance with other common pickling libraries available for Scala.js: uPickle, Prickle, Circe and Pushka. To access the performance tests, just
+switch to <code>perftestsJS</code> or <code>perftestsJVM</code> project.</p>
+<p>On the JVM you can run the tests simply with the <code>run</code> command and the output will be shown in the SBT console. You might want to run the
+test at least twice to ensure JVM has optimized the code properly.</p>
+<p>On the JS side, you&apos;ll need to use <code>fullOptJS</code> and <code>package</code> to compile the code into JavaScript and then run it in your browser at
+<a href="http://localhost:12345/perftests/js/target/scala-2.12/classes/index.html" target="_blank">http://localhost:12345/perftests/js/target/scala-2.12/classes/index.html</a> 
+To ensure good results, run the tests at least twice in the browser.</p>
+<p>Both tests provide similar output, although there are small differences in the Gzipped sizes due to the use of different libraries.</p>
+<p>In the browser (BooPickle! is using the speed optimized codec with deduplication disabled):</p>
+<pre><code>15/16 : Encoding Seq[Book] with numerical IDs
+=============================================
+Library    ops/s      %          size       %          size.gz    %         
+BooPickle  78104      41.2%      210        100%       193        100%      
+BooPickle! 189536     100.0%     402        191%       210        109%      
+uPickle    22824      12.0%      680        324%       233        121%      
+Circe      24977      13.2%      680        324%       233        121%      
+Play JSON  10560      5.6%       680        324%       233        121%      
+
+16/16 : Decoding Seq[Book] with numerical IDs
+=============================================
+Library    ops/s      %          size       %          size.gz    %         
+BooPickle  149996     100.0%     210        100%       193        100%      
+BooPickle! 126592     84.4%      402        191%       210        109%      
+uPickle    10790      7.2%       680        324%       233        121%      
+Circe      10600      7.1%       680        324%       233        121%      
+Play JSON  7821       5.2%       680        324%       233        121%
+</code></pre><pre><code>
+Under JVM:
+</code></pre><h1 id="1516--encoding-seqbook-with-numerical-ids">15/16 : Encoding Seq[Book] with numerical IDs</h1>
+<p>Library    ops/s      %          size       %          size.gz    %
+BooPickle  628246     57,7%      210        100%       188        100%
+BooPickle! 1089448    100,0%     402        191%       205        109%
+uPickle    98301      9,0%       680        324%       234        124%
+Circe      141695     13,0%      680        324%       234        124%
+Play JSON  81771      7,5%       680        324%       234        124%</p>
+<p>BufferPool:
+  allocations = 31600590
+  misses      = 223355</p>
+<h1 id="1616--decoding-seqbook-with-numerical-ids">16/16 : Decoding Seq[Book] with numerical IDs</h1>
+<p>Library    ops/s      %          size       %          size.gz    %
+BooPickle  737017     96,6%      210        100%       188        100%
+BooPickle! 762602     100,0%     402        191%       205        109%
+uPickle    65767      8,6%       680        324%       234        124%
+Circe      145578     19,1%      680        324%       234        124%
+Play JSON  35194      4,6%       680        324%       234        124%
+```</p>
+<p>Performance test suite measures how many encode or decode operations the library can do in one second and also checks the size of the raw
+and gzipped output. Relative speed and size are shown as percentages (bigger is better for speed, smaller is better for size). Typically
+BooPickle is 4 to 10 times faster than JSON pickling libraries in decoding and 2 to 5 times faster in encoding.</p>
+<h3 id="custom-tests">Custom tests</h3>
+<p>You can define your own tests by modifying the <code>Tests.scala</code> and <code>TestData.scala</code> source files. Just look at the examples provided
+and model your own data (as realistically as possible) to see which library works best for you.</p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="Shapeless.html" class="navigation navigation-prev " aria-label="Previous page: Shapeless bindings">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="Details.html" class="navigation navigation-next " aria-label="Next page: Internal details">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Optimization","level":"1.6","depth":1,"next":{"title":"Internal details","level":"1.7","depth":1,"path":"Details.md","ref":"Details.md","articles":[]},"previous":{"title":"Shapeless bindings","level":"1.5","depth":1,"path":"Shapeless.md","ref":"Shapeless.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"3.2.x","theme":"default","variables":{"version":"1.3.0"},"plugins":["editlink","prism","-highlight","github","scalafiddle"],"pluginsConfig":{"prism":{},"scalafiddle":{"dependency":"io.suzaku %%% boopickle % 1.3.0"},"github":{"url":"https://github.com/suzaku-io/boopickle/"},"editlink":{"label":"Edit This Page","multilingual":false,"base":"https://github.com/suzaku-io/boopickle/tree/master/doc"},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"Optimization.md","mtime":"2018-03-24T20:21:23.365Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2018-03-25T20:16:51.885Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-editlink/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-github/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

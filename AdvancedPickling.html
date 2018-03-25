@@ -1,0 +1,419 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Advanced pickling · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-prism/prism.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="Shapeless.html" />
+    
+    
+    <link rel="prev" href="ClassHierarchies.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="GettingStarted.html">
+            
+                <a href="GettingStarted.html">
+            
+                    
+                    Getting started
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="ClassHierarchies.html">
+            
+                <a href="ClassHierarchies.html">
+            
+                    
+                    Class hierarchies
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.4" data-path="AdvancedPickling.html">
+            
+                <a href="AdvancedPickling.html">
+            
+                    
+                    Advanced pickling
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="Shapeless.html">
+            
+                <a href="Shapeless.html">
+            
+                    
+                    Shapeless bindings
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="Optimization.html">
+            
+                <a href="Optimization.html">
+            
+                    
+                    Optimization
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="Details.html">
+            
+                <a href="Details.html">
+            
+                    
+                    Internal details
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8" data-path="Misc.html">
+            
+                <a href="Misc.html">
+            
+                    
+                    Miscellaneous
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Advanced pickling</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="advanced-pickling">Advanced pickling</h1>
+<h2 id="references">References</h2>
+<p>If your data contains the same object multiple times, BooPickle will encode it only once and use a reference for the remaining occurrences. For example
+the data below is correctly unpickled to contain references to the same <code>p</code> instances.</p>
+<pre><code class="lang-scala"><span class="token keyword">case</span> <span class="token keyword">class</span> Point<span class="token punctuation">(</span>x<span class="token operator">:</span> <span class="token builtin">Int</span><span class="token punctuation">,</span> y<span class="token operator">:</span> <span class="token builtin">Int</span><span class="token punctuation">)</span>
+
+<span class="token keyword">val</span> p <span class="token operator">=</span> Point<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span>
+<span class="token keyword">val</span> points <span class="token operator">=</span> Vector<span class="token punctuation">(</span>p<span class="token punctuation">,</span> p<span class="token punctuation">,</span> p<span class="token punctuation">,</span> p<span class="token punctuation">)</span>
+<span class="token keyword">val</span> bb <span class="token operator">=</span> Pickle<span class="token punctuation">.</span>intoBytes<span class="token punctuation">(</span>points<span class="token punctuation">)</span>
+<span class="token punctuation">.</span>
+<span class="token punctuation">.</span>
+<span class="token keyword">val</span> newPoints <span class="token operator">=</span> Unpickle<span class="token punctuation">[</span>Vector<span class="token punctuation">[</span>Point<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">.</span>fromBytes<span class="token punctuation">(</span>bb<span class="token punctuation">)</span>
+assert<span class="token punctuation">(</span>newPoints<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span> eq newPoints<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<p>Reference identity is checked by actual object identity, not by its <code>equal</code> method, so a <code>val a = List(2)</code> and <code>val b = List(2)</code> are two
+different objects and will not be replaced by each other in pickling.</p>
+<h2 id="custom-picklers">Custom picklers</h2>
+<p>If you need to pickle non-case classes or for example Java classes, you can define custom picklers for them. If it&apos;s a non-generic type,
+use an <code>implicit object</code> and for generic types use <code>implicit def</code>. See <code>Pickler.scala</code> for more detailed examples such
+as <code>Either[T, S]</code> below.</p>
+<p>In most cases, however, you can use the <code>TransformPickler</code> to create a custom pickler for a type by transforming it into another type that
+already has pickler support. For example you can transform a <code>java.util.Date</code> into a <code>Long</code> and back. More complex classes can be transformed
+to a suitable <code>Tuple</code>. </p>
+<pre><code class="lang-scala"><span class="token keyword">implicit</span> <span class="token keyword">val</span> datePickler <span class="token operator">=</span> transformPickler<span class="token punctuation">(</span><span class="token punctuation">(</span>t<span class="token operator">:</span> <span class="token builtin">Long</span><span class="token punctuation">)</span> <span class="token keyword">=&gt;</span> <span class="token keyword">new</span> java<span class="token punctuation">.</span>util<span class="token punctuation">.</span>Date<span class="token punctuation">(</span>t<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">(</span>_<span class="token punctuation">.</span>getTime<span class="token punctuation">)</span>
+</code></pre>
+<p>Note that transformation breaks reference equality, so multiple instances of the same reference will be pickled
+separately. Transforming picklers can also be used in <code>CompositePickler</code> with the <code>addTransform</code> method.</p>
+<p>For a full pickler you need to do as in the example below. It&apos;s optimizing encoding size by reusing the slot for identity reference for
+the string length.</p>
+<pre><code class="lang-scala"><span class="token keyword">class</span> Custom<span class="token punctuation">(</span><span class="token keyword">val</span> name<span class="token operator">:</span> <span class="token builtin">String</span><span class="token punctuation">,</span> value<span class="token operator">:</span> <span class="token builtin">Int</span><span class="token punctuation">)</span>
+
+<span class="token keyword">object</span> MyCustomPicklers <span class="token keyword">extends</span> PicklerHelper <span class="token punctuation">{</span>
+  <span class="token keyword">implicit</span> <span class="token keyword">object</span> customPickler <span class="token keyword">extends</span> P<span class="token punctuation">[</span>Custom<span class="token punctuation">]</span> <span class="token punctuation">{</span>
+    <span class="token keyword">override</span> <span class="token keyword">def</span> pickle<span class="token punctuation">(</span>obj<span class="token operator">:</span> Custom<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">implicit</span> state<span class="token operator">:</span> PickleState<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">Unit</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+      state<span class="token punctuation">.</span>identityRefFor<span class="token punctuation">(</span>obj<span class="token punctuation">)</span> <span class="token keyword">match</span> <span class="token punctuation">{</span>
+        <span class="token keyword">case</span> Some<span class="token punctuation">(</span>idx<span class="token punctuation">)</span> <span class="token keyword">=&gt;</span>
+          state<span class="token punctuation">.</span>enc<span class="token punctuation">.</span>writeInt<span class="token punctuation">(</span><span class="token operator">-</span>idx<span class="token punctuation">)</span>
+        <span class="token keyword">case</span> None <span class="token keyword">=&gt;</span>
+          <span class="token comment" spellcheck="true">// writeString will write an Int with the string length that we can</span>
+          <span class="token comment" spellcheck="true">// put at same position as identity ref</span>
+          state<span class="token punctuation">.</span>enc<span class="token punctuation">.</span>writeString<span class="token punctuation">(</span>obj<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+          state<span class="token punctuation">.</span>enc<span class="token punctuation">.</span>writeInt<span class="token punctuation">(</span>obj<span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+          state<span class="token punctuation">.</span>addIdentityRef<span class="token punctuation">(</span>obj<span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">override</span> <span class="token keyword">def</span> unpickle<span class="token punctuation">(</span><span class="token keyword">implicit</span> state<span class="token operator">:</span> UnpickleState<span class="token punctuation">)</span><span class="token operator">:</span> Custom <span class="token operator">=</span> <span class="token punctuation">{</span>
+      state<span class="token punctuation">.</span>dec<span class="token punctuation">.</span>readInt <span class="token keyword">match</span> <span class="token punctuation">{</span>
+        <span class="token keyword">case</span> idx <span class="token keyword">if</span> idx <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token keyword">=&gt;</span>
+          state<span class="token punctuation">.</span>identityFor<span class="token punctuation">[</span>Custom<span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token operator">-</span>idx<span class="token punctuation">)</span>
+        <span class="token keyword">case</span> len <span class="token keyword">=&gt;</span>
+          <span class="token keyword">val</span> c <span class="token operator">=</span> <span class="token keyword">new</span> Custom<span class="token punctuation">(</span>state<span class="token punctuation">.</span>dec<span class="token punctuation">.</span>readString<span class="token punctuation">(</span>len<span class="token punctuation">)</span><span class="token punctuation">,</span> state<span class="token punctuation">.</span>dec<span class="token punctuation">.</span>readInt<span class="token punctuation">)</span>
+          state<span class="token punctuation">.</span>addIdentityRef<span class="token punctuation">(</span>c<span class="token punctuation">)</span>
+          c
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>In principle the pickler should do following things:</p>
+<ul>
+<li>check if the object has been pickled already using <code>state.identityRefFor(obj)</code> (if you want deduplication)</li>
+<li>if yes, store an index to the reference (this also takes care of <code>null</code> values)</li>
+<li>it not, encode the class using <code>state.enc</code> and/or calling picklers for members</li>
+<li>if your class has a <code>length</code>, you can encode it in the same space as reference index by using a non-negative value</li>
+<li>finally add the object to the identity reference</li>
+</ul>
+<p>If your object is immutable, you can use <code>immutableRefFor</code> and <code>addImmutableRef</code> instead for even more efficient encoding.</p>
+<p>On the unpickling side you&apos;ll need to do following:</p>
+<ul>
+<li>read reference/length using <code>state.readInt</code></li>
+<li>depending on the result,<ul>
+<li>get an existing reference</li>
+<li>or use length to know how much to unpickle</li>
+</ul>
+</li>
+<li>unpickle class members</li>
+<li>finally add the reference to identity table</li>
+</ul>
+<h2 id="exception-picklers">Exception picklers</h2>
+<p>BooPickle has special helpers to simplify pickling most common exception types. A call to <code>exceptionPickler</code> gives you a pickler
+that supports all the typical Java/Scala exceptions and you can then add your own custom exceptions with <code>addException</code>. The exception pickler
+is a <code>CompositePickler[Throwable]</code> so your exceptions should be presented as <code>Throwable</code> to pickling functions.</p>
+<pre><code class="lang-scala"><span class="token keyword">implicit</span> <span class="token keyword">val</span> exPickler <span class="token operator">=</span> exceptionPickler<span class="token punctuation">.</span>addException<span class="token punctuation">[</span>MyException<span class="token punctuation">]</span><span class="token punctuation">(</span>m <span class="token keyword">=&gt;</span> <span class="token keyword">new</span> MyException<span class="token punctuation">(</span>m<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">val</span> ex<span class="token operator">:</span> Throwable <span class="token operator">=</span> <span class="token keyword">new</span> IllegalArgumentException<span class="token punctuation">(</span><span class="token string">&quot;No, no, no!&quot;</span><span class="token punctuation">)</span>
+<span class="token keyword">val</span> bb <span class="token operator">=</span> Pickle<span class="token punctuation">.</span>intoBytes<span class="token punctuation">(</span>ex<span class="token punctuation">)</span>
+</code></pre>
+<p>Note that the basic <code>addException</code> mechanism only pickles the exception message, not any other fields. If you wish to pickle more
+fields, create transform picklers described above with the <code>addTransform</code> function. The same <code>CompositePickler</code> can contain both regular
+exception picklers and transform picklers.</p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="ClassHierarchies.html" class="navigation navigation-prev " aria-label="Previous page: Class hierarchies">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="Shapeless.html" class="navigation navigation-next " aria-label="Next page: Shapeless bindings">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Advanced pickling","level":"1.4","depth":1,"next":{"title":"Shapeless bindings","level":"1.5","depth":1,"path":"Shapeless.md","ref":"Shapeless.md","articles":[]},"previous":{"title":"Class hierarchies","level":"1.3","depth":1,"path":"ClassHierarchies.md","ref":"ClassHierarchies.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"3.2.x","theme":"default","variables":{"version":"1.3.0"},"plugins":["editlink","prism","-highlight","github","scalafiddle"],"pluginsConfig":{"prism":{},"scalafiddle":{"dependency":"io.suzaku %%% boopickle % 1.3.0"},"github":{"url":"https://github.com/suzaku-io/boopickle/"},"editlink":{"label":"Edit This Page","multilingual":false,"base":"https://github.com/suzaku-io/boopickle/tree/master/doc"},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"AdvancedPickling.md","mtime":"2017-01-25T22:35:16.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2018-03-25T20:16:51.885Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-editlink/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-github/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

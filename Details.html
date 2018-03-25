@@ -1,0 +1,452 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Internal details · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-prism/prism.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="Misc.html" />
+    
+    
+    <link rel="prev" href="Optimization.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="GettingStarted.html">
+            
+                <a href="GettingStarted.html">
+            
+                    
+                    Getting started
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="ClassHierarchies.html">
+            
+                <a href="ClassHierarchies.html">
+            
+                    
+                    Class hierarchies
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="AdvancedPickling.html">
+            
+                <a href="AdvancedPickling.html">
+            
+                    
+                    Advanced pickling
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="Shapeless.html">
+            
+                <a href="Shapeless.html">
+            
+                    
+                    Shapeless bindings
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="Optimization.html">
+            
+                <a href="Optimization.html">
+            
+                    
+                    Optimization
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.7" data-path="Details.html">
+            
+                <a href="Details.html">
+            
+                    
+                    Internal details
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.8" data-path="Misc.html">
+            
+                <a href="Misc.html">
+            
+                    
+                    Miscellaneous
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Internal details</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="internal-details">Internal details</h1>
+<h2 id="efficient-coding">Efficient coding</h2>
+<p>BooPickle makes assumptions of what kind of data it needs to encode, to reach high efficiency in typical scenarios. For example an <code>Int</code> (which takes
+32-bits or 4 bytes) is encoded in 1-5 bytes depending on the value. The most common values (0-127) take only a single byte, whereas larger values
+require more bytes. Because very large integers take 5 bytes, if you know your data consists mainly of such values, you could specifically code them
+using <code>raw</code> format that always takes 32-bits. Similarly <code>Long</code>s are also coded in 1-9 bytes depending on the value.</p>
+<p>In many situations there is a need to encode a length (of String, Seq, Map, etc.) and the efficient Int coding is used. But because a length/size is always
+non-negative, we can use negative integers to indicate other things. BooPickle supports coding multiple instances of the same object reference by using
+a reference value. The length value is reused to encode the reference by just flipping it into a negative value.</p>
+<p>Note that when using the speed optimized codecs (<code>EncodeSpeed</code> and <code>DecodeSpeed</code>) some of these size optimizations are not used.</p>
+<h2 id="automatic-pickler-generation-with-macros">Automatic pickler generation with macros</h2>
+<p>Scala features powerful <a href="http://docs.scala-lang.org/overviews/macros/overview.html" target="_blank">macros</a> to help simplifying many mundane programming tasks. One
+such task is writing pickling functions for classes. Consider the simple case class below:</p>
+<pre><code class="lang-scala"><span class="token keyword">case</span> <span class="token keyword">class</span> Person<span class="token punctuation">(</span>foreName<span class="token operator">:</span> <span class="token builtin">String</span><span class="token punctuation">,</span> lastName<span class="token operator">:</span> <span class="token builtin">String</span><span class="token punctuation">,</span> email<span class="token operator">:</span> <span class="token builtin">String</span><span class="token punctuation">,</span> birthYear<span class="token operator">:</span> <span class="token builtin">Int</span><span class="token punctuation">)</span>
+</code></pre>
+<p>To pickle this, you&apos;d need to write following code:</p>
+<pre><code class="lang-scala"><span class="token keyword">implicit</span> <span class="token keyword">object</span> PersonPickler <span class="token keyword">extends</span> Pickler<span class="token punctuation">[</span>Person<span class="token punctuation">]</span> <span class="token punctuation">{</span>
+  <span class="token keyword">override</span> <span class="token keyword">def</span> pickle<span class="token punctuation">(</span>value<span class="token operator">:</span> Person<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token keyword">implicit</span> state<span class="token operator">:</span> PickleState<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">Unit</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+    state<span class="token punctuation">.</span>pickle<span class="token punctuation">(</span>value<span class="token punctuation">.</span>foreName<span class="token punctuation">)</span>
+    state<span class="token punctuation">.</span>pickle<span class="token punctuation">(</span>value<span class="token punctuation">.</span>lastName<span class="token punctuation">)</span>
+    state<span class="token punctuation">.</span>pickle<span class="token punctuation">(</span>value<span class="token punctuation">.</span>email<span class="token punctuation">)</span>
+    state<span class="token punctuation">.</span>pickle<span class="token punctuation">(</span>value<span class="token punctuation">.</span>birthYear<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">override</span> <span class="token keyword">def</span> unpickle<span class="token punctuation">(</span><span class="token keyword">implicit</span> state<span class="token operator">:</span> UnpickleState<span class="token punctuation">)</span><span class="token operator">:</span> Person <span class="token operator">=</span> <span class="token punctuation">{</span>
+    Person<span class="token punctuation">(</span> 
+      state<span class="token punctuation">.</span>unpickle<span class="token punctuation">[</span><span class="token builtin">String</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      state<span class="token punctuation">.</span>unpickle<span class="token punctuation">[</span><span class="token builtin">String</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      state<span class="token punctuation">.</span>unpickle<span class="token punctuation">[</span><span class="token builtin">String</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      state<span class="token punctuation">.</span>unpickle<span class="token punctuation">[</span><span class="token builtin">Int</span><span class="token punctuation">]</span>
+    <span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>This would be very tedious, which is why practically all serialization libraries use either reflection or macros to automate this task. BooPickle
+being fully compatible with Scala.js, reflection is not an option, so macros it is. Programming macros in Scala is quite difficult, because it&apos;s a very
+recent addition to the Scala compiler and the documentation tends to be terse and somewhat cryptic. Also many examples found in the net are already
+obsolete or wrong if you use Scala 2.11. Best course of action is to look at existing macro code and try to deduce what&apos;s going on. Both
+uPickle and Prickle provided good base for BooPickle&apos;s macros.</p>
+<p>The macro-generated picklers are provided by a separate trait to make sure they are the last resort the compiler turns to.</p>
+<pre><code class="lang-scala"><span class="token keyword">trait</span> MaterializePicklerFallback <span class="token punctuation">{</span>
+  <span class="token keyword">implicit</span> <span class="token keyword">def</span> generatePickler<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token operator">:</span> Pickler<span class="token punctuation">[</span>T<span class="token punctuation">]</span> <span class="token operator">=</span> macro PicklerMaterializersImpl<span class="token punctuation">.</span>materializePickler<span class="token punctuation">[</span>T<span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>If no other implicit pickler can be found, the compiler will call the <code>materializePickler</code> macro function in the hope of generating a suitable one.</p>
+<p>The <a href="https://github.com/suzaku-io/boopickle/blob/master/boopickle/shared/src/main/scala/boopickle/PicklerMaterializersImpl.scala" target="_blank">macro code</a> starts
+by checking that the given type is valid for pickling (a sealed trait or a case class). Next step is building the code for pickling individual fields
+of the case class, which is surprisingly simple. Scala macros use a concept called quasiquotes (<code>q&quot;&quot;&quot;code goes here&quot;&quot;&quot;</code>) to easily generate code.</p>
+<pre><code class="lang-scala"><span class="token keyword">val</span> accessors <span class="token operator">=</span> <span class="token punctuation">(</span>tpe<span class="token punctuation">.</span>decls collect <span class="token punctuation">{</span>
+  <span class="token keyword">case</span> acc<span class="token operator">:</span> MethodSymbol <span class="token keyword">if</span> acc<span class="token punctuation">.</span>isCaseAccessor <span class="token keyword">=&gt;</span> acc
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>toList
+
+<span class="token keyword">val</span> pickleFields <span class="token operator">=</span> <span class="token keyword">for</span> <span class="token punctuation">{</span>
+  accessor <span class="token keyword">&lt;-</span> accessors
+<span class="token punctuation">}</span> <span class="token keyword">yield</span>
+  q<span class="token string">&quot;&quot;&quot;state.pickle(value.${accessor.name})&quot;&quot;&quot;</span>
+</code></pre>
+<p>Because there might be more than one instance of the case class in the structure we are pickling, additional code is generated to check for that
+and to store just a reference instead, if needed. For case objects, nothing(!) needs to be stored as they are identified by their type directly.</p>
+<pre><code class="lang-scala"><span class="token keyword">val</span> pickleLogic <span class="token operator">=</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>sym<span class="token punctuation">.</span>isModuleClass<span class="token punctuation">)</span> 
+    q<span class="token string">&quot;&quot;&quot;()&quot;&quot;&quot;</span> 
+  <span class="token keyword">else</span> q<span class="token string">&quot;&quot;&quot;
+    state.identityRefFor(value) match {
+      case Some(idx) =&gt;
+        state.enc.writeInt(-idx)
+      case None =&gt;
+        state.enc.writeInt(0)
+        ..$pickleFields
+        state.addIdentityRef(value)
+    }
+  &quot;&quot;&quot;</span>
+</code></pre>
+<p>Finally an <code>implicit object</code> is generated to provide the <code>Pickler</code> instance.</p>
+<pre><code class="lang-scala"><span class="token keyword">val</span> result <span class="token operator">=</span> q<span class="token string">&quot;&quot;&quot;
+  implicit object $name extends boopickle.Pickler[$tpe] {
+    import boopickle._
+    override def pickle(value: $tpe)(implicit state: PickleState): Unit = $pickleLogic
+    override def unpickle(implicit state: UnpickleState): $tpe = $unpickleLogic
+  }
+  $name
+&quot;&quot;&quot;</span>
+</code></pre>
+<p>That&apos;s it for generating a pickler for a case class! Unpickle logic generation is pretty much the same, check out the code for details.</p>
+<p>BooPickle also supports automatic pickler generation for sealed class hierarchies and that functionality is also implemented by the macro. When the macro
+first checks if it&apos;s a trait, it will continue under a different code path than for case classes. Goal of the macro is to create a <code>CompositePickler</code>
+for the given trait so that all implementing classes are included.</p>
+<p>First step is to make some sanity checks and then find all the known subclasses. This is why the trait must be <em>sealed</em> so that the compiler knows
+all subclasses and the macro can generate correct code. Next all found subclasses are mapped to <code>addConcreteType[$s]</code> code blocks that are embedded into a
+generated <code>CompositePickler</code>.</p>
+<pre><code class="lang-scala">q<span class="token string">&quot;&quot;&quot;
+  implicit object $name extends boopickle.CompositePickler[$tpe] {
+    ..$concreteTypes
+  }
+  $name
+&quot;&quot;&quot;</span>
+</code></pre>
+<h2 id="fast-utf-8-coding-in-the-browser">Fast UTF-8 coding in the browser</h2>
+<p>UTF-8 is pretty much the universal character coding format used in the web. For example JSON data is always coded in UTF-8 and naturally all browsers
+are very good and efficient at processing UTF-8 formatted text. But when you actually have to do UTF-8 encoding or decoding in JavaScript the situation
+is much worse. You can have strings and arrays of bytes, but regular JavaScript doesn&apos;t provide decent methods for converting between these two.</p>
+<p>One option is to write your own UTF-8 codec and this is exactly what the Scala.js library provides. Its performance is not so great when compared to
+native JSON processing but it gets the job done. </p>
+<p>Luckily there is a JavaScript extension known as <a href="https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder" target="_blank">TextEncoder</a>, which provides native
+speed encoding of UTF-8 (and some other formats, too). The <code>TextEncoder</code> (and <code>TextDecoder</code>) work with typed arrays (<code>Uint8Array</code> in this case) that
+are a high-performance alternative to basic JS arrays.</p>
+<p>Because these interfaces are not available on all browsers, the string codec code must check for their availability and fall back to regular implementation
+if they are missing.</p>
+<pre><code class="lang-scala"><span class="token keyword">class</span> TextEncoder <span class="token keyword">extends</span> js<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+  <span class="token keyword">def</span> encode<span class="token punctuation">(</span>str<span class="token operator">:</span> <span class="token builtin">String</span><span class="token punctuation">)</span><span class="token operator">:</span> Uint8Array <span class="token operator">=</span> js<span class="token punctuation">.</span>native
+<span class="token punctuation">}</span>
+
+<span class="token keyword">private</span> <span class="token keyword">lazy</span> <span class="token keyword">val</span> utf8encoder<span class="token operator">:</span> <span class="token punctuation">(</span><span class="token builtin">String</span><span class="token punctuation">)</span> <span class="token keyword">=&gt;</span> Int8Array <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token keyword">val</span> te <span class="token operator">=</span> <span class="token keyword">new</span> TextEncoder
+  <span class="token comment" spellcheck="true">// use native TextEncoder</span>
+  <span class="token punctuation">(</span>str<span class="token operator">:</span> <span class="token builtin">String</span><span class="token punctuation">)</span> <span class="token keyword">=&gt;</span> <span class="token keyword">new</span> Int8Array<span class="token punctuation">(</span>te<span class="token punctuation">.</span>encode<span class="token punctuation">(</span>str<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">def</span> encodeUTF8<span class="token punctuation">(</span>s<span class="token operator">:</span> <span class="token builtin">String</span><span class="token punctuation">)</span><span class="token operator">:</span> ByteBuffer <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>js<span class="token punctuation">.</span>isUndefined<span class="token punctuation">(</span>js<span class="token punctuation">.</span>Dynamic<span class="token punctuation">.</span>global<span class="token punctuation">.</span>TextEncoder<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    StandardCharsets<span class="token punctuation">.</span>UTF_8<span class="token punctuation">.</span>encode<span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    TypedArrayBuffer<span class="token punctuation">.</span>wrap<span class="token punctuation">(</span>utf8encoder<span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="Optimization.html" class="navigation navigation-prev " aria-label="Previous page: Optimization">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="Misc.html" class="navigation navigation-next " aria-label="Next page: Miscellaneous">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Internal details","level":"1.7","depth":1,"next":{"title":"Miscellaneous","level":"1.8","depth":1,"path":"Misc.md","ref":"Misc.md","articles":[]},"previous":{"title":"Optimization","level":"1.6","depth":1,"path":"Optimization.md","ref":"Optimization.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"3.2.x","theme":"default","variables":{"version":"1.3.0"},"plugins":["editlink","prism","-highlight","github","scalafiddle"],"pluginsConfig":{"prism":{},"scalafiddle":{"dependency":"io.suzaku %%% boopickle % 1.3.0"},"github":{"url":"https://github.com/suzaku-io/boopickle/"},"editlink":{"label":"Edit This Page","multilingual":false,"base":"https://github.com/suzaku-io/boopickle/tree/master/doc"},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"Details.md","mtime":"2017-01-25T22:35:16.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2018-03-25T20:16:51.885Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-editlink/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-github/plugin.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
