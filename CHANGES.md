@@ -1,10 +1,12 @@
 # Changes
 
-## 1.3.0-SNAPSHOT
+## 1.3.0
 
 - Optimized size of generated JS code by marking some common methods as `@noinline`
 - Optimized away the generation of unnecessary calls to `boopickle.Default` object in picklers
-- Added `boopickle-shapeless` to provide Shapeless driven pickler derivation as an alternative to the regular macros
+- Added `boopickle-shapeless` to provide Shapeless driven pickler derivation as an alternative to the regular macros (by @cornerman)
+- Added automatic pickler generation for value classes (by @cornerman)
+- Unified how `generatePickler` is accessed (slightly breaking change)
 - Updated performance tests to use latest versions of different picklers, dropped Pushka
 
 ## 1.2.6
