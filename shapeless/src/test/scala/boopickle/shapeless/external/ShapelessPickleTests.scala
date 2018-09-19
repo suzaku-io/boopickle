@@ -68,7 +68,7 @@ object ShapelessPickleTests extends TestSuite {
       'Case1 {
         val bb = Pickle.intoBytes(Test1(5, "Hello!"))
         val u  = Unpickle[Test1].fromBytes(bb)
-        assert(bb.limit == 1 + 1 + 7 - 1)
+        assert(bb.limit() == 1 + 1 + 7 - 1)
         assert(u == Test1(5, "Hello!"))
       }
       'SeqCase {
@@ -77,21 +77,21 @@ object ShapelessPickleTests extends TestSuite {
         val t                                            = Test1(99, "Hello!")
         val s                                            = Seq(t, t, t)
         val bb                                           = Pickle.intoBytes(s)
-        assert(bb.limit == 1 + 1 + 1 + 7 + 2 * 2 + 1)
+        assert(bb.limit() == 1 + 1 + 1 + 7 + 2 * 2 + 1)
         val u = Unpickle[Seq[Test1]].fromBytes(bb)
         assert(u == s)
       }
       'Recursive {
         val t  = List(Test2(1, Some(Test2(2, Some(Test2(3, None))))))
         val bb = Pickle.intoBytes(t)
-        assert(bb.limit == 13 - 3)
+        assert(bb.limit() == 13 - 3)
         val u = Unpickle[List[Test2]].fromBytes(bb)
         assert(u == t)
       }
       'CaseObject {
         val bb = Pickle.intoBytes(TestO)
         // yea, pickling a case object takes no space at all :)
-        assert(bb.limit == 0)
+        assert(bb.limit() == 0)
         val u = Unpickle[TestO.type].fromBytes(bb)
         assert(u == TestO)
       }

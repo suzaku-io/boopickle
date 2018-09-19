@@ -80,8 +80,8 @@ object StringCodec extends StringCodecBase {
     if (buf.isDirect && !js.isUndefined(js.Dynamic.global.TextDecoder)) {
       // get the underlying Int8Array
       val ta = buf.typedArray()
-      val s  = utf8decoder(ta.subarray(buf.position, buf.position + len))
-      buf.position(buf.position + len)
+      val s  = utf8decoder(ta.subarray(buf.position(), buf.position() + len))
+      buf.position(buf.position() + len)
       s
     } else {
       val a = new Array[Byte](len)
@@ -100,8 +100,8 @@ object StringCodec extends StringCodecBase {
 
   override def decodeUTF16(len: Int, buf: ByteBuffer): String = {
     if (buf.isDirect) {
-      val ta = new Uint16Array(buf.typedArray().buffer, buf.position + buf.typedArray().byteOffset, len / 2)
-      buf.position(buf.position + len)
+      val ta = new Uint16Array(buf.typedArray().buffer, buf.position() + buf.typedArray().byteOffset, len / 2)
+      buf.position(buf.position() + len)
       utf16decoder(ta)
       //new String(ta.toArray) // alt implementation
     } else {

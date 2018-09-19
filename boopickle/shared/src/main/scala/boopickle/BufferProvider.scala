@@ -57,7 +57,7 @@ abstract class ByteBufferProvider extends BufferProvider {
     else {
       val bufList = (currentBuf :: buffers).reverse
       // create a new buffer and combine all buffers into it
-      val comb = allocate(bufList.map(_.limit).sum)
+      val comb = allocate(bufList.map(_.limit()).sum)
       bufList.foreach(buf => comb.put(buf))
       comb.flip()
       comb
@@ -90,11 +90,11 @@ class HeapByteBufferProvider extends ByteBufferProvider {
     else {
       // create a new buffer and combine all buffers into it
       val bufList = (currentBuf :: buffers).reverse
-      val comb    = allocate(bufList.map(_.limit).sum)
+      val comb    = allocate(bufList.map(_.limit()).sum)
       bufList.foreach { buf =>
         // use fast array copy
-        scala.compat.Platform.arraycopy(buf.array, buf.arrayOffset, comb.array, comb.position, buf.limit)
-        comb.position(comb.position + buf.limit)
+        scala.compat.Platform.arraycopy(buf.array, buf.arrayOffset, comb.array, comb.position(), buf.limit())
+        comb.position(comb.position() + buf.limit())
         // release to the pool
         pool.release(buf)
       }
@@ -119,7 +119,7 @@ class DirectByteBufferProvider extends ByteBufferProvider {
     else {
       // create a new buffer and combine all buffers into it
       val bufList = (currentBuf :: buffers).reverse
-      val comb    = allocate(bufList.map(_.limit).sum)
+      val comb    = allocate(bufList.map(_.limit()).sum)
       bufList.foreach { buf =>
         comb.put(buf)
         // release to the pool
