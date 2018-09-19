@@ -48,10 +48,10 @@ object CirceRunners {
 
 trait CirceCoding { self: TestData =>
   private implicit val eventEncoder: Encoder[Event] = deriveEncoder[Event]
-  private lazy val eventDecoder = deriveDecoder[Event]
+  private lazy val eventDecoder                     = deriveDecoder[Event]
 
-  private lazy val eventJson = event.asJson.noSpaces
-  private lazy val intsJson = largeIntSeq.asJson.noSpaces
+  private lazy val eventJson   = event.asJson.noSpaces
+  private lazy val intsJson    = largeIntSeq.asJson.noSpaces
   private lazy val doublesJson = largeDoubleSeq.asJson.noSpaces
 
   @Benchmark

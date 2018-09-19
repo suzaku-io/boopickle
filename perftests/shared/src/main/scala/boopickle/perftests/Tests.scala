@@ -6,12 +6,12 @@ import play.api.libs.json._
 import upickle.default._
 
 object Tests {
-  implicit val eventFormat: OFormat[Event] = Json.format[Event]
-  implicit val bookFormat: OFormat[Book] = Json.format[Book]
-  implicit val nodeFormat: OFormat[Node] = Json.format[Node]
+  implicit val eventFormat: OFormat[Event]     = Json.format[Event]
+  implicit val bookFormat: OFormat[Book]       = Json.format[Book]
+  implicit val nodeFormat: OFormat[Node]       = Json.format[Node]
   implicit val eventUpickle: ReadWriter[Event] = macroRW
-  implicit val eventNode: ReadWriter[Node] = macroRW
-  implicit val eventBook: ReadWriter[Book] = macroRW
+  implicit val eventNode: ReadWriter[Node]     = macroRW
+  implicit val eventBook: ReadWriter[Book]     = macroRW
 
   val tree = TestData.genTree(5, 3)
   val suites = Seq(

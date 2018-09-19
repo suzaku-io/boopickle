@@ -4,7 +4,15 @@ import java.nio.{ByteBuffer, ByteOrder}
 import java.util.UUID
 
 import boopickle.Default._
-import boopickle.{DirectByteBufferProvider, EncoderSize, HeapByteBufferProvider, UnpickleState, EncoderSpeed, DecoderSize, DecoderSpeed}
+import boopickle.{
+  DecoderSize,
+  DecoderSpeed,
+  DirectByteBufferProvider,
+  EncoderSize,
+  EncoderSpeed,
+  HeapByteBufferProvider,
+  UnpickleState
+}
 import utest._
 
 import scala.annotation.tailrec

@@ -406,7 +406,8 @@ object BasicPicklers extends PicklerHelper {
     * @tparam S Type of values
     * @return
     */
-  def MapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]](implicit cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): P[V[T, S]] =
+  def MapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]](
+      implicit cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): P[V[T, S]] =
     new P[V[T, S]] {
       override def pickle(map: V[T, S])(implicit state: PickleState): Unit = {
         if (map == null) {
@@ -593,7 +594,8 @@ object UnpickleState {
     *
     * @return
     */
-  implicit def unpickleStateSpeed: ByteBuffer => UnpickleState = bytes => new UnpickleState(new DecoderSize(bytes), true, true)
+  implicit def unpickleStateSpeed: ByteBuffer => UnpickleState =
+    bytes => new UnpickleState(new DecoderSize(bytes), true, true)
 
   def apply(bytes: ByteBuffer) = new UnpickleState(new DecoderSize(bytes))
 

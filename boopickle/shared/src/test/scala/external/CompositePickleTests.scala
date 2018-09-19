@@ -63,7 +63,8 @@ final case class OwnerAttribute(owner: String, parent: Element) extends Attribut
 object CompositePickleTests extends TestSuite {
   override def tests = Tests {
     'CaseClassHierarchySeq {
-      implicit val fruitPickler = compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
+      implicit val fruitPickler =
+        compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
 
       val fruits: Seq[Fruit] = Seq(Kiwi(0.5), Kiwi(0.6), Carambola(5.0), Banana(1.2))
       val bb                 = Pickle.intoBytes(fruits)
@@ -71,7 +72,8 @@ object CompositePickleTests extends TestSuite {
       assert(u == fruits)
     }
     'CaseClassHierarchy {
-      implicit val fruitPickler = compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
+      implicit val fruitPickler =
+        compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
 
       val b  = Banana(1.0)
       val bb = Pickle.intoBytes(b)
@@ -86,7 +88,10 @@ object CompositePickleTests extends TestSuite {
     }
     'CaseObjects {
       implicit val errorPickler =
-        compositePickler[Error].addConcreteType[InvalidName.type].addConcreteType[Unknown.type].addConcreteType[NotFound.type]
+        compositePickler[Error]
+          .addConcreteType[InvalidName.type]
+          .addConcreteType[Unknown.type]
+          .addConcreteType[NotFound.type]
       val errors: Map[Error, String] = Map(InvalidName -> "InvalidName", Unknown -> "Unknown", NotFound -> "Not found")
       val bb                         = Pickle.intoBytes(errors)
       val u                          = Unpickle[Map[Error, String]].fromBytes(bb)

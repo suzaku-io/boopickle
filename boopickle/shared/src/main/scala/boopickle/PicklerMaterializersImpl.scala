@@ -25,15 +25,15 @@ object PicklerMaterializersImpl {
     // must be a sealed trait
     if (!sym.isSealed) {
       val msg = s"The referenced trait ${sym.name} must be sealed. For non-sealed traits, create a pickler " +
-          "with boopickle.CompositePickler. You may also get this error if a pickler for a class in your type hierarchy cannot be found."
+        "with boopickle.CompositePickler. You may also get this error if a pickler for a class in your type hierarchy cannot be found."
       c.abort(c.enclosingPosition, msg)
     }
 
     if (sym.knownDirectSubclasses.isEmpty) {
       val msg = s"The referenced trait ${sym.name} does not have any sub-classes. This may " +
-          "happen due to a limitation of scalac (SI-7046) given that the trait is " +
-          "not in the same package. If this is the case, the pickler may be " +
-          "defined using boopickle.CompositePickler directly."
+        "happen due to a limitation of scalac (SI-7046) given that the trait is " +
+        "not in the same package. If this is the case, the pickler may be " +
+        "defined using boopickle.CompositePickler directly."
       c.abort(c.enclosingPosition, msg)
     }
 
@@ -62,10 +62,11 @@ object PicklerMaterializersImpl {
   private def pickleValueClass(c: blackbox.Context)(tpe: c.universe.Type): c.universe.Tree = {
     import c.universe._
 
-    val parameter = tpe.typeSymbol.asClass
-      .primaryConstructor
+    val parameter = tpe.typeSymbol.asClass.primaryConstructor
       .typeSignatureIn(tpe)
-      .paramLists.head.head
+      .paramLists
+      .head
+      .head
 
     val parameterType = parameter.typeSignature
     val parameterTerm = parameter.name.toTermName
@@ -97,8 +98,9 @@ object PicklerMaterializersImpl {
     }
 
     if (!sym.isCaseClass) {
-      c.error(c.enclosingPosition,
-              s"Cannot materialize pickler for non-case class: $tpe. If this is a collection, the error can refer to the class inside.")
+      c.error(
+        c.enclosingPosition,
+        s"Cannot materialize pickler for non-case class: $tpe. If this is a collection, the error can refer to the class inside.")
       return c.Expr[Pickler[T]](q"null")
     }
 
@@ -172,7 +174,7 @@ object PicklerMaterializersImpl {
   private def unifyClassWithTrait(c: blackbox.Context)(ttrait: c.universe.Type, classSym: c.universe.ClassSymbol) = {
     import c.universe._
 
-    val tclass = classSym.toType
+    val tclass             = classSym.toType
     val traitSeenFromClass = tclass.baseType(ttrait.typeSymbol)
 
     tclass.substituteTypes(traitSeenFromClass.typeArgs.map(_.typeSymbol), ttrait.typeArgs)

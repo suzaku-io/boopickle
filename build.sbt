@@ -1,15 +1,15 @@
 import sbt._
 import Keys._
 import com.typesafe.sbt.pgp.PgpKeys._
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
-scalafmtOnCompile in ThisBuild := true
-scalafmtVersion in ThisBuild := "1.3.0"
+ThisBuild / scalafmtOnCompile := true
 
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
-  crossScalaVersions := Seq("2.11.11", "2.12.4"),
-  scalaVersion := "2.12.4",
+  crossScalaVersions := Seq("2.11.12", "2.12.6"),
+  scalaVersion in ThisBuild := "2.12.6",
   scalacOptions := Seq(
     "-deprecation",
     "-encoding",
@@ -27,11 +27,10 @@ val commonSettings = Seq(
     case Some((2, 12)) => Seq("-Xlint:-unused")
     case _             => Nil
   }),
-  scalacOptions in Compile ~= (_ filterNot (_ == "-Ywarn-value-discard")),
+  Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "utest" % "0.6.3" % "test",
-    // "com.github.japgolly.nyaya" %%% "nyaya-test"  % "0.8.1"            % "test",
+    "com.lihaoyi" %%% "utest" % "0.6.5" % "test",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
 )
@@ -82,16 +81,16 @@ val sourceMapSettings = Seq(
 
 def preventPublication(p: Project) =
   p.settings(
-    publish := (),
-    publishLocal := (),
-    publishSigned := (),
-    publishLocalSigned := (),
+    publish := (()),
+    publishLocal := (()),
+    publishSigned := (()),
+    publishLocalSigned := (()),
     publishArtifact := false,
     publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
     packagedArtifacts := Map.empty
   )
 
-lazy val boopickle = crossProject
+lazy val boopickle = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(
@@ -104,7 +103,7 @@ lazy val boopickleJS = boopickle.js
 
 lazy val boopickleJVM = boopickle.jvm
 
-lazy val shapeless = crossProject
+lazy val shapeless = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .dependsOn(boopickle)
   .settings(commonSettings)
@@ -154,11 +153,11 @@ trait TuplePicklers extends PicklerHelper {
   )
 }
 
-lazy val perftests = crossProject
+lazy val perftests = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
     name := "perftests",
-    scalaVersion := "2.12.4",
+    scalaVersion := "2.12.6",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
       "com.lihaoyi"       %%% "upickle"       % "0.5.1",

@@ -34,7 +34,7 @@ object MacroPickleTests extends TestSuite {
 
   object MyTrait {
     // a pickler for non-case classes cannot be automatically generated, so use the transform pickler
-    implicit val pickler3: Pickler[TT3] = transformPickler[TT3, (Int, String)]((t) => new TT3(t._1, t._2))((t) => (t.i, t.s))
+    implicit val pickler3: Pickler[TT3]    = transformPickler[TT3, (Int, String)]((t) => new TT3(t._1, t._2))((t) => (t.i, t.s))
     implicit val pickler: Pickler[MyTrait] = generatePickler[MyTrait]
   }
 
@@ -64,9 +64,9 @@ object MacroPickleTests extends TestSuite {
 
   sealed trait MultiT[S, T, O]
 
-  case class Multi[S,T](s: S, t: T) extends MultiT[S, T, String]
+  case class Multi[S, T](s: S, t: T) extends MultiT[S, T, String]
 
-  case class Multi2[S,T](s: S, t: T) extends MultiT[S, T, String]
+  case class Multi2[S, T](s: S, t: T) extends MultiT[S, T, String]
 
   override def tests = Tests {
     // must import pickler from the companion object, otherwise scalac will try to use a macro to generate it
@@ -171,9 +171,9 @@ object MacroPickleTests extends TestSuite {
         assert(x == u)
       }
       'MultipleGenerics {
-        val x: MultiT[Int,Double,String] = Multi[Int,Double](1, 2.0)
-        val bb                 = Pickle.intoBytes(x)
-        val u                  = Unpickle[MultiT[Int,Double,String]].fromBytes(bb)
+        val x: MultiT[Int, Double, String] = Multi[Int, Double](1, 2.0)
+        val bb                             = Pickle.intoBytes(x)
+        val u                              = Unpickle[MultiT[Int, Double, String]].fromBytes(bb)
         assert(x == u)
       }
     }

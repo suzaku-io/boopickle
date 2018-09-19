@@ -54,8 +54,9 @@ class CompositePickler[A] extends Pickler[A] {
     this
   }
 
-  @noinline def addTransform[B <: A, C](transformTo: (B) => C, transformFrom: (C) => B)(implicit p: Pickler[C],
-                                                                                        tag: ClassTag[B]): CompositePickler[A] = {
+  @noinline def addTransform[B <: A, C](transformTo: (B) => C, transformFrom: (C) => B)(
+      implicit p: Pickler[C],
+      tag: ClassTag[B]): CompositePickler[A] = {
     val pickler = p.xmap(transformFrom)(transformTo)
     addPickler(pickler, tag)
     this

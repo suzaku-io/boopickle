@@ -88,7 +88,9 @@ class TestData {
 
   def genTree(maxChildren: Int, maxDepth: Int, r: Random = new Random(0)): Node = {
     val childrenCount = r.nextInt(maxChildren + maxDepth) max maxDepth min maxChildren
-    Node(genRandomId, colors(r.nextInt(colors.size)), Vector.tabulate(childrenCount)(_ => genTree(maxChildren, maxDepth - 1, r)))
+    Node(genRandomId,
+         colors(r.nextInt(colors.size)),
+         Vector.tabulate(childrenCount)(_ => genTree(maxChildren, maxDepth - 1, r)))
   }
 }
 

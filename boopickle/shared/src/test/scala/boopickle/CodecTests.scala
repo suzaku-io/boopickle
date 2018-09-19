@@ -94,12 +94,14 @@ object CodecTests extends TestSuite {
     }
 
     'Float - {
-      val data = Seq[Float](0.0f, 1.0f, -0.5f, Float.MaxValue, Float.MinValue, Float.NegativeInfinity, Float.PositiveInfinity)
+      val data =
+        Seq[Float](0.0f, 1.0f, -0.5f, Float.MaxValue, Float.MinValue, Float.NegativeInfinity, Float.PositiveInfinity)
       runCodec[Float](data, (e, x) => { e.writeFloat(x); () }, (d, x) => d.readFloat == x)
     }
 
     'Double - {
-      val data = Seq[Double](0.0, 1.0, -0.5, Double.MaxValue, Double.MinValue, Double.NegativeInfinity, Double.PositiveInfinity)
+      val data =
+        Seq[Double](0.0, 1.0, -0.5, Double.MaxValue, Double.MinValue, Double.NegativeInfinity, Double.PositiveInfinity)
       runCodec[Double](data, (e, x) => { e.writeDouble(x); () }, (d, x) => d.readDouble == x)
     }
 

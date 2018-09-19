@@ -57,9 +57,9 @@ trait BoopickleCoding { self: TestData =>
   private implicit def pickleState   = new PickleState(new EncoderSize, false, false)
   private implicit val unpickleState = (b: ByteBuffer) => new UnpickleState(new DecoderSize(b), false, false)
 
-  lazy val eventBB: ByteBuffer = Pickle.intoBytes(event)
-  lazy val intsBB: ByteBuffer = Pickle.intoBytes(largeIntSeq)
-  lazy val doublesBB: ByteBuffer  = Pickle.intoBytes(largeDoubleSeq)
+  lazy val eventBB: ByteBuffer   = Pickle.intoBytes(event)
+  lazy val intsBB: ByteBuffer    = Pickle.intoBytes(largeIntSeq)
+  lazy val doublesBB: ByteBuffer = Pickle.intoBytes(largeDoubleSeq)
 
   @Benchmark
   def boopickleEventDecode: Event = {

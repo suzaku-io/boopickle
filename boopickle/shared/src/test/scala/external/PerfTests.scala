@@ -35,7 +35,9 @@ object PerfTests extends TestSuite {
         assert(uData == data)
       }
       'Deduplication {
-        dedupTest("With dedup", new PickleState(new EncoderSize, true, true), bb => new UnpickleState(new DecoderSize(bb), true, true))
+        dedupTest("With dedup",
+                  new PickleState(new EncoderSize, true, true),
+                  bb => new UnpickleState(new DecoderSize(bb), true, true))
       }
       'NoDeduplication {
         dedupTest("Without dedup",

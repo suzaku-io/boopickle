@@ -59,15 +59,15 @@ object ShapelessPickleTests extends TestSuite {
 
   sealed trait MultiT[S, T, O]
 
-  case class Multi[S,T](s: S, t: T) extends MultiT[S, T, String]
+  case class Multi[S, T](s: S, t: T) extends MultiT[S, T, String]
 
-  case class Multi2[S,T](s: S, t: T) extends MultiT[S, T, String]
+  case class Multi2[S, T](s: S, t: T) extends MultiT[S, T, String]
 
   override def tests = Tests {
     'CaseClasses - {
       'Case1 {
         val bb = Pickle.intoBytes(Test1(5, "Hello!"))
-        val u = Unpickle[Test1].fromBytes(bb)
+        val u  = Unpickle[Test1].fromBytes(bb)
         assert(bb.limit == 1 + 1 + 7 - 1)
         assert(u == Test1(5, "Hello!"))
       }
@@ -110,8 +110,8 @@ object ShapelessPickleTests extends TestSuite {
       }
       'AbstractClass {
         val t: List[AClass] = List(AB(5), AB(2))
-        val bb             = Pickle.intoBytes(t)
-        val u              = Unpickle[List[AClass]].fromBytes(bb)
+        val bb              = Pickle.intoBytes(t)
+        val u               = Unpickle[List[AClass]].fromBytes(bb)
         assert(u == t)
       }
       'AbstractClass2 {
@@ -121,9 +121,9 @@ object ShapelessPickleTests extends TestSuite {
         assert(u == t)
       }
       'CaseTupleList {
-        val x = A(List(B(List(Tuple2(2.0, 1.0)))))
+        val x  = A(List(B(List(Tuple2(2.0, 1.0)))))
         val bb = Pickle.intoBytes(x)
-        val u = Unpickle[A].fromBytes(bb)
+        val u  = Unpickle[A].fromBytes(bb)
         assert(x == u)
       }
       'CaseTupleList2 {
@@ -164,9 +164,9 @@ object ShapelessPickleTests extends TestSuite {
         assert(x == u)
       }
       'MultipleGenerics {
-        val x: MultiT[Int,Double,String] = Multi[Int,Double](1, 2.0)
-        val bb                 = Pickle.intoBytes(x)
-        val u                  = Unpickle[MultiT[Int,Double,String]].fromBytes(bb)
+        val x: MultiT[Int, Double, String] = Multi[Int, Double](1, 2.0)
+        val bb                             = Pickle.intoBytes(x)
+        val u                              = Unpickle[MultiT[Int, Double, String]].fromBytes(bb)
         assert(x == u)
       }
     }
