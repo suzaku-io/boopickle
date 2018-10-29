@@ -4,6 +4,21 @@ import scala.reflect.macros.blackbox
 
 object PicklerMaterializersImpl {
 
+  private var logmacro = {
+    val prop = System.getProperty("boopickle.logmacro")
+    prop != null && prop.toLowerCase == "true"
+  }
+  private var stats: Map[String, Int] = Map()
+  private def logStatistics(x: String): Unit = {
+    stats += ((x, 1 + stats.getOrElse(x, 0)))
+    var count = stats(x)
+    if (count == 1) {
+      println(s"Boopickle macro: class: $x")
+    } else {
+      println(s"Boopickle macro: counter: $count, generating: $x")
+    }
+  }
+
   private def pickleSealedTrait(c: blackbox.Context)(tpe: c.universe.Type): c.universe.Tree = {
     import c.universe._
 
@@ -80,7 +95,10 @@ object PicklerMaterializersImpl {
     import c.universe._
 
     val tpe = weakTypeOf[T]
-    // println(s"Generating for $tpe")
+
+    if (logmacro) {
+      logStatistics(tpe.toString)
+    }
 
     if (!tpe.typeSymbol.isClass)
       throw new RuntimeException(s"Enclosure: ${c.enclosingPosition.toString}, type = $tpe")
