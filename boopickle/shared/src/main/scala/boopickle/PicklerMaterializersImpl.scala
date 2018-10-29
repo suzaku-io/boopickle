@@ -9,13 +9,15 @@ object PicklerMaterializersImpl {
     prop != null && prop.toLowerCase == "true"
   }
   private var stats: Map[String, Int] = Map()
+  private var overallCount            = 0
   private def logStatistics(x: String): Unit = {
     stats += ((x, 1 + stats.getOrElse(x, 0)))
+    overallCount += 1
     var count = stats(x)
     if (count == 1) {
-      println(s"Boopickle macro: class: $x")
+      println(s"Boopickle macro: overall: $overallCount, class: $x")
     } else {
-      println(s"Boopickle macro: counter: $count, generating: $x")
+      println(s"Boopickle macro: overall: $overallCount, counter: $count, generating: $x")
     }
   }
 
