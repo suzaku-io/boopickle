@@ -6,7 +6,7 @@ sudo: false
 jdk:
 - oraclejdk8
 - oraclejdk9
-- oraclejdk10
+- openjdk10
 node_js:
 - 8
 script:
