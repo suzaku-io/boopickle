@@ -7,7 +7,7 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % scalaJSVersion)
 
 addSbtPlugin("com.lihaoyi" % "workbench" % "0.4.1")
 
-addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.1")
+addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.2")
 
 addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")
 
