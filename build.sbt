@@ -38,7 +38,10 @@ val commonSettings = Seq(
 val nativeSettings = Seq(
   scalaVersion := "2.11.12",
   crossScalaVersions := Seq("2.11.12"),
-  nativeLinkStubs := true
+  nativeLinkStubs := true,
+  // Disable Scaladoc generation because of:
+  // [error] dropping dependency on node with no phase object: mixin
+  Compile / doc / sources := Seq.empty
 )
 
 val releaseSettings = Seq(
