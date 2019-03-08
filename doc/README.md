@@ -4,14 +4,14 @@
 [![Build Status](https://travis-ci.org/suzaku-io/boopickle.svg?branch=master)](https://travis-ci.org/suzaku-io/boopickle)
 [![Scala.js](https://www.scala-js.org/assets/badges/scalajs-0.6.13.svg)](http://www.scala-js.org)
 
-BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization (aka pickling) library that works on both Scala
-and [Scala.js](http://www.scala-js.org). It encodes into a binary format instead of the more customary JSON. A binary format brings efficiency 
+BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization (aka pickling) library that works on Scala,
+[Scala.js](http://www.scala-js.org) and [Scala Native](http://www.scala-native.org). It encodes into a binary format instead of the more customary JSON. A binary format brings efficiency 
 gains in both size and speed, at the cost of legibility of the encoded data. BooPickle borrows heavily from both [uPickle](https://github.com/lihaoyi/upickle-pprint)
 and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li Haoyi and Ben Hutchison for those two great libraries!
 
 ## Features
 
-- Supports both Scala and Scala.js (no reflection!)
+- Supports Scala, Scala.js and Scala Native (no reflection!)
 - Serialization support for all primitives, collections, options, tuples and case classes (including class hierarchies)
 - User-definable custom serializers
 - Transforming serializers to simplify serializing non-case classes

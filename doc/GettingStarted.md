@@ -1,10 +1,10 @@
 # Getting started
 
-Add following dependency declaration to your Scala project 
+Add following dependency declaration to your Scala project:
 
 <pre><code class="lang-scala">"io.suzaku" %% "boopickle" % "{{ book.version }}"</code></pre>
 
-On a Scala.js project the dependency looks like this
+On a Scala.js or a Scala Native project the dependency looks like this:
 
 <pre><code class="lang-scala">"io.suzaku" %%% "boopickle" % "{{ book.version }}"</code></pre>
 
@@ -31,7 +31,7 @@ val helloWorld = Unpickle[Seq[String]].fromBytes(buf)
 
 ## Supported types
 
-BooPickle has built-in support for most of the regular Scala types, including
+BooPickle has built-in support for most of the regular Scala types, including:
 
 - primitives: `Boolean`, `Byte`, `Short`, `Char`, `Int`, `Long`, `Float`, `Double` and `String`
 - common types: `Tuple`s, `Option`, `Either`, `Duration`, `UUID`, `BigInt`, `BigDecimal` and `ByteBuffer`
