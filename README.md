@@ -73,4 +73,4 @@ BooPickle was created and is maintained by [Otto Chrons](https://github.com/ochr
 
 Special thanks to Li Haoyi and Ben Hutchison for their pickling libraries, which provided more than inspiration to BooPickle.
 
-Contributors: @japgolly, @FlorianKirmaier, @guersam, @akshaal, @cquiroz, @cornerman, @notxcain
+Contributors: @japgolly, @FlorianKirmaier, @guersam, @akshaal, @cquiroz, @cornerman, @notxcain, @lolgab
