@@ -30,9 +30,18 @@ val commonSettings = Seq(
   Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "utest" % "0.6.5" % "test",
+    "com.lihaoyi" %%% "utest" % "0.6.6" % Test,
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
+)
+
+val nativeSettings = Seq(
+  scalaVersion := "2.11.12",
+  crossScalaVersions := Seq("2.11.12"),
+  nativeLinkStubs := true,
+  // Disable Scaladoc generation because of:
+  // [error] dropping dependency on node with no phase object: mixin
+  Compile / doc / sources := Seq.empty
 )
 
 val releaseSettings = Seq(
@@ -90,7 +99,7 @@ def preventPublication(p: Project) =
     packagedArtifacts := Map.empty
   )
 
-lazy val boopickle = crossProject(JSPlatform, JVMPlatform)
+lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(
@@ -98,12 +107,13 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform)
   )
   .jsSettings(sourceMapSettings)
   .jvmSettings()
+  .nativeSettings(nativeSettings)
 
 lazy val boopickleJS = boopickle.js
-
 lazy val boopickleJVM = boopickle.jvm
+lazy val boopickleNative = boopickle.native
 
-lazy val shapeless = crossProject(JSPlatform, JVMPlatform)
+lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .dependsOn(boopickle)
   .settings(commonSettings)
@@ -116,10 +126,11 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform)
   )
   .jsSettings(sourceMapSettings)
   .jvmSettings()
+  .nativeSettings(nativeSettings)
 
 lazy val shapelessJS = shapeless.js
-
 lazy val shapelessJVM = shapeless.jvm
+lazy val shapelessNative = shapeless.native
 
 lazy val generateTuples = taskKey[Unit]("Generates source code for pickling tuples")
 
@@ -166,13 +177,13 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
       "io.circe"          %%% "circe-parser"  % "0.9.2",
       "io.circe"          %%% "circe-generic" % "0.9.2"
     ),
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
   )
   .enablePlugins(JmhPlugin)
   .jsSettings(
     scalaJSOptimizerOptions in (Compile, fullOptJS) ~= { _.withUseClosureCompiler(false) },
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "0.9.5",
+      "org.scala-js" %%% "scalajs-dom" % "0.9.6",
       "com.lihaoyi"  %%% "scalatags"   % "0.6.7"
     )
   )
@@ -187,4 +198,4 @@ lazy val perftestsJVM = preventPublication(perftests.jvm)
 
 lazy val booPickleRoot = preventPublication(project.in(file(".")))
   .settings(commonSettings)
-  .aggregate(boopickleJS, boopickleJVM, shapelessJS, shapelessJVM)
+  .aggregate(boopickleJS, boopickleJVM, boopickleNative, shapelessJS, shapelessJVM, shapelessNative)

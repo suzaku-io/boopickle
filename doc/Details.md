@@ -43,11 +43,11 @@ implicit object PersonPickler extends Pickler[Person] {
 }
 ```
 
-This would be very tedious, which is why practically all serialization libraries use either reflection or macros to automate this task. BooPickle
-being fully compatible with Scala.js, reflection is not an option, so macros it is. Programming macros in Scala is quite difficult, because it's a very
-recent addition to the Scala compiler and the documentation tends to be terse and somewhat cryptic. Also many examples found in the net are already
-obsolete or wrong if you use Scala 2.11. Best course of action is to look at existing macro code and try to deduce what's going on. Both
-uPickle and Prickle provided good base for BooPickle's macros.
+This would be very tedious, which is why practically all serialization libraries use either reflection or macros to automate this task. Being fully
+compatible with Scala.js and Scala Native, BooPickle can't use reflection, so it uses macros. Programming macros in Scala is quite difficult, because
+it's a very recent addition to the Scala compiler and the documentation tends to be terse and somewhat cryptic. Also many examples found in the
+net are already obsolete or wrong if you use Scala 2.11. Best course of action is to look at existing macro code and try to deduce what's going on.
+Both uPickle and Prickle provided good base for BooPickle's macros.
 
 The macro-generated picklers are provided by a separate trait to make sure they are the last resort the compiler turns to.
 

@@ -21,7 +21,7 @@ object EmptyIdentMap extends IdentMap {
 
 private[boopickle] final class IdentMap1(o1: AnyRef) extends IdentMap {
   override def apply(obj: AnyRef): Option[Int] = {
-    if (obj eq o1)
+    if (ReferenceEquality.eq(obj, o1))
       Some(2)
     else None
   }
@@ -31,9 +31,9 @@ private[boopickle] final class IdentMap1(o1: AnyRef) extends IdentMap {
 
 private[boopickle] final class IdentMap2(o1: AnyRef, o2: AnyRef) extends IdentMap {
   override def apply(obj: AnyRef): Option[Int] = {
-    if (obj eq o1)
+    if (ReferenceEquality.eq(obj, o1))
       Some(2)
-    else if (obj eq o2)
+    else if (ReferenceEquality.eq(obj, o2))
       Some(3)
     else None
   }
@@ -67,10 +67,10 @@ private[boopickle] final class IdentMap3Plus(o1: AnyRef, o2: AnyRef, o3: AnyRef)
   }
 
   override def apply(obj: AnyRef): Option[Int] = {
-    val hash     = System.identityHashCode(obj)
+    val hash     = ReferenceEquality.identityHashCode(obj)
     val tableIdx = hashIdx(hash)
     var e        = hashTable(tableIdx)
-    while ((e != null) && (e.obj ne obj)) e = e.next
+    while ((e != null) && ReferenceEquality.ne(e.obj, obj)) e = e.next
     if (e == null)
       None
     else
@@ -78,7 +78,7 @@ private[boopickle] final class IdentMap3Plus(o1: AnyRef, o2: AnyRef, o3: AnyRef)
   }
 
   override def updated(obj: AnyRef): IdentMap = {
-    val hash     = System.identityHashCode(obj)
+    val hash     = ReferenceEquality.identityHashCode(obj)
     val tableIdx = hashIdx(hash)
     hashTable(tableIdx) = new Entry(hash, obj, curIdx, hashTable(tableIdx))
     curIdx += 1
