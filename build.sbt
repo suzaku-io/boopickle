@@ -30,7 +30,7 @@ val commonSettings = Seq(
   Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "utest" % "0.6.6" % Test,
+    "com.lihaoyi" %%% "utest" % "0.6.7" % Test,
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
 )
