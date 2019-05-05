@@ -526,7 +526,9 @@ object PickleTests extends TestSuite {
         'arrayOfArray {
           val bb = Pickle.intoBytes(Array(Array(0, 0, 0), Array(1, 1, 1)))
           assert(bb.limit() == 4 + 7 + 7)
-          assert(Unpickle[Array[Array[Int]]].fromBytes(bb).deep == Array(Array(0, 0, 0), Array(1, 1, 1)).deep)
+          assert(
+            java.util.Arrays.deepEquals(Unpickle[Array[Array[Int]]].fromBytes(bb).asInstanceOf[Array[Object]],
+                                        Array(Array(0, 0, 0), Array(1, 1, 1)).asInstanceOf[Array[Object]]))
         }
       }
       'ByteBuffer - {
@@ -1108,7 +1110,9 @@ object PickleTests extends TestSuite {
         'arrayOfArray {
           val bb = Pickle.intoBytes(Array(Array(0, 0, 0), Array(1, 1, 1)))
           assert(bb.limit() == 4 + 4 + 4 * 3 + 4 + 4 * 3)
-          assert(Unpickle[Array[Array[Int]]].fromBytes(bb).deep == Array(Array(0, 0, 0), Array(1, 1, 1)).deep)
+          assert(
+            java.util.Arrays.deepEquals(Unpickle[Array[Array[Int]]].fromBytes(bb).asInstanceOf[Array[Object]],
+                                        Array(Array(0, 0, 0), Array(1, 1, 1)).asInstanceOf[Array[Object]]))
         }
       }
       'ByteBuffer - {
