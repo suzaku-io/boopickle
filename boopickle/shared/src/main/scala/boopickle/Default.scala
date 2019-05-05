@@ -3,14 +3,13 @@ package boopickle
 import java.nio.{ByteBuffer, ByteOrder}
 import java.util.UUID
 
-import scala.collection.generic.CanBuildFrom
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.language.experimental.macros
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 import scala.util.Try
 
-trait BasicImplicitPicklers extends PicklerHelper {
+trait BasicImplicitPicklers extends PicklerHelper with XCompatImplicitPicklers {
   implicit def unitPickler: ConstPickler[Unit]  = BasicPicklers.UnitPickler
   implicit def booleanPickler: P[Boolean]       = BasicPicklers.BooleanPickler
   implicit def bytePickler: P[Byte]             = BasicPicklers.BytePickler
@@ -37,10 +36,6 @@ trait BasicImplicitPicklers extends PicklerHelper {
   implicit def leftPickler[T: P, S: P]: P[Left[T, S]]     = BasicPicklers.LeftPickler[T, S]
   implicit def rightPickler[T: P, S: P]: P[Right[T, S]]   = BasicPicklers.RightPickler[T, S]
   implicit def arrayPickler[T: P: ClassTag]: P[Array[T]]  = BasicPicklers.ArrayPickler[T]
-  implicit def mapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]](
-      implicit cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): P[V[T, S]] = BasicPicklers.MapPickler[T, S, V]
-  implicit def iterablePickler[T: P, V[_] <: Iterable[_]](implicit cbf: CanBuildFrom[Nothing, T, V[T]]): P[V[T]] =
-    BasicPicklers.IterablePickler[T, V]
 }
 
 trait TransformPicklers {
