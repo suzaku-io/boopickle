@@ -16,15 +16,14 @@ val commonSettings = Seq(
     "UTF-8",
     "-feature",
     "-unchecked",
-    "-Xfatal-warnings",
     "-Xlint",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
     "-Ywarn-value-discard"
   ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 13)) => Seq("-Xlint:-unused")
-    case Some((2, 12)) => Seq("-Xfuture", "-Xlint:-unused", "-Yno-adapted-args")
-    case _             => Seq("-Xfuture", "-Yno-adapted-args")
+    case Some((2, 12)) => Seq("-Xfatal-warnings", "-Xfuture", "-Xlint:-unused", "-Yno-adapted-args")
+    case _             => Seq("-Xfatal-warnings", "-Xfuture", "-Yno-adapted-args")
   }),
   Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   unmanagedSourceDirectories in Compile ++= {
