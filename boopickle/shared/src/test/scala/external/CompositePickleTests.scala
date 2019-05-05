@@ -62,7 +62,7 @@ final case class OwnerAttribute(owner: String, parent: Element) extends Attribut
 
 object CompositePickleTests extends TestSuite {
   override def tests = Tests {
-    'CaseClassHierarchySeq {
+    "CaseClassHierarchySeq" - {
       implicit val fruitPickler =
         compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
 
@@ -71,7 +71,7 @@ object CompositePickleTests extends TestSuite {
       val u                  = Unpickle[Seq[Fruit]].fromBytes(bb)
       assert(u == fruits)
     }
-    'CaseClassHierarchy {
+    "CaseClassHierarchy" - {
       implicit val fruitPickler =
         compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
 
@@ -86,7 +86,7 @@ object CompositePickleTests extends TestSuite {
       val bf       = Pickle.intoBytes(f)
       assert(Unpickle[Fruit].fromBytes(bf) == f) // This produces a Fruit
     }
-    'CaseObjects {
+    "CaseObjects" - {
       implicit val errorPickler =
         compositePickler[Error]
           .addConcreteType[InvalidName.type]
@@ -97,27 +97,27 @@ object CompositePickleTests extends TestSuite {
       val u                          = Unpickle[Map[Error, String]].fromBytes(bb)
       assert(u == errors)
     }
-    'Recursive {
+    "Recursive" - {
       val tree: Tree = Node(1, Seq(Node(2, Seq(Leaf, Node(3, Seq(Leaf, Leaf)), Node(5, Seq(Leaf, Leaf))))))
       val bb         = Pickle.intoBytes(tree)
       val u          = Unpickle[Tree].fromBytes(bb)
       assert(u == tree)
     }
-    'Complex {
+    "Complex" - {
       val doc        = WordDocument("Testing")
       val q: Element = OwnerAttribute("me", doc)
       val bb         = Pickle.intoBytes(q)
       val u          = Unpickle[Element].fromBytes(bb)
       assert(u == q)
     }
-    'Transformers {
+    "Transformers" - {
       implicit val datePickler = transformPickler((t: Long) => new java.util.Date(t))(_.getTime)
       val date                 = new java.util.Date()
       val bb                   = Pickle.intoBytes(date)
       val d                    = Unpickle[java.util.Date].fromBytes(bb)
       assert(d == date)
     }
-    'Exceptions {
+    "Exceptions" - {
       implicit val exPickler = exceptionPickler
 
       val exs: Seq[Throwable] = Seq(
@@ -129,7 +129,7 @@ object CompositePickleTests extends TestSuite {
       val e  = Unpickle[Seq[Throwable]].fromBytes(bb)
       assert(e.zip(exs).forall(x => x._1.getMessage == x._2.getMessage && x._1.getClass == x._2.getClass))
     }
-    'AddClassTwice {
+    "AddClassTwice" - {
       intercept[IllegalArgumentException] {
         compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Banana]
       }

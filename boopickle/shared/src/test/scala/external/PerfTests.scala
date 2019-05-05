@@ -8,7 +8,7 @@ import utest._
 
 object PerfTests extends TestSuite {
   def tests = Tests {
-    'Performance - {
+    "Performance" - {
       case class Test(i: Int, s: String)
       // generate data
       val template = (0 until 500).map(i => Test(i, (i / 2).toString * 20))
@@ -34,12 +34,12 @@ object PerfTests extends TestSuite {
         println(s"Data size ${bb.capacity()}")
         assert(uData == data)
       }
-      'Deduplication {
+      "Deduplication" - {
         dedupTest("With dedup",
                   new PickleState(new EncoderSize, true, true),
                   bb => new UnpickleState(new DecoderSize(bb), true, true))
       }
-      'NoDeduplication {
+      "NoDeduplication" - {
         dedupTest("Without dedup",
                   new PickleState(new EncoderSize, false, false),
                   bb => new UnpickleState(new DecoderSize(bb), false, false))

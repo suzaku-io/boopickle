@@ -11,7 +11,7 @@ import boopickle.Default._
 object BufferProviderTests extends TestSuite {
 
   override def tests = Tests {
-    'asByteBuffersProperOrder {
+    "asByteBuffersProperOrder" - {
 
       val input: Seq[Banana] = Iterator.tabulate(1000)(_ => Banana(Random.nextDouble)).toVector
       val bbs                = Pickle.intoByteBuffers(input)
