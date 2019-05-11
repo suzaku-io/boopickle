@@ -8,7 +8,7 @@ ThisBuild / scalafmtOnCompile := true
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
-  crossScalaVersions := Seq("2.11.12", "2.12.6"),
+  crossScalaVersions := Seq("2.11.12", "2.12.6", "2.13.0-RC1"),
   scalaVersion in ThisBuild := "2.12.6",
   scalacOptions := Seq(
     "-deprecation",
@@ -16,21 +16,27 @@ val commonSettings = Seq(
     "UTF-8",
     "-feature",
     "-unchecked",
-    "-Xfatal-warnings",
     "-Xlint",
-    "-Yno-adapted-args",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
-    "-Ywarn-value-discard",
-    "-Xfuture"
+    "-Ywarn-value-discard"
   ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, 12)) => Seq("-Xlint:-unused")
-    case _             => Nil
+    case Some((2, 13)) => Seq("-Xlint:-unused")
+    case Some((2, 12)) => Seq("-Xfatal-warnings", "-Xfuture", "-Xlint:-unused", "-Yno-adapted-args")
+    case _             => Seq("-Xfatal-warnings", "-Xfuture", "-Yno-adapted-args")
   }),
   Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
+  unmanagedSourceDirectories in Compile ++= {
+    (unmanagedSourceDirectories in Compile).value.map { dir =>
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 13)) => file(dir.getPath ++ "-2.13+")
+        case _             => file(dir.getPath ++ "-2.13-")
+      }
+    }
+  },
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "utest" % "0.6.6" % Test,
+    "com.lihaoyi" %%% "utest" % "0.6.7" % Test,
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
 )

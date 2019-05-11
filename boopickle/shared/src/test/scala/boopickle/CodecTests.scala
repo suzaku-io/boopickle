@@ -40,12 +40,12 @@ object CodecTests extends TestSuite {
   }
 
   override def tests = Tests {
-    'Byte - {
+    "Byte" - {
       val data = Seq[Byte](0, 1, -128, 127, -1)
       runCodec[Byte](data, (e, x) => { e.writeByte(x); () }, (d, x) => d.readByte == x)
     }
 
-    'Int - {
+    "Int" - {
       val data = Seq(
         0,
         1,
@@ -73,7 +73,7 @@ object CodecTests extends TestSuite {
       runCodec[Int](data, (e, x) => { e.writeInt(x); () }, (d, x) => d.readInt == x)
     }
 
-    'Long - {
+    "Long" - {
       val data = Seq[Long](0,
                            1,
                            -1,
@@ -93,29 +93,29 @@ object CodecTests extends TestSuite {
       runCodec[Long](data, (e, x) => { e.writeLong(x); () }, (d, x) => d.readLong == x)
     }
 
-    'Float - {
+    "Float" - {
       val data =
         Seq[Float](0.0f, 1.0f, -0.5f, Float.MaxValue, Float.MinValue, Float.NegativeInfinity, Float.PositiveInfinity)
       runCodec[Float](data, (e, x) => { e.writeFloat(x); () }, (d, x) => d.readFloat == x)
     }
 
-    'Double - {
+    "Double" - {
       val data =
         Seq[Double](0.0, 1.0, -0.5, Double.MaxValue, Double.MinValue, Double.NegativeInfinity, Double.PositiveInfinity)
       runCodec[Double](data, (e, x) => { e.writeDouble(x); () }, (d, x) => d.readDouble == x)
     }
 
-    'Char - {
+    "Char" - {
       val data = Seq[Char](' ', 'A', 'Ö', '叉', '€')
       runCodec[Char](data, (e, x) => { e.writeChar(x); () }, (d, x) => d.readChar == x)
     }
 
-    'String - {
+    "String" - {
       val data = Seq[String]("", "A", "叉", "Normal String", "Arabic ڞ", "Complex \uD840\uDC00\uD841\uDDA7")
       runCodec[String](data, (e, x) => { e.writeString(x); () }, (d, x) => d.readString == x)
     }
 
-    'ByteBuffer - {
+    "ByteBuffer" - {
       val bb = ByteBuffer.allocateDirect(256)
       for (i <- 0 until 256) bb.put(i.toByte)
       bb.flip
@@ -127,28 +127,28 @@ object CodecTests extends TestSuite {
       assert(y.compareTo(bb) == 0)
     }
 
-    'ByteArray - {
+    "ByteArray" - {
       val ba = Seq(Array[Byte](0, 127, -128, -1, 1), Array[Byte]())
       runCodec[Array[Byte]](ba, (e, x) => { e.writeByteArray(x); () }, (d, x) => d.readByteArray.sameElements(x))
     }
 
-    'IntArray - {
+    "IntArray" - {
       val ba = Seq(Array[Int](0, Int.MaxValue, Int.MinValue, -1, 1, 256, 65536), Array[Int]())
       runCodec[Array[Int]](ba, (e, x) => { e.writeIntArray(x); () }, (d, x) => d.readIntArray.sameElements(x))
     }
 
-    'FloatArray - {
+    "FloatArray" - {
       val ba = Seq(Array[Float](0, Float.MaxValue, Float.MinValue, -1, 1, 256.0f, 65536.0f), Array[Float]())
       runCodec[Array[Float]](ba, (e, x) => { e.writeFloatArray(x); () }, (d, x) => d.readFloatArray.sameElements(x))
     }
 
-    'DoubleArray - {
+    "DoubleArray" - {
       val ba = Seq(Array[Double](0, Double.MaxValue, Double.MinValue, -1, 1, 256.0, 65536.0), Array[Double]())
       runCodec[Array[Double]](ba, (e, x) => { e.writeDoubleArray(x); () }, (d, x) => d.readDoubleArray.sameElements(x))
     }
 
-    'StringEncoding - {
-      'all {
+    "StringEncoding" - {
+      "all" - {
         val cp    = Array.tabulate[Char](65536)(i => i.toChar)
         val str   = new String(cp)
         val codec = new StringCodecFast {}
@@ -162,7 +162,7 @@ object CodecTests extends TestSuite {
           i += 1
         }
       }
-      'unicode {
+      "unicode" - {
         val str   = "\u0c64\u866f\u6a55\ufffd"
         val codec = new StringCodecFast {}
         val bb    = ByteBuffer.allocate(str.length * 3)

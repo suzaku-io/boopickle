@@ -7,7 +7,7 @@ import utest._
 object BufferPoolTestsJVM extends TestSuite {
 
   override def tests = Tests {
-    'MultiThread {
+    "MultiThread" - {
       val pool  = BufferPool
       val count = 100000
       def runner = new Runnable {

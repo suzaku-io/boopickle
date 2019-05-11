@@ -31,7 +31,7 @@ object DefaultBasicTests extends TestSuite {
   }
 
   override def tests = Tests {
-    'Trait {
+    "Trait" - {
       val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
       val bb              = Pickle.intoBytes(t)
       val u               = Unpickle[Seq[MyTrait]].fromBytes(bb)

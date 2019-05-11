@@ -71,13 +71,13 @@ object MacroPickleTests extends TestSuite {
   override def tests = Tests {
     // must import pickler from the companion object, otherwise scalac will try to use a macro to generate it
     import MyTrait._
-    'CaseClasses - {
-      'Case1 {
+    "CaseClasses" - {
+      "Case1" - {
         val bb = Pickle.intoBytes(Test1(5, "Hello!"))
         assert(bb.limit() == 1 + 1 + 7)
         assert(Unpickle[Test1].fromBytes(bb) == Test1(5, "Hello!"))
       }
-      'SeqCase {
+      "SeqCase" - {
         implicit def pstate                              = new PickleState(new EncoderSize, true)
         implicit def ustate: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSize(b), true)
         val t                                            = Test1(99, "Hello!")
@@ -87,90 +87,90 @@ object MacroPickleTests extends TestSuite {
         val u = Unpickle[Seq[Test1]].fromBytes(bb)
         assert(u == s)
       }
-      'Recursive {
+      "Recursive" - {
         val t  = List(Test2(1, Some(Test2(2, Some(Test2(3, None))))))
         val bb = Pickle.intoBytes(t)
         assert(bb.limit() == 13)
         val u = Unpickle[List[Test2]].fromBytes(bb)
         assert(u == t)
       }
-      'CaseObject {
+      "CaseObject" - {
         val bb = Pickle.intoBytes(TestO)
         // yea, pickling a case object takes no space at all :)
         assert(bb.limit() == 0)
         val u = Unpickle[TestO.type].fromBytes(bb)
         assert(u == TestO)
       }
-      'Trait {
+      "Trait" - {
         val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
         val bb              = Pickle.intoBytes(t)
         val u               = Unpickle[Seq[MyTrait]].fromBytes(bb)
         assert(u == t)
       }
-      'TraitToo {
+      "TraitToo" - {
         // the same test code twice, to check that additional .class files are not generated for the MyTrait pickler
         val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
         val bb              = Pickle.intoBytes(t)
         val u               = Unpickle[Seq[MyTrait]].fromBytes(bb)
         assert(u == t)
       }
-      'AbstractClass {
+      "AbstractClass" - {
         val t: Seq[AClass] = Seq(AB(5), AB(2))
         val bb             = Pickle.intoBytes(t)
         val u              = Unpickle[Seq[AClass]].fromBytes(bb)
         assert(u == t)
       }
-      'AbstractClass2 {
+      "AbstractClass2" - {
         val t: Seq[Version] = Seq(V1, V2)
         val bytes           = Pickle.intoBytes(t)
         val u               = Unpickle[Seq[Version]].fromBytes(bytes)
         assert(u == t)
       }
-      'CaseTupleList {
+      "CaseTupleList" - {
         // this won't compile due to "diverging implicits"
         // val x = A(List(B(List(Tuple2(2.0, 1.0)))))
         // val bb = Pickle.intoBytes(x)
         // val u = Unpickle[A].fromBytes(bb)
         // assert(x == u)
       }
-      'CaseTupleList2 {
+      "CaseTupleList2" - {
         implicit val bPickler = generatePickler[B]
         val x                 = A(List(B(List((2.0, 3.0)))))
         val bb                = Pickle.intoBytes(x)
         val u                 = Unpickle[A].fromBytes(bb)
         assert(x == u)
       }
-      'CaseTupleList3 {
+      "CaseTupleList3" - {
         val x  = List(B(List((2.0, 3.0))))
         val bb = Pickle.intoBytes(x)
         val u  = Unpickle[List[B]].fromBytes(bb)
         assert(x == u)
       }
-      'CaseGenericTraitAndCaseclass {
+      "CaseGenericTraitAndCaseclass" - {
         val x: A1Trait[Int] = A1[Int](2)
         val bb              = Pickle.intoBytes(x)
         val u               = Unpickle[A1Trait[Int]].fromBytes(bb)
         assert(x == u)
       }
-      'CaseGenericTraitAndCaseclass2 {
+      "CaseGenericTraitAndCaseclass2" - {
         val x: A1Trait[Double] = A1[Double](2.0)
         val bb                 = Pickle.intoBytes(x)
         val u                  = Unpickle[A1Trait[Double]].fromBytes(bb)
         assert(x == u)
       }
-      'ValueClass {
+      "ValueClass" - {
         val x: ValueClass = ValueClass(3)
         val bb            = Pickle.intoBytes(x)
         val u             = Unpickle[ValueClass].fromBytes(bb)
         assert(x == u)
       }
-      'TraitAndValueClass {
+      "TraitAndValueClass" - {
         val x: ValueTrait[Int] = new ValueTraitClass[Int](3)
         val bb                 = Pickle.intoBytes(x)
         val u                  = Unpickle[ValueTrait[Int]].fromBytes(bb)
         assert(x == u)
       }
-      'MultipleGenerics {
+      "MultipleGenerics" - {
         val x: MultiT[Int, Double, String] = Multi[Int, Double](1, 2.0)
         val bb                             = Pickle.intoBytes(x)
         val u                              = Unpickle[MultiT[Int, Double, String]].fromBytes(bb)
