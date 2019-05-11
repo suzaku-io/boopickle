@@ -96,7 +96,6 @@ object ExceptionPickler {
     .addException[Exception](m => new Exception(m))
     .addException[RuntimeException](m => new RuntimeException(m))
     .addException[MatchError](m => new MatchError(m))
-    .addException[UninitializedError](_ => new UninitializedError)
     .addException[UninitializedFieldError](m => new UninitializedFieldError(m))
     .addException[NullPointerException](m => new NullPointerException(m))
     .addException[ClassCastException](m => new ClassCastException(m))
