@@ -12,7 +12,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 
 ## Features
 
-- Supports both Scala and Scala.js (no reflection!)
+- Supports both Scala, Scala Native and Scala.js (no reflection!)
 - Serialization support for all primitives, collections, options, tuples and case classes (including class hierarchies)
 - User-definable custom serializers
 - Transforming serializers to simplify serializing non-case classes
@@ -21,7 +21,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 - Very efficient coding
 - Low memory usage, no intermediate structures needed
 - Zero dependencies
-- Scala 2.11/2.12
+- Scala 2.11/2.12/2.13
 - All modern browsers are supported (not IE9 and below, though)
 
 ## Getting started
@@ -29,13 +29,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"io.suzaku" %% "boopickle" % "1.3.0"
+"io.suzaku" %% "boopickle" % "1.3.1"
 ```
 
-On a Scala.js project the dependency looks like this
+On a Scala.js / Scala Native project the dependency looks like this
 
 ```scala
-"io.suzaku" %%% "boopickle" % "1.3.0"
+"io.suzaku" %%% "boopickle" % "1.3.1"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
@@ -73,4 +73,4 @@ BooPickle was created and is maintained by [Otto Chrons](https://github.com/ochr
 
 Special thanks to Li Haoyi and Ben Hutchison for their pickling libraries, which provided more than inspiration to BooPickle.
 
-Contributors: @japgolly, @FlorianKirmaier, @guersam, @akshaal, @cquiroz, @cornerman, @notxcain, @lolgab
+Contributors: @japgolly, @FlorianKirmaier, @guersam, @akshaal, @cquiroz, @cornerman, @notxcain, @lolgab, @Philippus
