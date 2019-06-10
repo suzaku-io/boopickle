@@ -36,7 +36,10 @@ val commonSettings = Seq(
   },
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "utest" % "0.6.7" % Test,
+    if (scalaVersion.value.startsWith("2.11"))
+      "com.lihaoyi" %%% "utest" % "0.6.8" % Test
+    else
+      "com.lihaoyi" %%% "utest" % "0.6.9" % Test,
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
 )
