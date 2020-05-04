@@ -5,8 +5,8 @@ scala:
 - 2.13.0
 sudo: false
 jdk:
-- oraclejdk8
-- oraclejdk9
+- openjdk8
+- openjdk9
 - openjdk10
 node_js:
 - 8
