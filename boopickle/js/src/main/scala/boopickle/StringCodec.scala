@@ -38,7 +38,7 @@ object StringCodec extends StringCodecBase {
     val te = new TextEncoder
     // use native TextEncoder
     (str: String) =>
-      new Int8Array(te.encode(str))
+      new Int8Array(te.encode(str).buffer)
   }
 
   private lazy val utf16decoder: (Uint16Array) => String = {
