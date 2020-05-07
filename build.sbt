@@ -8,8 +8,8 @@ ThisBuild / scalafmtOnCompile := true
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
-  crossScalaVersions := Seq("2.11.12", "2.12.11", "2.13.0"),
-  scalaVersion in ThisBuild := "2.12.11",
+  crossScalaVersions := Seq("2.12.11", "2.13.2"),
+  scalaVersion in ThisBuild := "2.13.2",
   scalacOptions := Seq(
     "-deprecation",
     "-encoding",
@@ -36,22 +36,18 @@ val commonSettings = Seq(
   },
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-    if (scalaVersion.value.startsWith("2.11"))
-      "com.lihaoyi" %%% "utest" % "0.6.8" % Test
-    else
-      "com.lihaoyi" %%% "utest" % "0.7.4" % Test,
+     "com.lihaoyi" %%% "utest" % "0.7.4" % Test,
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
 )
 
-val nativeSettings = Seq(
-  scalaVersion := "2.11.12",
-  crossScalaVersions := Seq("2.11.12"),
+/*val nativeSettings = Seq(
   nativeLinkStubs := true,
+  scalaVersion in ThisBuild := "2.11.12",
   // Disable Scaladoc generation because of:
   // [error] dropping dependency on node with no phase object: mixin
   Compile / doc / sources := Seq.empty
-)
+)*/
 
 val releaseSettings = Seq(
   scmInfo := Some(
@@ -116,11 +112,11 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jsSettings(sourceMapSettings)
   .jvmSettings()
-  .nativeSettings(nativeSettings)
+  //.nativeSettings(nativeSettings)
 
 lazy val boopickleJS = boopickle.js
 lazy val boopickleJVM = boopickle.jvm
-lazy val boopickleNative = boopickle.native
+//lazy val boopickleNative = boopickle.native
 
 lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -135,11 +131,11 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jsSettings(sourceMapSettings)
   .jvmSettings()
-  .nativeSettings(nativeSettings)
+  //.nativeSettings(nativeSettings)
 
 lazy val shapelessJS = shapeless.js
 lazy val shapelessJVM = shapeless.jvm
-lazy val shapelessNative = shapeless.native
+//lazy val shapelessNative = shapeless.native
 
 lazy val generateTuples = taskKey[Unit]("Generates source code for pickling tuples")
 
@@ -207,4 +203,4 @@ lazy val perftestsJVM = preventPublication(perftests.jvm)
 
 lazy val booPickleRoot = preventPublication(project.in(file(".")))
   .settings(commonSettings)
-  .aggregate(boopickleJS, boopickleJVM, boopickleNative, shapelessJS, shapelessJVM, shapelessNative)
+  .aggregate(boopickleJS, boopickleJVM, /*boopickleNative,*/ shapelessJS, shapelessJVM /*, shapelessNative*/)
