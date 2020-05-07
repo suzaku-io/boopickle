@@ -1,6 +1,5 @@
 language: scala
 scala:
-- 2.11.12
 - 2.12.8
 - 2.13.0
 sudo: false
@@ -13,7 +12,7 @@ node_js:
 before_script:
   - curl https://raw.githubusercontent.com/scala-native/scala-native/master/scripts/travis_setup.sh | bash -x
 script:
-- sbt ++$TRAVIS_SCALA_VERSION boopickleJVM/test boopickleJS/test boopickleNative/test shapelessJVM/test shapelessJS/test shapelessNative/test
+- sbt ++$TRAVIS_SCALA_VERSION boopickleJVM/test boopickleJS/test shapelessJVM/test shapelessJS/test
 # Tricks to avoid unnecessary cache updates, from
 # http://www.scala-sbt.org/0.13/docs/Travis-CI-with-sbt.html
 - find $HOME/.sbt -name "*.lock" | xargs rm
