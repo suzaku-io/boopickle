@@ -3,7 +3,7 @@
 [![Join the chat at https://gitter.im/ochrons/boopickle](https://badges.gitter.im/suzaku-io/boopickle.svg)](https://gitter.im/suzaku-io/boopickle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 [![Build Status](https://travis-ci.org/suzaku-io/boopickle.svg?branch=master)](https://travis-ci.org/suzaku-io/boopickle)
-[![Scala.js](https://www.scala-js.org/assets/badges/scalajs-0.6.17.svg)](http://www.scala-js.org)
+[![Scala.js](https://www.scala-js.org/assets/badges/scalajs-1.0.0.svg)](http://www.scala-js.org)
 
 BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization (aka pickling) library that works on both Scala
 and [Scala.js](http://www.scala-js.org). It encodes into a binary format instead of the more customary JSON. A binary format brings efficiency 
@@ -21,7 +21,7 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 - Very efficient coding
 - Low memory usage, no intermediate structures needed
 - Zero dependencies
-- Scala 2.11/2.12/2.13
+- Scala 2.12/2.13
 - All modern browsers are supported (not IE9 and below, though)
 
 ## Getting started
@@ -29,13 +29,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"io.suzaku" %% "boopickle" % "1.3.1"
+"io.suzaku" %% "boopickle" % "1.3.2"
 ```
 
 On a Scala.js / Scala Native project the dependency looks like this
 
 ```scala
-"io.suzaku" %%% "boopickle" % "1.3.1"
+"io.suzaku" %%% "boopickle" % "1.3.2"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
