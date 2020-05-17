@@ -38,7 +38,7 @@ abstract class ByteBufferProvider extends BufferProvider {
 
   final private def newBuffer(size: Int): Unit = {
     // flip current buffer (prepare for reading and set limit)
-    currentBuf.flip()
+    Java8BufferCompat.flip(currentBuf)
     buffers = currentBuf :: buffers
     // replace current buffer with the new one, align to 16-byte border for small sizes
     currentBuf = allocate((math.max(size, expandSize) & ~15) + 16)
@@ -51,7 +51,7 @@ abstract class ByteBufferProvider extends BufferProvider {
   }
 
   def asByteBuffer = {
-    currentBuf.flip()
+    Java8BufferCompat.flip(currentBuf)
     if (buffers.isEmpty)
       currentBuf
     else {
@@ -59,13 +59,13 @@ abstract class ByteBufferProvider extends BufferProvider {
       // create a new buffer and combine all buffers into it
       val comb = allocate(bufList.map(_.limit()).sum)
       bufList.foreach(buf => comb.put(buf))
-      comb.flip()
+      Java8BufferCompat.flip(comb)
       comb
     }
   }
 
   def asByteBuffers = {
-    currentBuf.flip()
+    Java8BufferCompat.flip(currentBuf)
     (currentBuf :: buffers).reverse.toVector
   }
 }
@@ -84,7 +84,7 @@ class HeapByteBufferProvider extends ByteBufferProvider {
   }
 
   override def asByteBuffer = {
-    currentBuf.flip()
+    Java8BufferCompat.flip(currentBuf)
     if (buffers.isEmpty)
       currentBuf
     else {
@@ -94,11 +94,11 @@ class HeapByteBufferProvider extends ByteBufferProvider {
       bufList.foreach { buf =>
         // use fast array copy
         java.lang.System.arraycopy(buf.array, buf.arrayOffset, comb.array, comb.position(), buf.limit())
-        comb.position(comb.position() + buf.limit())
+        Java8BufferCompat.position(comb, comb.position() + buf.limit())
         // release to the pool
         pool.release(buf)
       }
-      comb.flip()
+      Java8BufferCompat.flip(comb)
       comb
     }
   }
@@ -113,7 +113,7 @@ class DirectByteBufferProvider extends ByteBufferProvider {
   }
 
   override def asByteBuffer = {
-    currentBuf.flip()
+    Java8BufferCompat.flip(currentBuf)
     if (buffers.isEmpty)
       currentBuf
     else {
@@ -125,7 +125,7 @@ class DirectByteBufferProvider extends ByteBufferProvider {
         // release to the pool
         pool.release(buf)
       }
-      comb.flip()
+      Java8BufferCompat.flip(comb)
       comb
     }
   }

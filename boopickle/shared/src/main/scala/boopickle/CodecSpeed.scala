@@ -326,12 +326,12 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
     * @return
     */
   def writeByteBuffer(bb: ByteBuffer): Encoder = {
-    bb.mark()
+    Java8BufferCompat.mark(bb)
     val byteOrder = if (bb.order() == ByteOrder.BIG_ENDIAN) 1 else 0
     // encode byte order as bit 0 in the length
     writeInt(bb.remaining * 2 | byteOrder)
     alloc(bb.remaining).put(bb)
-    bb.reset()
+    Java8BufferCompat.reset(bb)
     this
   }
 

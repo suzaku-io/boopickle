@@ -84,7 +84,7 @@ object BufferPool {
             val rNext = (rIdx + 1) % entryCount
             if (rNext != aIdx) {
               // try to release the buffer
-              bb.clear()
+              Java8BufferCompat.clear(bb)
               pool1(rNext) = bb
               releaseIdx1.compareAndSet(rIdx, rNext)
             }
@@ -94,7 +94,7 @@ object BufferPool {
             val rNext = (rIdx + 1) % entryCount
             if (rNext != aIdx) {
               // try to release the buffer
-              bb.clear()
+              Java8BufferCompat.clear(bb)
               pool0(rNext) = bb
               releaseIdx0.compareAndSet(rIdx, rNext)
             }
