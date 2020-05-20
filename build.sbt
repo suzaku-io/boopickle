@@ -24,7 +24,7 @@ val commonSettings = Seq(
     case Some((2, 13)) => Seq("-Xlint:-unused")
     case Some((2, 12)) => Seq("-Xfatal-warnings", "-Xfuture", "-Xlint:-unused", "-Yno-adapted-args")
     case _             => Seq("-Xfatal-warnings", "-Xfuture", "-Yno-adapted-args")
-  }),
+  }) ++ (if (scala.util.Properties.javaVersion.startsWith("1.8")) Nil else Seq("-release", "8")),
   Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   unmanagedSourceDirectories in Compile ++= {
     (unmanagedSourceDirectories in Compile).value.map { dir =>
