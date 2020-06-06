@@ -1,9 +1,12 @@
 import sbt._
 import Keys._
-import com.typesafe.sbt.pgp.PgpKeys._
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 ThisBuild / scalafmtOnCompile := true
+
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
+val customScalaJSVersion = Option(System.getenv("SCALAJS_VERSION"))
 
 val commonSettings = Seq(
   organization := "io.suzaku",
@@ -41,46 +44,25 @@ val commonSettings = Seq(
   )
 )
 
-/*val nativeSettings = Seq(
-  nativeLinkStubs := true,
-  scalaVersion in ThisBuild := "2.11.12",
-  // Disable Scaladoc generation because of:
-  // [error] dropping dependency on node with no phase object: mixin
-  Compile / doc / sources := Seq.empty
-)*/
-
-val releaseSettings = Seq(
-  scmInfo := Some(
-    ScmInfo(url("https://github.com/suzaku-io/boopickle"),
-            "scm:git:git@github.com:suzaku-io/boopickle.git",
-            Some("scm:git:git@github.com:suzaku-io/boopickle.git"))),
-  publishMavenStyle := true,
-  publishArtifact in Test := false,
-  pomExtra :=
-    <url>https://github.com/suzaku-io/boopickle</url>
-      <licenses>
-        <license>
-          <name>Apache 2.0 license</name>
-          <url>http://www.opensource.org/licenses/Apache-2.0</url>
-        </license>
-      </licenses>
-      <developers>
-        <developer>
-          <id>ochrons</id>
-          <name>Otto Chrons</name>
-          <url>https://github.com/ochrons</url>
-        </developer>
-      </developers>,
-  pomIncludeRepository := { _ =>
-    false
-  },
-  publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (isSnapshot.value)
-      Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-      Some("releases" at nexus + "service/local/staging/deploy/maven2")
-  }
+inThisBuild(
+  List(
+    homepage := Some(url("https://github.com/suzaku-io/boopickle")),
+    licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+    developers := List(
+      Developer("ochrons",
+                "Otto Chrons",
+                "",
+                url("https://github.com/boopickle"))
+    ),
+    scmInfo := Some(
+      ScmInfo(
+        url("https://github.com/suzaku-io/boopickle"),
+        "scm:git:git@github.com:suzaku-io/boopickle.git",
+        Some("scm:git:git@github.com:suzaku-io/boopickle.git")
+      )
+    ),
+    Test / publishArtifact := false
+  )
 )
 
 val sourceMapSettings = Seq(
@@ -97,8 +79,6 @@ def preventPublication(p: Project) =
   p.settings(
     publish := (()),
     publishLocal := (()),
-    publishSigned := (()),
-    publishLocalSigned := (()),
     publishArtifact := false,
     publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
     packagedArtifacts := Map.empty
@@ -106,12 +86,14 @@ def preventPublication(p: Project) =
 
 lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(commonSettings)
-  .settings(releaseSettings)
   .settings(
     name := "boopickle"
   )
   .jsSettings(sourceMapSettings)
-  .jvmSettings()
+  .jvmSettings(
+    skip.in(publish) := customScalaJSVersion.isDefined
+  )
+
   //.nativeSettings(nativeSettings)
 
 lazy val boopickleJS = boopickle.js
@@ -122,7 +104,6 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .dependsOn(boopickle)
   .settings(commonSettings)
-  .settings(releaseSettings)
   .settings(
     name := "boopickle-shapeless",
     libraryDependencies ++= Seq(
@@ -130,7 +111,10 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     )
   )
   .jsSettings(sourceMapSettings)
-  .jvmSettings()
+  .jvmSettings(
+    skip.in(publish) := customScalaJSVersion.isDefined
+  )
+
   //.nativeSettings(nativeSettings)
 
 lazy val shapelessJS = shapeless.js
@@ -192,6 +176,10 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
       "com.lihaoyi"  %%% "scalatags"   % "0.8.6"
     )
   )
+  .jvmSettings(
+    skip.in(publish) := customScalaJSVersion.isDefined
+  )
+
 
 lazy val perftestsJS = preventPublication(perftests.js)./*enablePlugins(WorkbenchPlugin).*/dependsOn(boopickleJS)
 
