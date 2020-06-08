@@ -11,7 +11,7 @@ addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.3.7")
 
 //addSbtPlugin("com.lihaoyi" % "workbench" % "0.4.1")
 
-addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.0.0")
 
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.3.4")
 
