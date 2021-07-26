@@ -11,8 +11,8 @@ val customScalaJSVersion = Option(System.getenv("SCALAJS_VERSION"))
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
-  crossScalaVersions := Seq("2.12.11", "2.13.2"),
-  scalaVersion in ThisBuild := "2.13.2",
+  crossScalaVersions := Seq("2.12.14", "2.13.6"),
+  scalaVersion in ThisBuild := "2.13.6",
   scalacOptions := Seq(
     "-deprecation",
     "-encoding",
@@ -39,7 +39,7 @@ val commonSettings = Seq(
   },
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-     "com.lihaoyi" %%% "utest" % "0.7.4" % Test,
+     "com.lihaoyi" %%% "utest" % "0.7.10" % Test,
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
 )
@@ -107,7 +107,7 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     name := "boopickle-shapeless",
     libraryDependencies ++= Seq(
-      "com.chuusai" %%% "shapeless" % "2.3.3"
+      "com.chuusai" %%% "shapeless" % "2.3.7"
     )
   )
   .jsSettings(sourceMapSettings)
@@ -157,7 +157,7 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
     name := "perftests",
-    scalaVersion := "2.12.6",
+    scalaVersion := "2.13.6",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
       "com.lihaoyi"       %%% "upickle"       % "1.0.0",
