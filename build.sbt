@@ -12,7 +12,7 @@ val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
   crossScalaVersions := Seq("2.12.14", "2.13.6"),
-  scalaVersion in ThisBuild := "2.13.6",
+  ThisBuild / scalaVersion := "2.13.6",
   scalacOptions := Seq(
     "-deprecation",
     "-encoding",
@@ -29,8 +29,8 @@ val commonSettings = Seq(
     case _             => Seq("-Xfatal-warnings", "-Xfuture", "-Yno-adapted-args")
   }) ++ (if (scala.util.Properties.javaVersion.startsWith("1.8")) Nil else Seq("-release", "8")),
   Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
-  unmanagedSourceDirectories in Compile ++= {
-    (unmanagedSourceDirectories in Compile).value.map { dir =>
+  Compile / unmanagedSourceDirectories ++= {
+    (Compile / unmanagedSourceDirectories).value.map { dir =>
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 13)) => file(dir.getPath ++ "-2.13+")
         case _             => file(dir.getPath ++ "-2.13-")
@@ -91,7 +91,7 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jsSettings(sourceMapSettings)
   .jvmSettings(
-    skip.in(publish) := customScalaJSVersion.isDefined
+    publish / skip := customScalaJSVersion.isDefined
   )
 
   //.nativeSettings(nativeSettings)
@@ -112,7 +112,7 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jsSettings(sourceMapSettings)
   .jvmSettings(
-    skip.in(publish) := customScalaJSVersion.isDefined
+    publish / skip := customScalaJSVersion.isDefined
   )
 
   //.nativeSettings(nativeSettings)
@@ -177,7 +177,7 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
     )
   )
   .jvmSettings(
-    skip.in(publish) := customScalaJSVersion.isDefined
+    publish / skip := customScalaJSVersion.isDefined
   )
 
 
