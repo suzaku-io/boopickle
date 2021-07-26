@@ -1,5 +1,5 @@
 val scalaJSVersion =
-  Option(System.getenv("SCALAJS_VERSION")).getOrElse("1.6.0")
+  Option(System.getenv("SCALAJS_VERSION")).filter(_ != "1.x").getOrElse("1.6.0")
 
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.1.0")
 
