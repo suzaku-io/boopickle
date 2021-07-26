@@ -6,22 +6,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    name: Scala v${{ matrix.scala }} / Scala.JS v${{ matrix.scalajs }} / Java v${{ matrix.java }}
+    name: Scala v${{ matrix.scala }} / Java v${{ matrix.java }}
     strategy:
       matrix:
         include:
           - java: 8
             scala: 2.12.14
-            scalajs: 0.6.33
           - java: 14
             scala: 2.13.6
-            scalajs: 0.6.33
-          - java: 8
-            scala: 2.12.14
-            scalajs: 1.x
-          - java: 14
-            scala: 2.13.6
-            scalajs: 1.x
 
     steps:
 
@@ -43,4 +35,4 @@ jobs:
 
       - name: Build and test
         shell: bash
-        run: SCALAJS_VERSION=${{ matrix.scalajs }} sbt clean test
+        run: sbt clean test
