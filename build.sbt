@@ -11,22 +11,29 @@ val customScalaJSVersion = Option(System.getenv("SCALAJS_VERSION"))
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
-  crossScalaVersions := Seq("2.12.14", "2.13.6"),
   ThisBuild / scalaVersion := "2.13.6",
+  crossScalaVersions := Seq("2.12.14", "2.13.6", "3.0.1"),
   scalacOptions := Seq(
     "-deprecation",
     "-encoding",
     "UTF-8",
     "-feature",
     "-unchecked",
-    "-Xlint",
-    "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen",
-    "-Ywarn-value-discard"
   ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, 13)) => Seq("-Xlint:-unused")
+    case Some((2, _)) => Seq(
+      "-Xlint",
+      "-Ywarn-dead-code",
+      "-Ywarn-numeric-widen",
+      "-Ywarn-value-discard",
+    )
+    case Some((3, _)) => Seq(
+      "-source:3.0-migration",
+    )
+    case _ => throw new RuntimeException("Unknown Scala version")
+  }) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 12)) => Seq("-Xfatal-warnings", "-Xfuture", "-Xlint:-unused", "-Yno-adapted-args")
-    case _             => Seq("-Xfatal-warnings", "-Xfuture", "-Yno-adapted-args")
+    case Some((2, 13)) => Seq("-Xlint:-unused")
+    case _             => Seq.empty
   }) ++ (if (scala.util.Properties.javaVersion.startsWith("1.8")) Nil else Seq("-release", "8")),
   Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
   Compile / unmanagedSourceDirectories ++= {
@@ -38,10 +45,13 @@ val commonSettings = Seq(
     }
   },
   testFrameworks += new TestFramework("utest.runner.Framework"),
-  libraryDependencies ++= Seq(
-     "com.lihaoyi" %%% "utest" % "0.7.10" % Test,
-    "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
-  )
+  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.7.10" % Test,
+  libraryDependencies ++= {
+    if (scalaVersion.value.startsWith("2"))
+      ("org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided) :: Nil
+    else
+      Nil
+  }
 )
 
 inThisBuild(
@@ -76,13 +86,23 @@ val sourceMapSettings = Seq(
 )
 
 def preventPublication(p: Project) =
+  p.settings(publish / skip := true)
+
+def onlyScala2(p: Project) = {
+  def clearWhenDisabled[A](key: SettingKey[Seq[A]]) =
+    Def.setting[Seq[A]] {
+      val disabled = scalaVersion.value.startsWith("3")
+      val as = key.value
+      if (disabled) Nil else as
+    }
+
   p.settings(
-    publish := (()),
-    publishLocal := (()),
-    publishArtifact := false,
-    publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
-    packagedArtifacts := Map.empty
+    libraryDependencies                  := clearWhenDisabled(libraryDependencies).value,
+    Compile / unmanagedSourceDirectories := clearWhenDisabled(Compile / unmanagedSourceDirectories).value,
+    Test / unmanagedSourceDirectories    := clearWhenDisabled(Test / unmanagedSourceDirectories).value,
+    publish / skip                       :=  ((publish / skip).value || scalaVersion.value.startsWith("3")),
   )
+}
 
 lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(commonSettings)
@@ -114,8 +134,8 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .jvmSettings(
     publish / skip := customScalaJSVersion.isDefined
   )
-
   //.nativeSettings(nativeSettings)
+  .configure(onlyScala2)
 
 lazy val shapelessJS = shapeless.js
 lazy val shapelessJVM = shapeless.jvm
