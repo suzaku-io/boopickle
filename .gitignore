@@ -11,10 +11,14 @@ lib_managed/
 src_managed/
 project/boot/
 project/plugins/project/
+.bloop
+.bsp
+.metals
 
 # Scala-IDE specific
 .scala_dependencies
 .worksheet
+.vscode
 
 # IntelliJ IDEA
 .idea
