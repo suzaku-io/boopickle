@@ -25,13 +25,15 @@ object PicklerMaterializersImpl {
     import c.universe._
 
     val concreteTypes = findConcreteTypes(c)(tpe)
-    val name          = TermName(c.freshName("TraitPickler"))
+    val name          = TermName(c.freshName("Pickler"))
+    val name2         = TermName(c.freshName("Pickler"))
 
     q"""
-      implicit object $name extends _root_.boopickle.CompositePickler[$tpe] {
+      @inline implicit def $name2 : _root_.boopickle.CompositePickler[$tpe] = $name
+      object $name extends _root_.boopickle.CompositePickler[$tpe] {
         ..$concreteTypes
       }
-      $name
+      $name2
     """
   }
 
@@ -178,14 +180,16 @@ object PicklerMaterializersImpl {
       """
     }
 
-    val name = TermName(c.freshName("Pickler"))
+    val name  = TermName(c.freshName("Pickler"))
+    val name2 = TermName(c.freshName("Pickler"))
 
     val result = q"""
-      implicit object $name extends _root_.boopickle.Pickler[$tpe] {
+      @inline implicit def $name2 : _root_.boopickle.Pickler[$tpe] = $name
+      object $name extends _root_.boopickle.Pickler[$tpe] {
         override def pickle(value: $tpe)(implicit state: _root_.boopickle.PickleState): Unit = { $pickleLogic; () }
         override def unpickle(implicit state: _root_.boopickle.UnpickleState): $tpe = $unpickleLogic
       }
-      $name
+      $name2
     """
 
     c.Expr[Pickler[T]](result)

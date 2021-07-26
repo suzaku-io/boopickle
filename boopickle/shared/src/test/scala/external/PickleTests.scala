@@ -23,10 +23,13 @@ import scala.util.Random
 object PickleTests extends TestSuite {
   private def nonZeroUuid = {
     @tailrec
-    def loop(u: UUID = UUID.randomUUID()): UUID = {
-      if (u.getMostSignificantBits != 0 || u.getLeastSignificantBits != 0) u else loop()
+    def loop(u: UUID): UUID = {
+      if (u.getMostSignificantBits != 0 || u.getLeastSignificantBits != 0)
+        u
+      else
+        loop(UUID.randomUUID())
     }
-    loop()
+    loop(UUID.randomUUID())
   }
 
   def tests = Tests {

@@ -41,7 +41,7 @@ trait XCompatPicklers {
           null.asInstanceOf[V[T]]
         case 0 =>
           // empty sequence
-          val res = cbf.newBuilder.result
+          val res = cbf.newBuilder.result()
           res
         case len =>
           val b = cbf.newBuilder
@@ -51,7 +51,7 @@ trait XCompatPicklers {
             b += read[T]
             i += 1
           }
-          val res = b.result
+          val res = b.result()
           res
       }
     }
@@ -88,7 +88,7 @@ trait XCompatPicklers {
             null.asInstanceOf[V[T, S]]
           case 0 =>
             // empty map
-            val res = cbf.newBuilder.result
+            val res = cbf.newBuilder.result()
             res
           case idx if idx < 0 =>
             state.identityFor[V[T, S]](-idx)
@@ -102,7 +102,7 @@ trait XCompatPicklers {
               b += kPickler.unpickle(state) -> vPickler.unpickle(state)
               i += 1
             }
-            val res = b.result
+            val res = b.result()
             res
         }
       }
