@@ -36,14 +36,6 @@ val commonSettings = Seq(
     case _             => Seq.empty
   }) ++ (if (scala.util.Properties.javaVersion.startsWith("1.8")) Nil else Seq("-release", "8")),
   Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
-  Compile / unmanagedSourceDirectories ++= {
-    (Compile / unmanagedSourceDirectories).value.map { dir =>
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, 13)) => file(dir.getPath ++ "-2.13+")
-        case _             => file(dir.getPath ++ "-2.13-")
-      }
-    }
-  },
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies += "com.lihaoyi" %%% "utest" % "0.7.10" % Test,
   libraryDependencies ++= {
@@ -157,13 +149,13 @@ generateTuples := {
     val reads        = commaSeparated(j => s"read[T$j]")
 
     s"""
-  implicit def Tuple${i}Pickler[$picklerTypes] = new P[$typeTuple] {
+  implicit def Tuple${i}Pickler[$picklerTypes]: P[$typeTuple] = new P[$typeTuple] {
     override def pickle(x: $typeTuple)(implicit state: PickleState): Unit = { $writes }
     override def unpickle(implicit state: UnpickleState) = ${if (i == 1) s"Tuple1[T1]" else ""}($reads)
   }"""
   }
   IO.write(
-    baseDirectory.value / "target" / "TuplePicklers.scala",
+    baseDirectory.value / "boopickle"/"shared"/"src"/"main"/"scala"/"boopickle"/"TuplePicklers.scala",
     s"""package boopickle
 
 trait TuplePicklers extends PicklerHelper {

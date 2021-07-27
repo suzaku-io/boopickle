@@ -62,10 +62,6 @@ trait TransformPicklers {
   }
 }
 
-trait MaterializePicklerFallback {
-  implicit def generatePickler[T]: Pickler[T] = macro PicklerMaterializersImpl.materializePickler[T]
-}
-
 object PickleImpl {
   def apply[A](value: A)(implicit state: PickleState, p: Pickler[A]): PickleState = {
     p.pickle(value)(state)
@@ -146,7 +142,9 @@ object Default
 /**
   * Provides basic implicit picklers without macro support for case classes
   */
-object DefaultBasic extends Base with BasicImplicitPicklers with TransformPicklers with TuplePicklers {
-
-  def generatePickler[T]: Pickler[T] = macro PicklerMaterializersImpl.materializePickler[T]
-}
+object DefaultBasic
+    extends Base
+    with BasicImplicitPicklers
+    with TransformPicklers
+    with TuplePicklers
+    with MaterializePicklerExplicit

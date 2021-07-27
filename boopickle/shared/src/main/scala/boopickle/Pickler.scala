@@ -107,7 +107,7 @@ object BasicPicklers extends PicklerHelper with XCompatPicklers {
   }
 
   object BigIntPickler extends P[BigInt] {
-    implicit def bp = BytePickler
+    implicit def bp: P[Byte] = BytePickler
 
     @inline override def pickle(value: BigInt)(implicit state: PickleState): Unit = {
       ArrayPickler.pickle(value.toByteArray)
@@ -118,7 +118,7 @@ object BasicPicklers extends PicklerHelper with XCompatPicklers {
   }
 
   object BigDecimalPickler extends P[BigDecimal] {
-    implicit def bp = BytePickler
+    implicit def bp: P[Byte] = BytePickler
 
     @inline override def pickle(value: BigDecimal)(implicit state: PickleState): Unit = {
       state.enc.writeInt(value.scale)
