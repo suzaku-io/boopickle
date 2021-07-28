@@ -62,7 +62,7 @@ object MacroPickleTests extends TestSuite {
 
   sealed trait ValueTrait[T] extends Any
 
-  class ValueTraitClass[T](val value: T) extends AnyVal with ValueTrait[T]
+  case class ValueTraitClass[T](value: T) extends AnyVal with ValueTrait[T]
 
   sealed trait MultiT[S, T, O]
 
@@ -104,12 +104,14 @@ object MacroPickleTests extends TestSuite {
         assert(u == TestO)
       }
     //   "Trait" - {
+    //     // Scala 3 doesn't yet provide a Mirror for this case
     //     val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
     //     val bb              = Pickle.intoBytes(t)
     //     val u               = Unpickle[Seq[MyTrait]].fromBytes(bb)
     //     assert(u == t)
     //   }
     //   "TraitToo" - {
+    //     // Scala 3 doesn't yet provide a Mirror for this case
     //     // the same test code twice, to check that additional .class files are not generated for the MyTrait pickler
     //     val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
     //     val bb              = Pickle.intoBytes(t)
@@ -166,12 +168,13 @@ object MacroPickleTests extends TestSuite {
         val u             = Unpickle[ValueClass].fromBytes(bb)
         assert(x == u)
       }
-    //   "TraitAndValueClass" - {
-    //     val x: ValueTrait[Int] = new ValueTraitClass[Int](3)
-    //     val bb                 = Pickle.intoBytes(x)
-    //     val u                  = Unpickle[ValueTrait[Int]].fromBytes(bb)
-    //     assert(x == u)
-    //   }
+      // "TraitAndValueClass" - {
+      //   // Scala 3 doesn't yet provide a Mirror for this case
+      //   val x: ValueTrait[Int] = new ValueTraitClass[Int](3)
+      //   val bb                 = Pickle.intoBytes(x)
+      //   val u                  = Unpickle[ValueTrait[Int]].fromBytes(bb)
+      //   assert(x == u)
+      // }
       "MultipleGenerics" - {
         val x: MultiT[Int, Double, String] = Multi[Int, Double](1, 2.0)
         val bb                             = Pickle.intoBytes(x)
