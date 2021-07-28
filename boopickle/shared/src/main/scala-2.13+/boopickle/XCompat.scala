@@ -3,8 +3,9 @@ package boopickle
 import boopickle.Constants.NullRef
 import scala.collection.Factory
 import scala.language.higherKinds
+import scala.collection.immutable.SeqMap
 
-trait XCompatImplicitPicklers {
+trait XCompatImplicitPicklers1 {
   this: PicklerHelper =>
 
   implicit def mapPickler[K: P, V: P, M[_, _] <: scala.collection.Map[_, _]](
@@ -12,6 +13,13 @@ trait XCompatImplicitPicklers {
 
   implicit def iterablePickler[A: P, F[_] <: Iterable[_]](implicit cbf: Factory[A, F[A]]): P[F[A]] =
     BasicPicklers.IterablePickler[A, F]
+}
+
+trait XCompatImplicitPicklers extends XCompatImplicitPicklers1 {
+  this: PicklerHelper =>
+
+  implicit def seqMapPickler[K, V](implicit k: P[K], v: P[V]): P[SeqMap[K, V]] =
+    BasicPicklers.MapPickler[K, V, SeqMap](k, v, SeqMap.mapFactory)
 }
 
 trait XCompatPicklers {
