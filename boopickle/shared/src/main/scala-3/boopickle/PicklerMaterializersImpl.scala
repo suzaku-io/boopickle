@@ -160,12 +160,6 @@ object PicklerMaterializersImpl {
     }
   }
 
-  inline def summonAllClassTags[A <: Tuple]: List[ClassTag[_]] =
-    inline erasedValue[A] match {
-      case _: EmptyTuple => Nil
-      case _: (a *: as)  => summonInline[ClassTag[a]] :: summonAllClassTags[as]
-    }
-
   inline def summonLater[A]: A =
     summonInline[A]
 
