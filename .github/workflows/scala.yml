@@ -35,4 +35,4 @@ jobs:
 
       - name: Build and test
         shell: bash
-        run: sbt clean test
+        run: sbt ++${{ matrix.scala }} clean test
