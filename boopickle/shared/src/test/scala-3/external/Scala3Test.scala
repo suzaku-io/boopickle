@@ -1,6 +1,6 @@
 package external
 
-import boopickle.Default._
+import boopickle.Default.{generatePickler => _, _}
 import utest._
 
 object Scala3Test extends TestSuite {
