@@ -6,7 +6,6 @@ ThisBuild / scalafmtOnCompile := scalaVersion.value.startsWith("2")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
-
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
@@ -68,25 +67,21 @@ inThisBuild(
   )
 )
 
-val sourceMapSettings = Seq(
-  scalacOptions ++= (
-    if (isSnapshot.value)
-      Nil
-    else {
-       val isDotty = scalaVersion.value startsWith "3"
-       val ver     = version.value
-       val baseDir = baseDirectory.value
-       if (isSnapshot.value)
-         Nil
-       else {
-         val a = baseDir.toURI.toString.replaceFirst("[^/]+/?$", "")
-         val g = s"https://raw.githubusercontent.com/suzaku-io/boopickle"
-         val flag = if (isDotty) "-scalajs-mapSourceURI" else "-P:scalajs:mapSourceURI"
-         s"$flag:$a->$g/v$ver/" :: Nil
-       }
+def sourceMapsToGithub: Project => Project =
+  p => p.settings(
+    scalacOptions ++= {
+      val isDotty = scalaVersion.value startsWith "3"
+      val ver     = version.value
+      if (isSnapshot.value)
+        Nil
+      else {
+        val a = p.base.toURI.toString.replaceFirst("[^/]+/?$", "")
+        val g = s"https://raw.githubusercontent.com/suzaku-io/boopickle"
+        val flag = if (isDotty) "-scalajs-mapSourceURI" else "-P:scalajs:mapSourceURI"
+        s"$flag:$a->$g/v$ver/" :: Nil
+      }
     }
   )
-)
 
 def preventPublication(p: Project) =
   p.settings(publish / skip := true)
@@ -98,7 +93,6 @@ def onlyScala2(p: Project) = {
       val as = key.value
       if (disabled) Nil else as
     }
-
   p.settings(
     libraryDependencies                  := clearWhenDisabled(libraryDependencies).value,
     Compile / unmanagedSourceDirectories := clearWhenDisabled(Compile / unmanagedSourceDirectories).value,
@@ -113,9 +107,7 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     name := "boopickle"
   )
-  .jsSettings(sourceMapSettings)
-
-
+  .jsConfigure(sourceMapsToGithub)
   //.nativeSettings(nativeSettings)
 
 lazy val boopickleJS = boopickle.js
@@ -132,9 +124,7 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
       "com.chuusai" %%% "shapeless" % "2.3.7"
     )
   )
-  .jsSettings(sourceMapSettings)
-
-
+  .jsConfigure(sourceMapsToGithub)
   //.nativeSettings(nativeSettings)
   .configure(onlyScala2)
 
