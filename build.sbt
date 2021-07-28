@@ -2,7 +2,7 @@ import sbt._
 import Keys._
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
-ThisBuild / scalafmtOnCompile := true
+ThisBuild / scalafmtOnCompile := scalaVersion.value.startsWith("2")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 

@@ -78,7 +78,7 @@ object MacroPickleTests extends TestSuite {
         assert(Unpickle[Test1].fromBytes(bb) == Test1(5, "Hello!"))
       }
       "SeqCase" - {
-        implicit def pstate                              = new PickleState(new EncoderSize, true)
+        implicit def pstate: PickleState                 = new PickleState(new EncoderSize, true)
         implicit def ustate: ByteBuffer => UnpickleState = b => new UnpickleState(new DecoderSize(b), true)
         val t                                            = Test1(99, "Hello!")
         val s                                            = Seq(t, t, t)

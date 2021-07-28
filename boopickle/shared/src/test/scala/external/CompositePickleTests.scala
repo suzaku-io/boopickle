@@ -2,6 +2,7 @@ package external
 
 import utest._
 import boopickle.Default._
+import boopickle.CompositePickler
 
 trait Fruit {
   val weight: Double
@@ -35,7 +36,7 @@ case object Leaf extends Tree
 case class Node(value: Int, children: Seq[Tree]) extends Tree
 
 object Tree {
-  implicit val treePickler = compositePickler[Tree]
+  implicit val treePickler: CompositePickler[Tree] = compositePickler[Tree]
   treePickler.addConcreteType[Node].addConcreteType[Leaf.type]
 }
 
@@ -46,13 +47,13 @@ sealed trait Document extends Element
 sealed trait Attribute extends Element
 
 object Element {
-  implicit val documentPickler = compositePickler[Document]
+  implicit val documentPickler: CompositePickler[Document] = compositePickler[Document]
   documentPickler.addConcreteType[WordDocument]
 
-  implicit val attributePickler = compositePickler[Attribute]
+  implicit val attributePickler: CompositePickler[Attribute] = compositePickler[Attribute]
   attributePickler.addConcreteType[OwnerAttribute]
 
-  implicit val elementPickler = compositePickler[Element]
+  implicit val elementPickler: CompositePickler[Element] = compositePickler[Element]
   elementPickler.join[Document].join[Attribute]
 }
 
@@ -63,7 +64,7 @@ final case class OwnerAttribute(owner: String, parent: Element) extends Attribut
 object CompositePickleTests extends TestSuite {
   override def tests = Tests {
     "CaseClassHierarchySeq" - {
-      implicit val fruitPickler =
+      implicit val fruitPickler: Pickler[Fruit] =
         compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
 
       val fruits: Seq[Fruit] = Seq(Kiwi(0.5), Kiwi(0.6), Carambola(5.0), Banana(1.2))
@@ -72,7 +73,7 @@ object CompositePickleTests extends TestSuite {
       assert(u == fruits)
     }
     "CaseClassHierarchy" - {
-      implicit val fruitPickler =
+      implicit val fruitPickler: Pickler[Fruit] =
         compositePickler[Fruit].addConcreteType[Banana].addConcreteType[Kiwi].addConcreteType[Carambola]
 
       val b  = Banana(1.0)
@@ -87,7 +88,7 @@ object CompositePickleTests extends TestSuite {
       assert(Unpickle[Fruit].fromBytes(bf) == f) // This produces a Fruit
     }
     "CaseObjects" - {
-      implicit val errorPickler =
+      implicit val errorPickler: Pickler[Error] =
         compositePickler[Error]
           .addConcreteType[InvalidName.type]
           .addConcreteType[Unknown.type]
@@ -111,10 +112,11 @@ object CompositePickleTests extends TestSuite {
       assert(u == q)
     }
     "Transformers" - {
-      implicit val datePickler = transformPickler((t: Long) => new java.util.Date(t))(_.getTime)
-      val date                 = new java.util.Date()
-      val bb                   = Pickle.intoBytes(date)
-      val d                    = Unpickle[java.util.Date].fromBytes(bb)
+      import java.util.{Date => D}
+      implicit val datePickler: Pickler[D] = transformPickler((t: Long) => new D(t))(_.getTime)
+      val date                             = new D()
+      val bb                               = Pickle.intoBytes(date)
+      val d                                = Unpickle[D].fromBytes(bb)
       assert(d == date)
     }
     "Exceptions" - {
