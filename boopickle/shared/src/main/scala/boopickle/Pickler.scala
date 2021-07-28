@@ -8,6 +8,8 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 
+object Pickler extends PicklerDerived
+
 trait Pickler[A] {
   def pickle(obj: A)(implicit state: PickleState): Unit
   def unpickle(implicit state: UnpickleState): A
