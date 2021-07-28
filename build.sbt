@@ -6,11 +6,11 @@ ThisBuild / scalafmtOnCompile := scalaVersion.value.startsWith("2")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
-val customScalaJSVersion = Option(System.getenv("SCALAJS_VERSION"))
 
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
+
   ThisBuild / scalaVersion := "2.13.6",
   crossScalaVersions := Seq("2.12.14", "2.13.6", "3.0.1"),
   scalacOptions := Seq(
@@ -36,6 +36,7 @@ val commonSettings = Seq(
     case _             => Seq.empty
   }) ++ (if (scala.util.Properties.javaVersion.startsWith("1.8")) Nil else Seq("-release", "8")),
   Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
+
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies += "com.lihaoyi" %%% "utest" % "0.7.10" % Test,
   libraryDependencies ++= {
@@ -103,6 +104,7 @@ def onlyScala2(p: Project) = {
     Compile / unmanagedSourceDirectories := clearWhenDisabled(Compile / unmanagedSourceDirectories).value,
     Test / unmanagedSourceDirectories    := clearWhenDisabled(Test / unmanagedSourceDirectories).value,
     publish / skip                       :=  ((publish / skip).value || scalaVersion.value.startsWith("3")),
+
   )
 }
 
@@ -112,9 +114,7 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     name := "boopickle"
   )
   .jsSettings(sourceMapSettings)
-  .jvmSettings(
-    publish / skip := customScalaJSVersion.isDefined
-  )
+
 
   //.nativeSettings(nativeSettings)
 
@@ -133,9 +133,8 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     )
   )
   .jsSettings(sourceMapSettings)
-  .jvmSettings(
-    publish / skip := customScalaJSVersion.isDefined
-  )
+
+
   //.nativeSettings(nativeSettings)
   .configure(onlyScala2)
 
@@ -197,9 +196,6 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
       "org.scala-js" %%% "scalajs-dom" % "1.0.0",
       "com.lihaoyi"  %%% "scalatags"   % "0.8.6"
     )
-  )
-  .jvmSettings(
-    publish / skip := customScalaJSVersion.isDefined
   )
 
 
