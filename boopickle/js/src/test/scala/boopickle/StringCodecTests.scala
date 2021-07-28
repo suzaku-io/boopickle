@@ -9,7 +9,7 @@ import boopickle.DefaultBasic._
 object StringCodecTests extends TestSuite {
 
   override def tests = Tests {
-    'LargeString {
+    "LargeString" - {
       // test data
       val data = new String(Array.fill[Byte](400000)('A'))
       // create encoded strings of various lengths

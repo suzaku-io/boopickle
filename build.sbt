@@ -11,8 +11,8 @@ val customScalaJSVersion = Option(System.getenv("SCALAJS_VERSION"))
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
-  crossScalaVersions := Seq("2.12.11", "2.13.2"),
-  scalaVersion in ThisBuild := "2.13.2",
+  crossScalaVersions := Seq("2.12.14", "2.13.6"),
+  ThisBuild / scalaVersion := "2.13.6",
   scalacOptions := Seq(
     "-deprecation",
     "-encoding",
@@ -29,8 +29,8 @@ val commonSettings = Seq(
     case _             => Seq("-Xfatal-warnings", "-Xfuture", "-Yno-adapted-args")
   }) ++ (if (scala.util.Properties.javaVersion.startsWith("1.8")) Nil else Seq("-release", "8")),
   Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
-  unmanagedSourceDirectories in Compile ++= {
-    (unmanagedSourceDirectories in Compile).value.map { dir =>
+  Compile / unmanagedSourceDirectories ++= {
+    (Compile / unmanagedSourceDirectories).value.map { dir =>
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 13)) => file(dir.getPath ++ "-2.13+")
         case _             => file(dir.getPath ++ "-2.13-")
@@ -39,7 +39,7 @@ val commonSettings = Seq(
   },
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies ++= Seq(
-     "com.lihaoyi" %%% "utest" % "0.7.4" % Test,
+     "com.lihaoyi" %%% "utest" % "0.7.10" % Test,
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
   )
 )
@@ -91,7 +91,7 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jsSettings(sourceMapSettings)
   .jvmSettings(
-    skip.in(publish) := customScalaJSVersion.isDefined
+    publish / skip := customScalaJSVersion.isDefined
   )
 
   //.nativeSettings(nativeSettings)
@@ -107,12 +107,12 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     name := "boopickle-shapeless",
     libraryDependencies ++= Seq(
-      "com.chuusai" %%% "shapeless" % "2.3.3"
+      "com.chuusai" %%% "shapeless" % "2.3.7"
     )
   )
   .jsSettings(sourceMapSettings)
   .jvmSettings(
-    skip.in(publish) := customScalaJSVersion.isDefined
+    publish / skip := customScalaJSVersion.isDefined
   )
 
   //.nativeSettings(nativeSettings)
@@ -157,7 +157,7 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
     name := "perftests",
-    scalaVersion := "2.12.6",
+    scalaVersion := "2.13.6",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
       "com.lihaoyi"       %%% "upickle"       % "1.0.0",
@@ -177,7 +177,7 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
     )
   )
   .jvmSettings(
-    skip.in(publish) := customScalaJSVersion.isDefined
+    publish / skip := customScalaJSVersion.isDefined
   )
 
 

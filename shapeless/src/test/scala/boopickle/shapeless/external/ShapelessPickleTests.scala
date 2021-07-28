@@ -6,7 +6,9 @@ import boopickle.shapeless.Default._
 import shapeless._
 import boopickle.{DecoderSize, EncoderSize, UnpickleState}
 import utest._
+import scala.annotation.nowarn
 
+@nowarn("msg=Block result was adapted via implicit conversion") // https://github.com/scala/bug/issues/12072
 object ShapelessPickleTests extends TestSuite {
 
   case class Test1(i: Int, x: String)

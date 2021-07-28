@@ -129,22 +129,22 @@ object CodecTests extends TestSuite {
 
     "ByteArray" - {
       val ba = Seq(Array[Byte](0, 127, -128, -1, 1), Array[Byte]())
-      runCodec[Array[Byte]](ba, (e, x) => { e.writeByteArray(x); () }, (d, x) => d.readByteArray.sameElements(x))
+      runCodec[Array[Byte]](ba, (e, x) => { e.writeByteArray(x); () }, (d, x) => d.readByteArray().sameElements(x))
     }
 
     "IntArray" - {
       val ba = Seq(Array[Int](0, Int.MaxValue, Int.MinValue, -1, 1, 256, 65536), Array[Int]())
-      runCodec[Array[Int]](ba, (e, x) => { e.writeIntArray(x); () }, (d, x) => d.readIntArray.sameElements(x))
+      runCodec[Array[Int]](ba, (e, x) => { e.writeIntArray(x); () }, (d, x) => d.readIntArray().sameElements(x))
     }
 
     "FloatArray" - {
       val ba = Seq(Array[Float](0, Float.MaxValue, Float.MinValue, -1, 1, 256.0f, 65536.0f), Array[Float]())
-      runCodec[Array[Float]](ba, (e, x) => { e.writeFloatArray(x); () }, (d, x) => d.readFloatArray.sameElements(x))
+      runCodec[Array[Float]](ba, (e, x) => { e.writeFloatArray(x); () }, (d, x) => d.readFloatArray().sameElements(x))
     }
 
     "DoubleArray" - {
       val ba = Seq(Array[Double](0, Double.MaxValue, Double.MinValue, -1, 1, 256.0, 65536.0), Array[Double]())
-      runCodec[Array[Double]](ba, (e, x) => { e.writeDoubleArray(x); () }, (d, x) => d.readDoubleArray.sameElements(x))
+      runCodec[Array[Double]](ba, (e, x) => { e.writeDoubleArray(x); () }, (d, x) => d.readDoubleArray().sameElements(x))
     }
 
     "StringEncoding" - {
