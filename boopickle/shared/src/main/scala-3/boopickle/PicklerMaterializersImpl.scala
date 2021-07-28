@@ -24,11 +24,6 @@ object PicklerMaterializersImpl {
   def deriveProduct[A](m: Expr[Mirror.ProductOf[A]])(using Quotes, Type[A]): Expr[Pickler[A]] = {
     import quotes.reflect._
 
-    // println("------------------------------------------------------------------------------")
-    // println(Position.ofMacroExpansion)
-    // println(Type.show[A])
-    // println()
-
     m match {
 
       case '{ $x: Mirror.ProductOf[A] { type MirroredElemTypes = EmptyTuple }} =>
@@ -94,7 +89,6 @@ object PicklerMaterializersImpl {
     def fields[T <: Tuple](using Type[T]): List[Expr[(Pickler[_], ClassTag[_])]] = {
       Type.of[T] match {
         case '[ h *: tail ] =>
-          // println("  - " + Type.show[h])
           val p = exprSummonLater[Pickler [h]]
           val c = exprSummonLater[ClassTag[h]]
           '{ ($p, $c) } :: fields[tail]
@@ -105,12 +99,7 @@ object PicklerMaterializersImpl {
 
     m match {
       case '{ type t <: Tuple; $x: Mirror.SumOf[A] { type MirroredElemTypes = `t` }} =>
-        // println("------------------------------------------------------------------------------")
-        // println(Position.ofMacroExpansion)
-        // println(Type.show[t])
-        // println()
         val fs = fields[t]
-        // println()
         val e = '{ sumTypeHack[A](${ Expr.ofList(fs) }) }
         inlineExpr(e)
     }
