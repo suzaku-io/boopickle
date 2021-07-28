@@ -2,44 +2,49 @@ import sbt._
 import Keys._
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
-ThisBuild / scalafmtOnCompile := true
+ThisBuild / scalafmtOnCompile := scalaVersion.value.startsWith("2")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
+
 
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
-  crossScalaVersions := Seq("2.12.14", "2.13.6"),
+
   ThisBuild / scalaVersion := "2.13.6",
-  scalacOptions := Seq(
+  crossScalaVersions := Seq("2.12.14", "2.13.6", "3.0.1"),
+  scalacOptions ++= Seq(
     "-deprecation",
     "-encoding",
     "UTF-8",
     "-feature",
     "-unchecked",
-    "-Xlint",
-    "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen",
-    "-Ywarn-value-discard"
   ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, 13)) => Seq("-Xlint:-unused")
+    case Some((2, _)) => Seq(
+      "-Xlint",
+      "-Ywarn-dead-code",
+      "-Ywarn-numeric-widen",
+      "-Ywarn-value-discard",
+    )
+    case Some((3, _)) => Seq(
+      "-source:3.0-migration",
+    )
+    case _ => throw new RuntimeException("Unknown Scala version")
+  }) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 12)) => Seq("-Xfatal-warnings", "-Xfuture", "-Xlint:-unused", "-Yno-adapted-args")
-    case _             => Seq("-Xfatal-warnings", "-Xfuture", "-Yno-adapted-args")
+    case Some((2, 13)) => Seq("-Xlint:-unused")
+    case _             => Seq.empty
   }) ++ (if (scala.util.Properties.javaVersion.startsWith("1.8")) Nil else Seq("-release", "8")),
   Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
-  Compile / unmanagedSourceDirectories ++= {
-    (Compile / unmanagedSourceDirectories).value.map { dir =>
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, 13)) => file(dir.getPath ++ "-2.13+")
-        case _             => file(dir.getPath ++ "-2.13-")
-      }
-    }
-  },
+
   testFrameworks += new TestFramework("utest.runner.Framework"),
-  libraryDependencies ++= Seq(
-     "com.lihaoyi" %%% "utest" % "0.7.10" % Test,
-    "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided"
-  )
+  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.7.10" % Test,
+  libraryDependencies ++= {
+    if (scalaVersion.value.startsWith("2"))
+      ("org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided) :: Nil
+    else
+      Nil
+  }
 )
 
 inThisBuild(
@@ -64,23 +69,44 @@ inThisBuild(
 )
 
 val sourceMapSettings = Seq(
-  scalacOptions ++= (if (isSnapshot.value) Seq.empty
-                     else
-                       Seq({
-                         val a = baseDirectory.value.toURI.toString.replaceFirst("[^/]+/?$", "")
-                         val g = "https://raw.githubusercontent.com/suzaku-io/boopickle"
-                         s"-P:scalajs:mapSourceURI:$a->$g/v${version.value}/"
-                       }))
+  scalacOptions ++= (
+    if (isSnapshot.value)
+      Nil
+    else {
+       val isDotty = scalaVersion.value startsWith "3"
+       val ver     = version.value
+       val baseDir = baseDirectory.value
+       if (isSnapshot.value)
+         Nil
+       else {
+         val a = baseDir.toURI.toString.replaceFirst("[^/]+/?$", "")
+         val g = s"https://raw.githubusercontent.com/suzaku-io/boopickle"
+         val flag = if (isDotty) "-scalajs-mapSourceURI" else "-P:scalajs:mapSourceURI"
+         s"$flag:$a->$g/v$ver/" :: Nil
+       }
+    }
+  )
 )
 
 def preventPublication(p: Project) =
+  p.settings(publish / skip := true)
+
+def onlyScala2(p: Project) = {
+  def clearWhenDisabled[A](key: SettingKey[Seq[A]]) =
+    Def.setting[Seq[A]] {
+      val disabled = scalaVersion.value.startsWith("3")
+      val as = key.value
+      if (disabled) Nil else as
+    }
+
   p.settings(
-    publish := (()),
-    publishLocal := (()),
-    publishArtifact := false,
-    publishTo := Some(Resolver.file("Unused transient repository", target.value / "fakepublish")),
-    packagedArtifacts := Map.empty
+    libraryDependencies                  := clearWhenDisabled(libraryDependencies).value,
+    Compile / unmanagedSourceDirectories := clearWhenDisabled(Compile / unmanagedSourceDirectories).value,
+    Test / unmanagedSourceDirectories    := clearWhenDisabled(Test / unmanagedSourceDirectories).value,
+    publish / skip                       :=  ((publish / skip).value || scalaVersion.value.startsWith("3")),
+    Test / test                           := { if (scalaVersion.value.startsWith("2")) (Test / test).value },
   )
+}
 
 lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(commonSettings)
@@ -88,6 +114,7 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     name := "boopickle"
   )
   .jsSettings(sourceMapSettings)
+
 
   //.nativeSettings(nativeSettings)
 
@@ -107,7 +134,9 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
   .jsSettings(sourceMapSettings)
 
+
   //.nativeSettings(nativeSettings)
+  .configure(onlyScala2)
 
 lazy val shapelessJS = shapeless.js
 lazy val shapelessJVM = shapeless.jvm
@@ -129,13 +158,13 @@ generateTuples := {
     val reads        = commaSeparated(j => s"read[T$j]")
 
     s"""
-  implicit def Tuple${i}Pickler[$picklerTypes] = new P[$typeTuple] {
+  implicit def Tuple${i}Pickler[$picklerTypes]: P[$typeTuple] = new P[$typeTuple] {
     override def pickle(x: $typeTuple)(implicit state: PickleState): Unit = { $writes }
     override def unpickle(implicit state: UnpickleState) = ${if (i == 1) s"Tuple1[T1]" else ""}($reads)
   }"""
   }
   IO.write(
-    baseDirectory.value / "target" / "TuplePicklers.scala",
+    baseDirectory.value / "boopickle"/"shared"/"src"/"main"/"scala"/"boopickle"/"TuplePicklers.scala",
     s"""package boopickle
 
 trait TuplePicklers extends PicklerHelper {
@@ -168,6 +197,7 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
       "com.lihaoyi"  %%% "scalatags"   % "0.8.6"
     )
   )
+
 
 lazy val perftestsJS = preventPublication(perftests.js)./*enablePlugins(WorkbenchPlugin).*/dependsOn(boopickleJS)
 

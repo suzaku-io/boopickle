@@ -32,10 +32,12 @@ object PickleTests extends TestSuite {
     loop(UUID.randomUUID())
   }
 
+  type UnpickleBB = ByteBuffer => UnpickleState
+
   def tests = Tests {
     "sizeCodec" - {
-      implicit def pstate = new PickleState(new EncoderSize)
-      implicit def ustate = (b: ByteBuffer) => new UnpickleState(new DecoderSize(b))
+      implicit def pstate: PickleState = new PickleState(new EncoderSize)
+      implicit def ustate: UnpickleBB  = b => new UnpickleState(new DecoderSize(b))
       "Boolean" - {
         "true" - {
           val bb = Pickle.intoBytes(true)
@@ -312,10 +314,10 @@ object PickleTests extends TestSuite {
           assert(Unpickle[String].fromBytes(bb) == uuidStr)
         }
         "deduplication" - {
-          implicit def pstate = new PickleState(new EncoderSize, true, true)
-          implicit def ustate = (b: ByteBuffer) => new UnpickleState(new DecoderSize(b), true, true)
-          val data            = (0 until 10).map(i => s"testing${i / 10}")
-          val bb              = Pickle.intoBytes(data)
+          implicit def pstate: PickleState = new PickleState(new EncoderSize, true, true)
+          implicit def ustate: UnpickleBB  = b => new UnpickleState(new DecoderSize(b), true, true)
+          val data                         = (0 until 10).map(i => s"testing${i / 10}")
+          val bb                           = Pickle.intoBytes(data)
           assert(bb.limit() == 1 + 1 + 8 + 2 * 9)
           val udata = Unpickle[Seq[String]].fromBytes(bb)
           assert(udata == data)
@@ -562,8 +564,8 @@ object PickleTests extends TestSuite {
       }
       "IdentityDeduplication" - {
         "CaseClasses" - {
-          implicit def pstate = new PickleState(new EncoderSize, true)
-          implicit def ustate = (b: ByteBuffer) => new UnpickleState(new DecoderSize(b), true)
+          implicit def pstate: PickleState = new PickleState(new EncoderSize, true)
+          implicit def ustate: UnpickleBB  = b => new UnpickleState(new DecoderSize(b), true)
           case class Test(i: Int, s: String)
           val data = Test(42, "Earth")
           val bb   = Pickle.intoBytes(Seq(data, data, data))
@@ -582,7 +584,7 @@ object PickleTests extends TestSuite {
           assert(Unpickle[String].fromState(state) == "World")
         }
         "stringRef" - {
-          implicit def pstate = new PickleState(new EncoderSize, true, true)
+          implicit def pstate: PickleState = new PickleState(new EncoderSize, true, true)
 
           val s  = Pickle("Hello")
           val bb = s.pickle("Hello").toByteBuffer

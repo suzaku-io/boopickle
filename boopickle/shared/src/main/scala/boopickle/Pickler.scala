@@ -8,6 +8,8 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.language.higherKinds
 import scala.reflect.ClassTag
 
+object Pickler extends PicklerDerived
+
 trait Pickler[A] {
   def pickle(obj: A)(implicit state: PickleState): Unit
   def unpickle(implicit state: UnpickleState): A
@@ -107,7 +109,7 @@ object BasicPicklers extends PicklerHelper with XCompatPicklers {
   }
 
   object BigIntPickler extends P[BigInt] {
-    implicit def bp = BytePickler
+    implicit def bp: P[Byte] = BytePickler
 
     @inline override def pickle(value: BigInt)(implicit state: PickleState): Unit = {
       ArrayPickler.pickle(value.toByteArray)
@@ -118,7 +120,7 @@ object BasicPicklers extends PicklerHelper with XCompatPicklers {
   }
 
   object BigDecimalPickler extends P[BigDecimal] {
-    implicit def bp = BytePickler
+    implicit def bp: P[Byte] = BytePickler
 
     @inline override def pickle(value: BigDecimal)(implicit state: PickleState): Unit = {
       state.enc.writeInt(value.scale)
