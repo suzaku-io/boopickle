@@ -29,13 +29,13 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 Add following dependency declaration to your Scala project 
 
 ```scala
-"io.suzaku" %% "boopickle" % "1.3.2"
+"io.suzaku" %% "boopickle" % "1.4.0"
 ```
 
 On a Scala.js / Scala Native project the dependency looks like this
 
 ```scala
-"io.suzaku" %%% "boopickle" % "1.3.2"
+"io.suzaku" %%% "boopickle" % "1.4.0"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
