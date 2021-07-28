@@ -68,13 +68,23 @@ inThisBuild(
 )
 
 val sourceMapSettings = Seq(
-  scalacOptions ++= (if (isSnapshot.value) Seq.empty
-                     else
-                       Seq({
-                         val a = baseDirectory.value.toURI.toString.replaceFirst("[^/]+/?$", "")
-                         val g = "https://raw.githubusercontent.com/suzaku-io/boopickle"
-                         s"-P:scalajs:mapSourceURI:$a->$g/v${version.value}/"
-                       }))
+  scalacOptions ++= (
+    if (isSnapshot.value)
+      Nil
+    else {
+       val isDotty = scalaVersion.value startsWith "3"
+       val ver     = version.value
+       val baseDir = baseDirectory.value
+       if (isSnapshot.value)
+         Nil
+       else {
+         val a = baseDir.toURI.toString.replaceFirst("[^/]+/?$", "")
+         val g = s"https://raw.githubusercontent.com/suzaku-io/boopickle"
+         val flag = if (isDotty) "-scalajs-mapSourceURI" else "-P:scalajs:mapSourceURI"
+         s"$flag:$a->$g/v$ver/" :: Nil
+       }
+    }
+  )
 )
 
 def preventPublication(p: Project) =
