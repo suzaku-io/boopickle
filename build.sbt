@@ -6,6 +6,18 @@ ThisBuild / scalafmtOnCompile := scalaVersion.value.startsWith("2")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
+def addDirsFor213_+(scope: ConfigKey): Def.Initialize[Seq[File]] = Def.setting {
+  (scope / unmanagedSourceDirectories).value.flatMap { dir =>
+    if (dir.getPath.endsWith("scala"))
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 12)) => Nil
+        case _             => file(dir.getPath ++ "-2.13+") :: Nil
+      }
+    else
+      Nil
+  }
+}
+
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
@@ -35,7 +47,8 @@ val commonSettings = Seq(
     case _             => Seq.empty
   }) ++ (if (scala.util.Properties.javaVersion.startsWith("1.8")) Nil else Seq("-release", "8")),
   Compile / scalacOptions ~= (_ filterNot (_ == "-Ywarn-value-discard")),
-
+  Compile / unmanagedSourceDirectories ++= addDirsFor213_+(Compile).value,
+  Test / unmanagedSourceDirectories ++= addDirsFor213_+(Test).value,
   testFrameworks += new TestFramework("utest.runner.Framework"),
   libraryDependencies += "com.lihaoyi" %%% "utest" % "0.7.10" % Test,
   libraryDependencies ++= {
