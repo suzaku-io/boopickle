@@ -13,7 +13,7 @@ val commonSettings = Seq(
 
   ThisBuild / scalaVersion := "2.13.6",
   crossScalaVersions := Seq("2.12.14", "2.13.6", "3.0.1"),
-  scalacOptions := Seq(
+  scalacOptions ++= Seq(
     "-deprecation",
     "-encoding",
     "UTF-8",
@@ -104,7 +104,7 @@ def onlyScala2(p: Project) = {
     Compile / unmanagedSourceDirectories := clearWhenDisabled(Compile / unmanagedSourceDirectories).value,
     Test / unmanagedSourceDirectories    := clearWhenDisabled(Test / unmanagedSourceDirectories).value,
     publish / skip                       :=  ((publish / skip).value || scalaVersion.value.startsWith("3")),
-
+    Test / test                           := { if (scalaVersion.value.startsWith("2")) (Test / test).value },
   )
 }
 
