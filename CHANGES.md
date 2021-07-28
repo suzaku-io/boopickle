@@ -1,6 +1,9 @@
 # Changes
 
 ## 1.4.0
+- Add Scala 3 support
+  - Due to https://github.com/lampepfl/dotty/pull/11686 Pickler derivation doesn't yet work with nested `sealed trait`s
+  - Because Shapeless isn't yet upgraded to Scala 3, the boopickle shapeless module is omitted (Scala 2 modules still available)
 - Upgrade Scala.JS to 1.6.0
 - Drop support for Scala.JS 0.6.33
 
