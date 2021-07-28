@@ -6,8 +6,6 @@ ThisBuild / scalafmtOnCompile := true
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
-val customScalaJSVersion = Option(System.getenv("SCALAJS_VERSION"))
-
 val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
@@ -90,9 +88,6 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     name := "boopickle"
   )
   .jsSettings(sourceMapSettings)
-  .jvmSettings(
-    publish / skip := customScalaJSVersion.isDefined
-  )
 
   //.nativeSettings(nativeSettings)
 
@@ -111,9 +106,6 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     )
   )
   .jsSettings(sourceMapSettings)
-  .jvmSettings(
-    publish / skip := customScalaJSVersion.isDefined
-  )
 
   //.nativeSettings(nativeSettings)
 
@@ -176,10 +168,6 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
       "com.lihaoyi"  %%% "scalatags"   % "0.8.6"
     )
   )
-  .jvmSettings(
-    publish / skip := customScalaJSVersion.isDefined
-  )
-
 
 lazy val perftestsJS = preventPublication(perftests.js)./*enablePlugins(WorkbenchPlugin).*/dependsOn(boopickleJS)
 
