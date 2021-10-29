@@ -59,6 +59,10 @@ val commonSettings = Seq(
   }
 )
 
+val commonNativeSettings = Seq(
+  crossScalaVersions ~= { _.filter(_.startsWith("2.")) }
+)
+
 inThisBuild(
   List(
     homepage := Some(url("https://github.com/suzaku-io/boopickle")),
@@ -121,11 +125,11 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     name := "boopickle"
   )
   .jsConfigure(sourceMapsToGithub)
-  //.nativeSettings(nativeSettings)
+  .nativeSettings(commonNativeSettings)
 
 lazy val boopickleJS = boopickle.js
 lazy val boopickleJVM = boopickle.jvm
-//lazy val boopickleNative = boopickle.native
+lazy val boopickleNative = boopickle.native
 
 lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -138,12 +142,12 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     )
   )
   .jsConfigure(sourceMapsToGithub)
-  //.nativeSettings(nativeSettings)
+  .nativeSettings(commonNativeSettings)
   .configure(onlyScala2)
 
 lazy val shapelessJS = shapeless.js
 lazy val shapelessJVM = shapeless.jvm
-//lazy val shapelessNative = shapeless.native
+lazy val shapelessNative = shapeless.native
 
 lazy val generateTuples = taskKey[Unit]("Generates source code for pickling tuples")
 
@@ -212,4 +216,4 @@ lazy val perftestsJVM = preventPublication(perftests.jvm)
 
 lazy val booPickleRoot = preventPublication(project.in(file(".")))
   .settings(commonSettings)
-  .aggregate(boopickleJS, boopickleJVM, /*boopickleNative,*/ shapelessJS, shapelessJVM /*, shapelessNative*/)
+  .aggregate(boopickleJS, boopickleJVM, boopickleNative, shapelessJS, shapelessJVM, shapelessNative)
