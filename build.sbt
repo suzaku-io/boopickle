@@ -22,8 +22,8 @@ val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
 
-  ThisBuild / scalaVersion := "2.13.6",
-  crossScalaVersions := Seq("2.12.14", "2.13.6", "3.0.1"),
+  ThisBuild / scalaVersion := "2.13.7",
+  crossScalaVersions := Seq("2.12.14", "2.13.7", "3.0.1"),
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding",
@@ -181,7 +181,7 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
     name := "perftests",
-    scalaVersion := "2.13.6",
+    scalaVersion := "2.13.7",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
       "com.lihaoyi"       %%% "upickle"       % "1.0.0",
