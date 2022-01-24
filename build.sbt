@@ -50,7 +50,7 @@ val commonSettings = Seq(
   Compile / unmanagedSourceDirectories ++= addDirsFor213_+(Compile).value,
   Test / unmanagedSourceDirectories ++= addDirsFor213_+(Test).value,
   testFrameworks += new TestFramework("utest.runner.Framework"),
-  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.7.10" % Test,
+  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.7.11" % Test,
   libraryDependencies ++= {
     if (scalaVersion.value.startsWith("2"))
       ("org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided) :: Nil
