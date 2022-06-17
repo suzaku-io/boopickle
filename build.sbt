@@ -23,7 +23,7 @@ val commonSettings = Seq(
   version := Version.library,
 
   ThisBuild / scalaVersion := "2.13.6",
-  crossScalaVersions := Seq("2.12.14", "2.13.6", "3.0.1"),
+  crossScalaVersions := Seq("2.12.14", "2.13.6", "3.1.2"),
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding",
@@ -57,10 +57,6 @@ val commonSettings = Seq(
     else
       Nil
   }
-)
-
-val commonNativeSettings = Seq(
-  crossScalaVersions ~= { _.filter(_.startsWith("2.")) }
 )
 
 inThisBuild(
@@ -125,7 +121,6 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     name := "boopickle"
   )
   .jsConfigure(sourceMapsToGithub)
-  .nativeSettings(commonNativeSettings)
 
 lazy val boopickleJS = boopickle.js
 lazy val boopickleJVM = boopickle.jvm
@@ -142,7 +137,6 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     )
   )
   .jsConfigure(sourceMapsToGithub)
-  .nativeSettings(commonNativeSettings)
   .configure(onlyScala2)
 
 lazy val shapelessJS = shapeless.js
