@@ -120,6 +120,9 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     name := "boopickle"
   )
+  .jsSettings(
+    libraryDependencies += "org.scala-js" %%% "scalajs-java-securerandom" % "1.0.0" % Test cross CrossVersion.for3Use2_13
+  )
   .jsConfigure(sourceMapsToGithub)
 
 lazy val boopickleJS = boopickle.js
