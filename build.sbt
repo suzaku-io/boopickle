@@ -23,7 +23,7 @@ val commonSettings = Seq(
   version := Version.library,
 
   ThisBuild / scalaVersion := "2.13.6",
-  crossScalaVersions := Seq("2.12.14", "2.13.6", "3.0.1"),
+  crossScalaVersions := Seq("2.12.14", "2.13.6", "3.1.3"),
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding",
@@ -50,7 +50,7 @@ val commonSettings = Seq(
   Compile / unmanagedSourceDirectories ++= addDirsFor213_+(Compile).value,
   Test / unmanagedSourceDirectories ++= addDirsFor213_+(Test).value,
   testFrameworks += new TestFramework("utest.runner.Framework"),
-  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.7.10" % Test,
+  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.1" % Test,
   libraryDependencies ++= {
     if (scalaVersion.value.startsWith("2"))
       ("org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided) :: Nil
@@ -120,12 +120,14 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     name := "boopickle"
   )
+  .jsSettings(
+    libraryDependencies += "org.scala-js" %%% "scalajs-java-securerandom" % "1.0.0" % Test cross CrossVersion.for3Use2_13
+  )
   .jsConfigure(sourceMapsToGithub)
-  //.nativeSettings(nativeSettings)
 
 lazy val boopickleJS = boopickle.js
 lazy val boopickleJVM = boopickle.jvm
-//lazy val boopickleNative = boopickle.native
+lazy val boopickleNative = boopickle.native
 
 lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -138,12 +140,11 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     )
   )
   .jsConfigure(sourceMapsToGithub)
-  //.nativeSettings(nativeSettings)
   .configure(onlyScala2)
 
 lazy val shapelessJS = shapeless.js
 lazy val shapelessJVM = shapeless.jvm
-//lazy val shapelessNative = shapeless.native
+lazy val shapelessNative = shapeless.native
 
 lazy val generateTuples = taskKey[Unit]("Generates source code for pickling tuples")
 
@@ -212,4 +213,4 @@ lazy val perftestsJVM = preventPublication(perftests.jvm)
 
 lazy val booPickleRoot = preventPublication(project.in(file(".")))
   .settings(commonSettings)
-  .aggregate(boopickleJS, boopickleJVM, /*boopickleNative,*/ shapelessJS, shapelessJVM /*, shapelessNative*/)
+  .aggregate(boopickleJS, boopickleJVM, boopickleNative, shapelessJS, shapelessJVM, shapelessNative)
