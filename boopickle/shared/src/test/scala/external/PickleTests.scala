@@ -21,6 +21,7 @@ import scala.concurrent.duration.Duration
 import scala.util.Random
 
 object PickleTests extends TestSuite {
+  private def skipScalaNative(f: => Unit) = if (System.getProperty("java.vm.name") != "Scala Native") f
   private def nonZeroUuid = {
     @tailrec
     def loop(u: UUID): UUID = {
@@ -519,7 +520,7 @@ object PickleTests extends TestSuite {
           assert(bb.limit() == 4 + 4 * 4)
           assert(Unpickle[Array[Float]].fromBytes(bb) sameElements Array[Float](0f, 1f, -1.5f, math.Pi.toFloat))
         }
-        "doubles" - {
+        "doubles" - skipScalaNative {
           val bb = Pickle.intoBytes(Array[Double](0, 1.0, -1.5, math.Pi))
           assert(bb.limit() == 8 + 4 * 8)
           assert(Unpickle[Array[Double]].fromBytes(bb) sameElements Array[Double](0, 1.0, -1.5, math.Pi))
@@ -1103,7 +1104,7 @@ object PickleTests extends TestSuite {
           assert(bb.limit() == 4 + 4 * 4)
           assert(Unpickle[Array[Float]].fromBytes(bb) sameElements Array[Float](0f, 1f, -1.5f, math.Pi.toFloat))
         }
-        "doubles" - {
+        "doubles" - skipScalaNative {
           val bb = Pickle.intoBytes(Array[Double](0, 1.0, -1.5, math.Pi))
           assert(bb.limit() == 8 + 4 * 8)
           assert(Unpickle[Array[Double]].fromBytes(bb) sameElements Array[Double](0, 1.0, -1.5, math.Pi))
