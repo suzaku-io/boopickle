@@ -10,6 +10,6 @@ addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.10")
 
 addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")
 
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.3")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.4")
 
 addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.7")
