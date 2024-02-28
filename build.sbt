@@ -23,7 +23,7 @@ val commonSettings = Seq(
   version := Version.library,
 
   ThisBuild / scalaVersion := "2.13.6",
-  crossScalaVersions := Seq("2.12.14", "2.13.6", "3.0.1"),
+  crossScalaVersions := Seq("2.12.19", "2.13.6", "3.0.1"),
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding",
