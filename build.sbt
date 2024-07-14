@@ -22,8 +22,8 @@ val commonSettings = Seq(
   organization := "io.suzaku",
   version := Version.library,
 
-  ThisBuild / scalaVersion := "2.13.6",
-  crossScalaVersions := Seq("2.12.14", "2.13.6", "3.0.1"),
+  ThisBuild / scalaVersion := "2.13.14",
+  crossScalaVersions := Seq("2.12.19", "2.13.14", "3.3.3"),
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding",
@@ -50,7 +50,7 @@ val commonSettings = Seq(
   Compile / unmanagedSourceDirectories ++= addDirsFor213_+(Compile).value,
   Test / unmanagedSourceDirectories ++= addDirsFor213_+(Test).value,
   testFrameworks += new TestFramework("utest.runner.Framework"),
-  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.7.11" % Test,
+  libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.3" % Test,
   libraryDependencies ++= {
     if (scalaVersion.value.startsWith("2"))
       ("org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided) :: Nil
@@ -121,11 +121,6 @@ lazy val boopickle = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     name := "boopickle"
   )
   .jsConfigure(sourceMapsToGithub)
-  //.nativeSettings(nativeSettings)
-
-lazy val boopickleJS = boopickle.js
-lazy val boopickleJVM = boopickle.jvm
-//lazy val boopickleNative = boopickle.native
 
 lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -134,16 +129,11 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     name := "boopickle-shapeless",
     libraryDependencies ++= Seq(
-      "com.chuusai" %%% "shapeless" % "2.3.7"
+      "com.chuusai" %%% "shapeless" % "2.3.12"
     )
   )
   .jsConfigure(sourceMapsToGithub)
-  //.nativeSettings(nativeSettings)
   .configure(onlyScala2)
-
-lazy val shapelessJS = shapeless.js
-lazy val shapelessJVM = shapeless.jvm
-//lazy val shapelessNative = shapeless.native
 
 lazy val generateTuples = taskKey[Unit]("Generates source code for pickling tuples")
 
@@ -181,14 +171,14 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
     name := "perftests",
-    scalaVersion := "2.13.6",
+    scalaVersion := "2.13.14",
     scalacOptions ++= Seq("-Xstrict-inference"),
     libraryDependencies ++= Seq(
-      "com.lihaoyi"       %%% "upickle"       % "1.0.0",
-      "com.typesafe.play" %%% "play-json"     % "2.8.1", // Not available for sjs1
-      "io.circe"          %%% "circe-core"    % "0.13.0",
-      "io.circe"          %%% "circe-parser"  % "0.13.0",
-      "io.circe"          %%% "circe-generic" % "0.13.0"
+      "com.lihaoyi"       %%% "upickle"       % "3.3.1",
+      "com.typesafe.play" %%% "play-json"     % "3.0.4",
+      "io.circe"          %%% "circe-core"    % "0.14.9",
+      "io.circe"          %%% "circe-parser"  % "0.14.9",
+      "io.circe"          %%% "circe-generic" % "0.14.9"
     ),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
   )
@@ -196,20 +186,21 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
   .jsSettings(
 //    scalaJSOptimizerOptions in (Compile, fullOptJS) ~= { _.withUseClosureCompiler(false) },
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "1.0.0",
-      "com.lihaoyi"  %%% "scalatags"   % "0.8.6"
+      "org.scala-js" %%% "scalajs-dom" % "2.8.0",
+      "com.lihaoyi"  %%% "scalatags"   % "0.13.1"
     )
   )
+  .dependsOn(boopickle)
 
 
-lazy val perftestsJS = preventPublication(perftests.js)./*enablePlugins(WorkbenchPlugin).*/dependsOn(boopickleJS)
+lazy val perftestsJS = preventPublication(perftests.js).dependsOn(boopickle.js)
 
 lazy val perftestsJVM = preventPublication(perftests.jvm)
   .settings(
-    libraryDependencies += "io.circe" %% "circe-jawn" % "0.13.0"
+    libraryDependencies += "io.circe" %% "circe-jawn" % "0.14.9"
   )
-  .dependsOn(boopickleJVM)
+  .dependsOn(boopickle.jvm)
 
 lazy val booPickleRoot = preventPublication(project.in(file(".")))
   .settings(commonSettings)
-  .aggregate(boopickleJS, boopickleJVM, /*boopickleNative,*/ shapelessJS, shapelessJVM /*, shapelessNative*/)
+  .aggregate(boopickle.js, boopickle.jvm, boopickle.native, shapeless.js, shapeless.jvm, shapeless.native)

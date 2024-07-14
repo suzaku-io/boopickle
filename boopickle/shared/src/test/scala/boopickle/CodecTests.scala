@@ -86,8 +86,8 @@ object CodecTests extends TestSuite {
                            -1048577,
                            Int.MaxValue,
                            Int.MinValue,
-                           Int.MaxValue + 1,
-                           Int.MinValue - 1,
+                           Int.MaxValue.toLong + 1,
+                           Int.MinValue.toLong - 1,
                            Long.MaxValue,
                            Long.MinValue)
       runCodec[Long](data, (e, x) => { e.writeLong(x); () }, (d, x) => d.readLong == x)
