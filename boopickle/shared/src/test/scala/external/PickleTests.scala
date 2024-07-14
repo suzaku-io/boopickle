@@ -434,7 +434,7 @@ object PickleTests extends TestSuite {
         }
         "dupStrings" - {
           val bb = Pickle.intoBytes(Seq("test", "test", "test", "test"))
-          //assert(bb.limit() == 1 + 5 + 3 * 2) // seq length, first "test", 3x reference
+          // assert(bb.limit() == 1 + 5 + 3 * 2) // seq length, first "test", 3x reference
           assert(Unpickle[Seq[String]].fromBytes(bb) == Seq("test", "test", "test", "test"))
         }
         "longSeq" - {
@@ -532,8 +532,11 @@ object PickleTests extends TestSuite {
           val bb = Pickle.intoBytes(Array(Array(0, 0, 0), Array(1, 1, 1)))
           assert(bb.limit() == 4 + 7 + 7)
           assert(
-            java.util.Arrays.deepEquals(Unpickle[Array[Array[Int]]].fromBytes(bb).asInstanceOf[Array[Object]],
-                                        Array(Array(0, 0, 0), Array(1, 1, 1)).asInstanceOf[Array[Object]]))
+            java.util.Arrays.deepEquals(
+              Unpickle[Array[Array[Int]]].fromBytes(bb).asInstanceOf[Array[Object]],
+              Array(Array(0, 0, 0), Array(1, 1, 1)).asInstanceOf[Array[Object]]
+            )
+          )
         }
       }
       "ByteBuffer" - {
@@ -625,8 +628,8 @@ object PickleTests extends TestSuite {
     }
     "speedCodec" - {
       import boopickle.SpeedOriented._
-      //implicit def pstate = new PickleState(new EncoderSpeed)
-      //implicit def ustate = (b: ByteBuffer) =>  new UnpickleState(new DecoderSpeed(b))
+      // implicit def pstate = new PickleState(new EncoderSpeed)
+      // implicit def ustate = (b: ByteBuffer) =>  new UnpickleState(new DecoderSpeed(b))
       "Boolean" - {
         "true" - {
           val bb = Pickle.intoBytes(true)
@@ -1116,8 +1119,11 @@ object PickleTests extends TestSuite {
           val bb = Pickle.intoBytes(Array(Array(0, 0, 0), Array(1, 1, 1)))
           assert(bb.limit() == 4 + 4 + 4 * 3 + 4 + 4 * 3)
           assert(
-            java.util.Arrays.deepEquals(Unpickle[Array[Array[Int]]].fromBytes(bb).asInstanceOf[Array[Object]],
-                                        Array(Array(0, 0, 0), Array(1, 1, 1)).asInstanceOf[Array[Object]]))
+            java.util.Arrays.deepEquals(
+              Unpickle[Array[Array[Int]]].fromBytes(bb).asInstanceOf[Array[Object]],
+              Array(Array(0, 0, 0), Array(1, 1, 1)).asInstanceOf[Array[Object]]
+            )
+          )
         }
       }
       "ByteBuffer" - {

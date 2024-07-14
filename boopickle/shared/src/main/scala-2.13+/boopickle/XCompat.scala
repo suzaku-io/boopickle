@@ -8,8 +8,9 @@ import scala.collection.immutable.SeqMap
 trait XCompatImplicitPicklers1 {
   this: PicklerHelper =>
 
-  implicit def mapPickler[K: P, V: P, M[_, _] <: scala.collection.Map[_, _]](
-      implicit f: Factory[(K, V), M[K, V]]): P[M[K, V]] = BasicPicklers.MapPickler[K, V, M]
+  implicit def mapPickler[K: P, V: P, M[_, _] <: scala.collection.Map[_, _]](implicit
+      f: Factory[(K, V), M[K, V]]
+  ): P[M[K, V]] = BasicPicklers.MapPickler[K, V, M]
 
   implicit def iterablePickler[A: P, F[_] <: Iterable[_]](implicit cbf: Factory[A, F[A]]): P[F[A]] =
     BasicPicklers.IterablePickler[A, F]
@@ -28,8 +29,10 @@ trait XCompatPicklers {
   /**
     * This pickler works on all collections that derive from Iterable[A] (Vector, Set, List, etc)
     *
-    * @tparam A type of the values
-    * @tparam F type of the collection
+    * @tparam A
+    *   type of the values
+    * @tparam F
+    *   type of the collection
     * @return
     */
   def IterablePickler[A: P, F[_] <: Iterable[_]](implicit cbf: Factory[A, F[A]]): P[F[A]] = new P[F[A]] {

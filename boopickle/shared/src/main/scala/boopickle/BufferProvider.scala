@@ -5,10 +5,11 @@ import java.nio.{ByteBuffer, ByteOrder}
 trait BufferProvider {
 
   /**
-    * Makes sure the ByteBuffer has enough space for new data. If not, allocates a new ByteBuffer
-    * and returns it. The returned ByteBuffer must have little-endian ordering.
+    * Makes sure the ByteBuffer has enough space for new data. If not, allocates a new ByteBuffer and returns it. The
+    * returned ByteBuffer must have little-endian ordering.
     *
-    * @param size Number of bytes needed for new data
+    * @param size
+    *   Number of bytes needed for new data
     * @return
     */
   def alloc(size: Int): ByteBuffer

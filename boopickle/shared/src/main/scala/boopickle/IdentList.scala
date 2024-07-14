@@ -26,7 +26,8 @@ object EmptyIdentList extends IdentList {
 /**
   * A fast and simple linked list implementation for identifier list
   *
-  * @param o1 First object
+  * @param o1
+  *   First object
   */
 private[boopickle] final class IdentList1Plus(o1: AnyRef) extends IdentList {
   import boopickle.IdentList.Entry
@@ -64,7 +65,8 @@ private[boopickle] final class IdentList1Plus(o1: AnyRef) extends IdentList {
 /**
   * A more scalable implementation for an identifier list
   *
-  * @param first First entry in a list of entries
+  * @param first
+  *   First entry in a list of entries
   */
 private[boopickle] final class IdentListBig(first: IdentList.Entry, size: Int) extends IdentList {
   // transform the linked list into an array buffer

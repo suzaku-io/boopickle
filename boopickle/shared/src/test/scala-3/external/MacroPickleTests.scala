@@ -36,7 +36,7 @@ object MacroPickleTests extends TestSuite {
 
   object MyTrait {
     // a pickler for non-case classes cannot be automatically generated, so use the transform pickler
-    implicit val pickler3: Pickler[TT3]    = transformPickler[TT3, (Int, String)]((t) => new TT3(t._1, t._2))((t) => (t.i, t.s))
+    implicit val pickler3: Pickler[TT3] = transformPickler[TT3, (Int, String)]((t) => new TT3(t._1, t._2))((t) => (t.i, t.s))
     // implicit val pickler: Pickler[MyTrait] = generatePickler[MyTrait]
   }
 
@@ -90,7 +90,7 @@ object MacroPickleTests extends TestSuite {
         assert(u == s)
       }
       "Recursive" - {
-        val t = List(Test2(1, Some(Test2(2, Some(Test2(3, None))))))
+        val t  = List(Test2(1, Some(Test2(2, Some(Test2(3, None))))))
         val bb = Pickle.intoBytes(t)
         assert(bb.limit() == 13)
         val u = Unpickle[List[Test2]].fromBytes(bb)
@@ -103,21 +103,21 @@ object MacroPickleTests extends TestSuite {
         val u = Unpickle[TestO.type].fromBytes(bb)
         assert(u == TestO)
       }
-    //   "Trait" - {
-    //     // Scala 3 doesn't yet provide a Mirror for this case
-    //     val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
-    //     val bb              = Pickle.intoBytes(t)
-    //     val u               = Unpickle[Seq[MyTrait]].fromBytes(bb)
-    //     assert(u == t)
-    //   }
-    //   "TraitToo" - {
-    //     // Scala 3 doesn't yet provide a Mirror for this case
-    //     // the same test code twice, to check that additional .class files are not generated for the MyTrait pickler
-    //     val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
-    //     val bb              = Pickle.intoBytes(t)
-    //     val u               = Unpickle[Seq[MyTrait]].fromBytes(bb)
-    //     assert(u == t)
-    //   }
+      //   "Trait" - {
+      //     // Scala 3 doesn't yet provide a Mirror for this case
+      //     val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
+      //     val bb              = Pickle.intoBytes(t)
+      //     val u               = Unpickle[Seq[MyTrait]].fromBytes(bb)
+      //     assert(u == t)
+      //   }
+      //   "TraitToo" - {
+      //     // Scala 3 doesn't yet provide a Mirror for this case
+      //     // the same test code twice, to check that additional .class files are not generated for the MyTrait pickler
+      //     val t: Seq[MyTrait] = Seq(TT1(5), TT2("five", TT2("six", new TT3(42, "fortytwo"))))
+      //     val bb              = Pickle.intoBytes(t)
+      //     val u               = Unpickle[Seq[MyTrait]].fromBytes(bb)
+      //     assert(u == t)
+      //   }
       "AbstractClass" - {
         val t: Seq[AClass] = Seq(AB(5), AB(2))
         val bb             = Pickle.intoBytes(t)

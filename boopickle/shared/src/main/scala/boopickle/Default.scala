@@ -52,10 +52,14 @@ trait TransformPicklers {
     *
     * Note that parameters are in reversed order.
     *
-    * @param transformFrom Function that takes `B` and transforms it into `A`
-    * @param transformTo   Function that takes `A` and transforms it into `B`
-    * @tparam A Type of the original object
-    * @tparam B Type for the object used for pickling
+    * @param transformFrom
+    *   Function that takes `B` and transforms it into `A`
+    * @param transformTo
+    *   Function that takes `A` and transforms it into `B`
+    * @tparam A
+    *   Type of the original object
+    * @tparam B
+    *   Type for the object used for pickling
     */
   def transformPickler[A, B](transformFrom: (B) => A)(transformTo: (A) => B)(implicit p: Pickler[B]): Pickler[A] = {
     p.xmap(transformFrom)(transformTo)

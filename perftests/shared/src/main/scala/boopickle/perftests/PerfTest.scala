@@ -12,7 +12,8 @@ abstract class TestRunner[A](val data: A) {
   /**
     * Initialize runner, for example by encoding input data
     *
-    * @return Encoded bytes
+    * @return
+    *   Encoded bytes
     */
   def initialize: Array[Byte]
 

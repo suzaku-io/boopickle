@@ -4,8 +4,8 @@ import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
-  * Encodes a class belonging to a type hierarchy. Type is identified by the index in the `picklers` sequence, so care
-  * must be taken to ensure picklers are added in the same order.
+  * Encodes a class belonging to a type hierarchy. Type is identified by the index in the `picklers` sequence, so care must
+  * be taken to ensure picklers are added in the same order.
   */
 class CompositePickler[A] extends Pickler[A] {
 
@@ -54,9 +54,10 @@ class CompositePickler[A] extends Pickler[A] {
     this
   }
 
-  @noinline def addTransform[B <: A, C](transformTo: (B) => C, transformFrom: (C) => B)(
-      implicit p: Pickler[C],
-      tag: ClassTag[B]): CompositePickler[A] = {
+  @noinline def addTransform[B <: A, C](transformTo: (B) => C, transformFrom: (C) => B)(implicit
+      p: Pickler[C],
+      tag: ClassTag[B]
+  ): CompositePickler[A] = {
     val pickler = p.xmap(transformFrom)(transformTo)
     addPickler(pickler, tag)
     this
@@ -111,8 +112,8 @@ object ExceptionPickler {
     .addException[InterruptedException](m => new InterruptedException(m))
 
   /**
-    * Provides simple (message only) pickling of most common Java/Scala exception types. This can be used
-    * as a base for adding custom exception types.
+    * Provides simple (message only) pickling of most common Java/Scala exception types. This can be used as a base for
+    * adding custom exception types.
     */
   def base = CompositePickler[Throwable].join(basePicklers)
 }

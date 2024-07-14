@@ -9,10 +9,14 @@ object CodecTests extends TestSuite {
   /**
     * Helper function to run codec tests.
     *
-    * @param data Sequence of data
-    * @param w    Writer function
-    * @param r    Reader/comparison function
-    * @tparam T Data type
+    * @param data
+    *   Sequence of data
+    * @param w
+    *   Writer function
+    * @param r
+    *   Reader/comparison function
+    * @tparam T
+    *   Data type
     */
   def runCodec[T](data: Seq[T], w: (Encoder, T) => Unit, r: (Decoder, T) => Boolean) = {
     locally {
@@ -74,22 +78,24 @@ object CodecTests extends TestSuite {
     }
 
     "Long" - {
-      val data = Seq[Long](0,
-                           1,
-                           -1,
-                           -4096,
-                           -4097,
-                           4096,
-                           1048575,
-                           1048576,
-                           -1048576,
-                           -1048577,
-                           Int.MaxValue,
-                           Int.MinValue,
-                           Int.MaxValue.toLong + 1,
-                           Int.MinValue.toLong - 1,
-                           Long.MaxValue,
-                           Long.MinValue)
+      val data = Seq[Long](
+        0,
+        1,
+        -1,
+        -4096,
+        -4097,
+        4096,
+        1048575,
+        1048576,
+        -1048576,
+        -1048577,
+        Int.MaxValue,
+        Int.MinValue,
+        Int.MaxValue.toLong + 1,
+        Int.MinValue.toLong - 1,
+        Long.MaxValue,
+        Long.MinValue
+      )
       runCodec[Long](data, (e, x) => { e.writeLong(x); () }, (d, x) => d.readLong == x)
     }
 

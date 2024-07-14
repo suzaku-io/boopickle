@@ -58,9 +58,9 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
     * @return
     */
   def readIntCode: Either[Byte, Int] = {
-    val b = buf.get & 0xFF
+    val b = buf.get & 0xff
     if ((b & 0x80) != 0) {
-      Left((b & 0xF).toByte)
+      Left((b & 0xf).toByte)
     } else {
       Right(buf.getInt)
     }
@@ -72,9 +72,9 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
     * @return
     */
   def readLongCode: Either[Byte, Long] = {
-    val b = buf.get & 0xFF
+    val b = buf.get & 0xff
     if ((b & 0x80) != 0) {
-      Left((b & 0xF).toByte)
+      Left((b & 0xf).toByte)
     } else {
       Right(buf.getLong)
     }
@@ -108,7 +108,8 @@ class DecoderSpeed(val buf: ByteBuffer) extends Decoder {
   /**
     * Decodes a UTF-8 encoded string whose length is already known
     *
-    * @param len Length of the string (in bytes)
+    * @param len
+    *   Length of the string (in bytes)
     * @return
     */
   def readString(len: Int): String = {
@@ -185,7 +186,8 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
   /**
     * Encodes a single byte
     *
-    * @param b Byte to encode
+    * @param b
+    *   Byte to encode
     * @return
     */
   def writeByte(b: Byte): Encoder = {
@@ -196,7 +198,8 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
   /**
     * Encodes a single character using UTF-8 encoding
     *
-    * @param c Character to encode
+    * @param c
+    *   Character to encode
     * @return
     */
   def writeChar(c: Char): Encoder = {
@@ -215,7 +218,8 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
   /**
     * Encodes an integer
     *
-    * @param i Integer to encode
+    * @param i
+    *   Integer to encode
     */
   def writeInt(i: Int): Encoder = {
     alloc(4).putInt(i)
@@ -225,7 +229,8 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
   /**
     * Encodes an integer in 32-bits
     *
-    * @param i Integer to encode
+    * @param i
+    *   Integer to encode
     * @return
     */
   def writeRawInt(i: Int): Encoder = {
@@ -236,7 +241,8 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
   /**
     * Encodes a long
     *
-    * @param l Long to encode
+    * @param l
+    *   Long to encode
     */
   def writeLong(l: Long): Encoder = {
     alloc(8).putLong(l)
@@ -246,7 +252,8 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
   /**
     * Encodes a long in 64-bits
     *
-    * @param l Long to encode
+    * @param l
+    *   Long to encode
     * @return
     */
   def writeRawLong(l: Long): Encoder = {
@@ -257,7 +264,8 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
   /**
     * Writes either a code byte (0-15) or an Int
     *
-    * @param intCode Integer or a code byte
+    * @param intCode
+    *   Integer or a code byte
     */
   def writeIntCode(intCode: Either[Byte, Int]): Encoder = {
     intCode match {
@@ -272,7 +280,8 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
   /**
     * Writes either a code byte (0-15) or a Long
     *
-    * @param longCode Long or a code byte
+    * @param longCode
+    *   Long or a code byte
     */
   def writeLongCode(longCode: Either[Byte, Long]): Encoder = {
     longCode match {
@@ -287,7 +296,8 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
   /**
     * Encodes a string using UTF8
     *
-    * @param s String to encode
+    * @param s
+    *   String to encode
     * @return
     */
   def writeString(s: String): Encoder = {
@@ -300,7 +310,8 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
   /**
     * Encodes a float as 4 bytes
     *
-    * @param f Float to encode
+    * @param f
+    *   Float to encode
     * @return
     */
   def writeFloat(f: Float): Encoder = {
@@ -311,7 +322,8 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
   /**
     * Encodes a double as 8 bytes
     *
-    * @param d Double to encode
+    * @param d
+    *   Double to encode
     * @return
     */
   def writeDouble(d: Double): Encoder = {
@@ -322,7 +334,8 @@ class EncoderSpeed(bufferProvider: BufferProvider = DefaultByteBufferProvider.pr
   /**
     * Encodes a ByteBuffer by writing its length and content
     *
-    * @param bb ByteBuffer to encode
+    * @param bb
+    *   ByteBuffer to encode
     * @return
     */
   def writeByteBuffer(bb: ByteBuffer): Encoder = {
