@@ -2,6 +2,8 @@ import sbt._
 import Keys._
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
+ThisBuild / scalaVersion := "2.13.14"
+
 ThisBuild / scalafmtOnCompile := scalaVersion.value.startsWith("2")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
@@ -19,10 +21,9 @@ def addDirsFor213_+(scope: ConfigKey): Def.Initialize[Seq[File]] = Def.setting {
 }
 
 val commonSettings = Seq(
-  organization             := "io.suzaku",
-  version                  := Version.library,
-  ThisBuild / scalaVersion := "2.13.14",
-  crossScalaVersions       := Seq("2.12.19", "2.13.14", "3.3.3"),
+  organization       := "io.suzaku",
+  version            := Version.library,
+  crossScalaVersions := Seq("2.12.19", "2.13.14", "3.3.3"),
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding",
@@ -95,8 +96,7 @@ def sourceMapsToGithub: Project => Project =
       }
     )
 
-def preventPublication(p: Project) =
-  p.settings(publish / skip := true)
+lazy val preventPublicationSettings = Seq(publish / skip := true)
 
 def onlyScala2(p: Project) = {
   def clearWhenDisabled[A](key: SettingKey[Seq[A]]) =
@@ -169,19 +169,36 @@ trait TuplePicklers extends PicklerHelper {
 lazy val perftests = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
-    name         := "perftests",
-    scalaVersion := "2.13.14",
-    scalacOptions ++= Seq("-Xstrict-inference"),
+    name := "perftests",
     libraryDependencies ++= Seq(
       "com.lihaoyi"       %%% "upickle"       % "3.3.1",
-      "com.typesafe.play" %%% "play-json"     % "3.0.4",
+      "org.playframework" %%% "play-json"     % "3.0.4",
       "io.circe"          %%% "circe-core"    % "0.14.9",
       "io.circe"          %%% "circe-parser"  % "0.14.9",
       "io.circe"          %%% "circe-generic" % "0.14.9"
     ),
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
+    preventPublicationSettings
+  )
+  .settings(
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 12)) =>
+          Seq(compilerPlugin(("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)))
+        case _ =>
+          Seq.empty
+      }
+    },
+    Compile / scalacOptions ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 13)) => Seq("-Ymacro-annotations")
+        case _             => Seq.empty
+      }
+    }
   )
   .enablePlugins(JmhPlugin)
+  .jvmSettings(
+    libraryDependencies += "io.circe" %% "circe-jawn" % "0.14.9"
+  )
   .jsSettings(
 //    scalaJSOptimizerOptions in (Compile, fullOptJS) ~= { _.withUseClosureCompiler(false) },
     libraryDependencies ++= Seq(
@@ -191,14 +208,8 @@ lazy val perftests = crossProject(JSPlatform, JVMPlatform)
   )
   .dependsOn(boopickle)
 
-lazy val perftestsJS = preventPublication(perftests.js).dependsOn(boopickle.js)
-
-lazy val perftestsJVM = preventPublication(perftests.jvm)
-  .settings(
-    libraryDependencies += "io.circe" %% "circe-jawn" % "0.14.9"
-  )
-  .dependsOn(boopickle.jvm)
-
-lazy val booPickleRoot = preventPublication(project.in(file(".")))
+lazy val booPickleRoot = project
+  .in(file("."))
   .settings(commonSettings)
+  .settings(preventPublicationSettings)
   .aggregate(boopickle.js, boopickle.jvm, boopickle.native, shapeless.js, shapeless.jvm, shapeless.native)
