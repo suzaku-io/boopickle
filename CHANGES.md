@@ -1,5 +1,10 @@
 # Changes
 
+## 1.5.0
+- Restore scala native support
+- Upgrade multiple libraries to their latest versions
+- Setup scalafmt
+
 ## 1.4.0
 - Add Scala 3 support
   - Due to https://github.com/lampepfl/dotty/pull/11686 Pickler derivation doesn't yet work with nested `sealed trait`s
