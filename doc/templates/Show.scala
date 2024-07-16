@@ -10,7 +10,7 @@ private def printByteBuffer(bb: ByteBuffer): List[String] = {
   val data = Array.ofDim[Byte](bb.remaining())
   bb.duplicate().get(data)
   data.grouped(16).toList.map { d =>
-    val hex = d.map(c => "%02X " format (c & 0xFF)).mkString
+    val hex = d.map(c => "%02X " format (c & 0xff)).mkString
     val str = d
       .collect {
         case ascii if ascii >= 0x20 && ascii < 0x80 => ascii

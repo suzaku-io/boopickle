@@ -16,7 +16,7 @@ object PicklerMaterializersImpl {
 
     Expr.summon[Mirror.Of[A]] match {
       case Some('{ $p: Mirror.ProductOf[A] }) => deriveProduct[A](p)
-      case Some('{ $s: Mirror.SumOf[A]     }) => deriveSum[A](s)
+      case Some('{ $s: Mirror.SumOf[A] })     => deriveSum[A](s)
       case _                                  => deriveOther[A]
     }
   }
@@ -26,27 +26,24 @@ object PicklerMaterializersImpl {
 
     m match {
 
-      case '{ $x: Mirror.ProductOf[A] { type MirroredElemTypes = EmptyTuple }} =>
+      case '{ $x: Mirror.ProductOf[A] { type MirroredElemTypes = EmptyTuple } } =>
         val a = '{ $x.fromProduct(EmptyTuple) }
         '{ ConstPickler($a) }
 
-      case '{ $x: Mirror.ProductOf[A] { type MirroredElemTypes = t *: EmptyTuple }} =>
+      case '{ $x: Mirror.ProductOf[A] { type MirroredElemTypes = t *: EmptyTuple } } =>
         val pickler = exprSummonLater[Pickler[t]]
-        '{ $pickler.xmap[A](
-              v => $x.fromProduct(Tuple1(v)))(
-              a => a.asInstanceOf[Product].productElement(0).asInstanceOf[t])
-        }
+        '{ $pickler.xmap[A](v => $x.fromProduct(Tuple1(v)))(a => a.asInstanceOf[Product].productElement(0).asInstanceOf[t]) }
 
-      case '{ type p <: AnyRef; type t <: Tuple; $x: Mirror.ProductOf[`p`] { type MirroredElemTypes = `t` }} =>
-        lazy val picklerExprs = summonAllPicklers[t]
-        lazy val picklers = Expr.ofList(picklerExprs)
+      case '{ type p <: AnyRef; type t <: Tuple; $x: Mirror.ProductOf[`p`] { type MirroredElemTypes = `t` } } =>
+        lazy val picklerExprs        = summonAllPicklers[t]
+        lazy val picklers            = Expr.ofList(picklerExprs)
         val result: Expr[Pickler[p]] = '{ deriveAnyRefProduct[p]($x, $picklers) }
         result.asInstanceOf[Expr[Pickler[A]]]
     }
   }
 
   def deriveAnyRefProduct[A <: AnyRef](m: Mirror.ProductOf[A], _picklers: => List[Pickler[_]]): Pickler[A] = {
-    lazy val picklers = _picklers.asInstanceOf[List[Pickler[Any]]]
+    lazy val picklers     = _picklers.asInstanceOf[List[Pickler[Any]]]
     lazy val picklerCount = picklers.size
     new Pickler[A] {
       override def pickle(value: A)(implicit state: PickleState): Unit = {
@@ -88,19 +85,19 @@ object PicklerMaterializersImpl {
 
     def fields[T <: Tuple](using Type[T]): List[Expr[(Pickler[_], ClassTag[_])]] = {
       Type.of[T] match {
-        case '[ h *: tail ] =>
-          val p = exprSummonLater[Pickler [h]]
+        case '[h *: tail] =>
+          val p = exprSummonLater[Pickler[h]]
           val c = exprSummonLater[ClassTag[h]]
           '{ ($p, $c) } :: fields[tail]
-        case '[ EmptyTuple ] =>
+        case '[EmptyTuple] =>
           Nil
       }
     }
 
     m match {
-      case '{ type t <: Tuple; $x: Mirror.SumOf[A] { type MirroredElemTypes = `t` }} =>
+      case '{ type t <: Tuple; $x: Mirror.SumOf[A] { type MirroredElemTypes = `t` } } =>
         val fs = fields[t]
-        val e = '{ sumTypeHack[A](${ Expr.ofList(fs) }) }
+        val e  = '{ sumTypeHack[A](${ Expr.ofList(fs) }) }
         inlineExpr(e)
     }
   }
@@ -124,16 +121,16 @@ object PicklerMaterializersImpl {
         (sym.caseFields, sym.companionModule.memberMethod("apply")) match {
           case (field :: Nil, apply :: Nil) =>
             TypeRepr.of[A].memberType(field).asType match {
-              case '[ t ] =>
+              case '[t] =>
                 lazy val pickler = exprSummonLater[Pickler[t]]
                 apply.tree match {
                   case DefDef(_, (p :: Nil) :: Nil, _, _) =>
-                    def build(e: Expr[t]): Expr[A] = Apply(Ref(apply), e.asTerm :: Nil).asExprOf[A]
+                    def build(e: Expr[t]): Expr[A]  = Apply(Ref(apply), e.asTerm :: Nil).asExprOf[A]
                     def access(e: Expr[A]): Expr[t] = Select(e.asTerm, field).asExprOf[t]
-                    return '{ $pickler.xmap[A](b => ${build('b)})(a => ${access('a)}) }
+                    return '{ $pickler.xmap[A](b => ${ build('b) })(a => ${ access('a) }) }
                   case _ =>
                 }
-              }
+            }
           case _ =>
         }
       case _ =>
@@ -155,8 +152,8 @@ object PicklerMaterializersImpl {
   def summonAllPicklers[A <: Tuple](using Quotes, Type[A]): List[Expr[Pickler[_]]] = {
     import quotes.reflect._
     Type.of[A] match {
-      case '[ EmptyTuple ] => Nil
-      case '[ a *: as ] => exprSummonLater[Pickler[a]] :: summonAllPicklers[as]
+      case '[EmptyTuple] => Nil
+      case '[a *: as]    => exprSummonLater[Pickler[a]] :: summonAllPicklers[as]
     }
   }
 

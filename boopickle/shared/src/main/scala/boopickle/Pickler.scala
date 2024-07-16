@@ -296,7 +296,8 @@ object BasicPicklers extends PicklerHelper with XCompatPicklers {
   /**
     * Specific pickler for Arrays
     *
-    * @tparam T Type of values
+    * @tparam T
+    *   Type of values
     * @return
     */
   def ArrayPickler[T: P: ClassTag]: P[Array[T]] = new P[Array[T]] {
@@ -362,18 +363,19 @@ object BasicPicklers extends PicklerHelper with XCompatPicklers {
 /**
   * Manage state for a pickling "session".
   *
-  * @param enc            Encoder instance to use
-  * @param deduplicate    Set to `false` if you want to disable deduplication
-  * @param dedupImmutable Set to `false` if you want to disable deduplication of immutable values (like Strings)
+  * @param enc
+  *   Encoder instance to use
+  * @param deduplicate
+  *   Set to `false` if you want to disable deduplication
+  * @param dedupImmutable
+  *   Set to `false` if you want to disable deduplication of immutable values (like Strings)
   */
 final class PickleState(val enc: Encoder, deduplicate: Boolean = true, dedupImmutable: Boolean = true) {
 
   /**
     * Object reference for pickled objects (use identity for equality comparison)
     *
-    * Index 0 is not used
-    * Index 1 = null
-    * Index 2-n, references to pickled objects
+    * Index 0 is not used Index 1 = null Index 2-n, references to pickled objects
     */
   private[this] var identityRefs: IdentMap = EmptyIdentMap
 
@@ -440,18 +442,19 @@ object PickleState {
 /**
   * Manage state for an unpickling "session"
   *
-  * @param dec            Decoder instance to use
-  * @param deduplicate    Set to `false` if you want to disable deduplication
-  * @param dedupImmutable Set to `false` if you want to disable deduplication of immutable values (like Strings)
+  * @param dec
+  *   Decoder instance to use
+  * @param deduplicate
+  *   Set to `false` if you want to disable deduplication
+  * @param dedupImmutable
+  *   Set to `false` if you want to disable deduplication of immutable values (like Strings)
   */
 final class UnpickleState(val dec: Decoder, deduplicate: Boolean = true, dedupImmutable: Boolean = true) {
 
   /**
     * Object reference for pickled objects (use identity for equality comparison)
     *
-    * Index 0 is not used
-    * Index 1 = null
-    * Index 2-n, references to pickled objects
+    * Index 0 is not used Index 1 = null Index 2-n, references to pickled objects
     */
   private[this] var identityRefs: IdentList = EmptyIdentList
 

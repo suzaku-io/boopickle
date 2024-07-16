@@ -122,7 +122,8 @@ object PicklerMaterializersImpl {
     if (!sym.isCaseClass) {
       c.error(
         c.enclosingPosition,
-        s"Cannot materialize pickler for non-case class: $tpe. If this is a collection, the error can refer to the class inside.")
+        s"Cannot materialize pickler for non-case class: $tpe. If this is a collection, the error can refer to the class inside."
+      )
       return c.Expr[Pickler[T]](q"null")
     }
 

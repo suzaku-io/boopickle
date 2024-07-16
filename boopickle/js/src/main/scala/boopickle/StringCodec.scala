@@ -30,15 +30,13 @@ object StringCodec extends StringCodecBase {
   private lazy val utf8decoder: (Int8Array) => String = {
     val td = new TextDecoder
     // use native TextDecoder
-    (data: Int8Array) =>
-      td.decode(data)
+    (data: Int8Array) => td.decode(data)
   }
 
   private lazy val utf8encoder: (String) => Int8Array = {
     val te = new TextEncoder
     // use native TextEncoder
-    (str: String) =>
-      new Int8Array(te.encode(str).buffer)
+    (str: String) => new Int8Array(te.encode(str).buffer)
   }
 
   private lazy val utf16decoder: (Uint16Array) => String = {
@@ -103,7 +101,7 @@ object StringCodec extends StringCodecBase {
       val ta = new Uint16Array(buf.typedArray().buffer, buf.position() + buf.typedArray().byteOffset, len / 2)
       buf.position(buf.position() + len)
       utf16decoder(ta)
-      //new String(ta.toArray) // alt implementation
+      // new String(ta.toArray) // alt implementation
     } else {
       val a = new Array[Byte](len)
       buf.get(a)
@@ -149,12 +147,12 @@ object StringCodec extends StringCodecBase {
         buf(dst) = c.toByte
         dst += 1
       } else if (c < 0x4000) {
-        buf(dst) = (0x80 | (c & 0x3F)).toByte
-        buf(dst + 1) = (c >> 6 & 0xFF).toByte
+        buf(dst) = (0x80 | (c & 0x3f)).toByte
+        buf(dst + 1) = (c >> 6 & 0xff).toByte
         dst += 2
       } else {
-        buf(dst) = (0xC0 | (c & 0x3F)).toByte
-        buf(dst + 1) = (c >> 6 & 0xFF).toByte
+        buf(dst) = (0xc0 | (c & 0x3f)).toByte
+        buf(dst + 1) = (c >> 6 & 0xff).toByte
         buf(dst + 2) = (c >> 14).toByte
         dst += 3
       }
@@ -176,19 +174,19 @@ object StringCodec extends StringCodecBase {
     var offset = buf.position()
     var dst    = 0
     while (dst < len) {
-      val b = src(offset) & 0xFF
+      val b = src(offset) & 0xff
       offset += 1
       if ((b & 0x80) == 0) {
         cp(dst) = b
-      } else if ((b & 0xC0) == 0x80) {
-        val b1 = src(offset) & 0xFF
+      } else if ((b & 0xc0) == 0x80) {
+        val b1 = src(offset) & 0xff
         offset += 1
-        cp(dst) = b & 0x3F | b1 << 6
+        cp(dst) = b & 0x3f | b1 << 6
       } else {
-        val b1 = src(offset) & 0xFF
-        val b2 = src(offset + 1) & 0xFF
+        val b1 = src(offset) & 0xff
+        val b2 = src(offset + 1) & 0xff
         offset += 2
-        cp(dst) = b & 0x3F | b1 << 6 | b2 << 14
+        cp(dst) = b & 0x3f | b1 << 6 | b2 << 14
       }
       dst += 1
     }

@@ -40,8 +40,10 @@ trait ShapelessPicklers extends TransformPicklers {
     transformPickler[Inr[A, B], B](a => Inr(a))(_.tail)(bp.value)
   }
 
-  implicit def coproductPickler[A: ClassTag, B <: Coproduct: ClassTag](implicit ap: Lazy[Pickler[A]],
-                                                                       bp: Lazy[Pickler[B]]): Pickler[A :+: B] = {
+  implicit def coproductPickler[A: ClassTag, B <: Coproduct: ClassTag](implicit
+      ap: Lazy[Pickler[A]],
+      bp: Lazy[Pickler[B]]
+  ): Pickler[A :+: B] = {
     CompositePickler[A :+: B].addConcreteType[Inl[A, B]].addConcreteType[Inr[A, B]]
   }
 

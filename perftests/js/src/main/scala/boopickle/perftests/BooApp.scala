@@ -30,7 +30,8 @@ object BooApp {
       val header = s"${1 + Tests.suites.size - suites.size}/${Tests.suites.size} : ${suite.name}"
       resView.innerHTML = resView.innerHTML + header + "\n"
       resView.innerHTML = resView.innerHTML + "=" * header.length + "\n"
-      resView.innerHTML = resView.innerHTML + f"${"Library"}%-10s ${"ops/s"}%-10s ${"%"}%-10s ${"size"}%-10s ${"%"}%-10s ${"size.gz"}%-10s ${"%"}%-10s" + "\n"
+      resView.innerHTML =
+        resView.innerHTML + f"${"Library"}%-10s ${"ops/s"}%-10s ${"%"}%-10s ${"size"}%-10s ${"%"}%-10s ${"size.gz"}%-10s ${"%"}%-10s" + "\n"
       val tester = new PerfTester(suite)
       val res    = tester.runSuite
       // zip result data to see how small it gets
@@ -43,7 +44,8 @@ object BooApp {
       val minSize   = resSizes.map(_._2).min
       val minGZSize = resSizes.map(_._3).min
       resSizes.foreach { r =>
-        resView.innerHTML = resView.innerHTML + f"${r._1.name}%-10s ${r._1.count}%-10d ${f"${r._1.count * 100.0 / maxCount}%.1f%%"}%-10s ${r._2}%-10d ${f"${r._2 * 100.0 / minSize}%.0f%%"}%-10s ${r._3}%-10d ${f"${r._3 * 100.0 / minGZSize}%.0f%%"}%-10s" + "\n"
+        resView.innerHTML =
+          resView.innerHTML + f"${r._1.name}%-10s ${r._1.count}%-10d ${f"${r._1.count * 100.0 / maxCount}%.1f%%"}%-10s ${r._2}%-10d ${f"${r._2 * 100.0 / minSize}%.0f%%"}%-10s ${r._3}%-10d ${f"${r._3 * 100.0 / minGZSize}%.0f%%"}%-10s" + "\n"
       }
       resView.innerHTML = resView.innerHTML + "\n"
       if (suites.tail.nonEmpty)

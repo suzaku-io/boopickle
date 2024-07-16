@@ -19,8 +19,8 @@ object StringCodecTests extends TestSuite {
       val bufs  = sizes.map(createBB)
 
       val strings = bufs.map(b => Unpickle[String].fromBytes(b))
-      sizes.zip(strings).foreach {
-        case (size, str) => assert(str.length == size)
+      sizes.zip(strings).foreach { case (size, str) =>
+        assert(str.length == size)
       }
     }
   }

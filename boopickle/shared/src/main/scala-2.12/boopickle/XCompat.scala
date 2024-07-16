@@ -9,8 +9,9 @@ import scala.language.higherKinds
 trait XCompatImplicitPicklers {
   this: PicklerHelper =>
 
-  implicit def mapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]](
-      implicit cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): P[V[T, S]] =
+  implicit def mapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]](implicit
+      cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]
+  ): P[V[T, S]] =
     BasicPicklers.MapPickler[T, S, V]
   implicit def iterablePickler[T: P, V[_] <: Iterable[_]](implicit cbf: CanBuildFrom[Nothing, T, V[T]]): P[V[T]] =
     BasicPicklers.IterablePickler[T, V]
@@ -22,8 +23,10 @@ trait XCompatPicklers {
   /**
     * This pickler works on all collections that derive from Iterable[T] (Vector, Set, List, etc)
     *
-    * @tparam T type of the values
-    * @tparam V type of the collection
+    * @tparam T
+    *   type of the values
+    * @tparam V
+    *   type of the collection
     * @return
     */
   def IterablePickler[T: P, V[_] <: Iterable[_]](implicit cbf: CanBuildFrom[Nothing, T, V[T]]): P[V[T]] = new P[V[T]] {
@@ -63,12 +66,15 @@ trait XCompatPicklers {
   /**
     * Maps require a specific pickler as they have two type parameters.
     *
-    * @tparam T Type of keys
-    * @tparam S Type of values
+    * @tparam T
+    *   Type of keys
+    * @tparam S
+    *   Type of values
     * @return
     */
-  def MapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]](
-      implicit cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]): P[V[T, S]] =
+  def MapPickler[T: P, S: P, V[_, _] <: scala.collection.Map[_, _]](implicit
+      cbf: CanBuildFrom[Nothing, (T, S), V[T, S]]
+  ): P[V[T, S]] =
     new P[V[T, S]] {
       override def pickle(map: V[T, S])(implicit state: PickleState): Unit = {
         if (map == null) {

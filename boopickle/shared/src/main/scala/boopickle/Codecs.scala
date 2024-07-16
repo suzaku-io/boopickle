@@ -6,13 +6,11 @@ trait Decoder {
 
   /**
     * Decodes a single byte
-    *
     */
   def readByte: Byte
 
   /**
     * Decodes a UTF-8 encoded character (1-3 bytes) and produces a single UTF-16 character
-    *
     */
   def readChar: Char
 
@@ -52,20 +50,19 @@ trait Decoder {
 
   /**
     * Decodes a 64-bit double (8 bytes)
-    *
     */
   def readDouble: Double
 
   /**
     * Decodes a string
-    *
     */
   def readString: String
 
   /**
     * Decodes a string whose length is already known
     *
-    * @param len Length of the string (in bytes)
+    * @param len
+    *   Length of the string (in bytes)
     */
   def readString(len: Int): String
 
@@ -104,14 +101,16 @@ trait Encoder {
   /**
     * Encodes a single byte
     *
-    * @param b Byte to encode
+    * @param b
+    *   Byte to encode
     */
   def writeByte(b: Byte): Encoder
 
   /**
     * Encodes a single character using UTF-8 encoding
     *
-    * @param c Character to encode
+    * @param c
+    *   Character to encode
     */
   def writeChar(c: Char): Encoder
 
@@ -128,63 +127,72 @@ trait Encoder {
   /**
     * Encodes an integer in 32-bits
     *
-    * @param i Integer to encode
+    * @param i
+    *   Integer to encode
     */
   def writeRawInt(i: Int): Encoder
 
   /**
     * Encodes a long
     *
-    * @param l Long to encode
+    * @param l
+    *   Long to encode
     */
   def writeLong(l: Long): Encoder
 
   /**
     * Encodes a long in 64-bits
     *
-    * @param l Long to encode
+    * @param l
+    *   Long to encode
     */
   def writeRawLong(l: Long): Encoder
 
   /**
     * Writes either a code byte (0-15) or an Int
     *
-    * @param intCode Integer or a code byte
+    * @param intCode
+    *   Integer or a code byte
     */
   def writeIntCode(intCode: Either[Byte, Int]): Encoder
 
   /**
     * Writes either a code byte (0-15) or a Long
     *
-    * @param longCode Long or a code byte
+    * @param longCode
+    *   Long or a code byte
     */
   def writeLongCode(longCode: Either[Byte, Long]): Encoder
 
   /**
     * Encodes a string
     *
-    * @param s String to encode
+    * @param s
+    *   String to encode
     */
   def writeString(s: String): Encoder
 
   /**
     * Encodes a float as 4 bytes
     *
-    * @param f Float to encode
+    * @param f
+    *   Float to encode
     */
   def writeFloat(f: Float): Encoder
 
   /**
     * Encodes a double as 8 bytes
     *
-    * @param d Double to encode
+    * @param d
+    *   Double to encode
     */
   def writeDouble(d: Double): Encoder
 
   /**
     * Encodes a ByteBuffer by writing its length and content
     *
-    * @param bb ByteBuffer to encode
+    * @param bb
+    *   ByteBuffer to encode
     */
   def writeByteBuffer(bb: ByteBuffer): Encoder
 
