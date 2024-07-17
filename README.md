@@ -6,7 +6,7 @@
 [![Scala.js](https://www.scala-js.org/assets/badges/scalajs-1.0.0.svg)](http://www.scala-js.org)
 
 BooPickle is the [fastest](http://ochrons.github.io/boopickle-perftest/) and most size efficient serialization (aka pickling) library that works on both Scala
-and [Scala.js](http://www.scala-js.org). It encodes into a binary format instead of the more customary JSON. A binary format brings efficiency 
+and [Scala.js](http://www.scala-js.org). It encodes into a binary format instead of the more customary JSON. A binary format brings efficiency
 gains in both size and speed, at the cost of legibility of the encoded data. BooPickle borrows heavily from both [uPickle](https://github.com/lihaoyi/upickle-pprint)
 and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li Haoyi and Ben Hutchison for those two great libraries!
 
@@ -26,16 +26,16 @@ and [Prickle](https://github.com/benhutchison/prickle) so special thanks to Li H
 
 ## Getting started
 
-Add following dependency declaration to your Scala project 
+Add following dependency declaration to your Scala project
 
 ```scala
-"io.suzaku" %% "boopickle" % "1.4.0"
+"io.suzaku" %% "boopickle" % "1.5.0-M1"
 ```
 
 On a Scala.js / Scala Native project the dependency looks like this
 
 ```scala
-"io.suzaku" %%% "boopickle" % "1.4.0"
+"io.suzaku" %%% "boopickle" % "1.5.0-M1"
 ```
 
 To use it in your code, simply import the Default object contents. All examples in this document assume this import is present.
