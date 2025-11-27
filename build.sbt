@@ -2,7 +2,7 @@ import sbt._
 import Keys._
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
-ThisBuild / scalaVersion := "2.13.14"
+ThisBuild / scalaVersion := "2.13.18"
 
 ThisBuild / scalafmtOnCompile := scalaVersion.value.startsWith("2")
 
@@ -23,7 +23,7 @@ def addDirsFor213_+(scope: ConfigKey): Def.Initialize[Seq[File]] = Def.setting {
 val commonSettings = Seq(
   organization       := "io.suzaku",
   version            := Version.library,
-  crossScalaVersions := Seq("2.12.19", "2.13.14", "3.3.3"),
+  crossScalaVersions := Seq("2.12.19", "2.13.18", "3.3.3"),
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding",
