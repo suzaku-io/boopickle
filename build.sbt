@@ -128,7 +128,7 @@ lazy val shapeless = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     name := "boopickle-shapeless",
     libraryDependencies ++= Seq(
-      "com.chuusai" %%% "shapeless" % "2.3.12"
+      "com.chuusai" %%% "shapeless" % "2.3.13"
     )
   )
   .jsConfigure(sourceMapsToGithub)
