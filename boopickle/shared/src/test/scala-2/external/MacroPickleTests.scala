@@ -176,6 +176,49 @@ object MacroPickleTests extends TestSuite {
         val u                              = Unpickle[MultiT[Int, Double, String]].fromBytes(bb)
         assert(x == u)
       }
+      "ArrayDoubleCaseClass" - {
+        import boopickle.Default._
+        final case class Probe(a: Array[Double], b: Array[Double])
+        object Probe {
+          implicit val pickler: Pickler[Probe] = generatePickler[Probe]
+        }
+
+        "both non-empty" - {
+          val original = Probe(
+            a = Array(1.0, 2.0),
+            b = Array(3.0, 4.0)
+          )
+          val bb = Pickle.intoBytes(original)
+          val u  = Unpickle[Probe].fromBytes(bb)
+
+          assert(u.a.sameElements(original.a))
+          assert(u.b.sameElements(original.b))
+        }
+
+        "leading non-empty" - {
+          val original = Probe(
+            a = Array(1.0, 2.0),
+            b = Array.emptyDoubleArray
+          )
+          val bb = Pickle.intoBytes(original)
+          val u  = Unpickle[Probe].fromBytes(bb)
+
+          assert(u.a.sameElements(original.a))
+          assert(u.b.sameElements(original.b))
+        }
+
+        "trailing non-empty" - {
+          val original = Probe(
+            a = Array.emptyDoubleArray,
+            b = Array(3.0, 4.0)
+          )
+          val bb = Pickle.intoBytes(original)
+          val u  = Unpickle[Probe].fromBytes(bb)
+
+          assert(u.a.sameElements(original.a))
+          assert(u.b.sameElements(original.b))
+        }
+      }
     }
   }
 }

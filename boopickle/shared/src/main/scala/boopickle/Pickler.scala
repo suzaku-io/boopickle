@@ -326,14 +326,29 @@ object BasicPicklers extends PicklerHelper with XCompatPicklers {
     }
 
     override def unpickle(implicit state: UnpickleState): Array[T] = {
-      state.dec.readRawInt match {
+      val ct  = implicitly[ClassTag[T]]
+      val len = state.dec.readRawInt
+
+      len match {
         case NullRef =>
           null
+
+        case _ if ct == ClassTag.Double =>
+          // Double arrays have an extra padding word for alignment.
+          // Consume it even when the array is empty, otherwise the decoder
+          // gets out of sync for the following fields.
+          state.dec.readRawInt
+          if (len == 0)
+            Array.emptyDoubleArray.asInstanceOf[Array[T]]
+          else
+            state.dec.readDoubleArray(len).asInstanceOf[Array[T]]
+
         case 0 =>
           // empty Array
           Array.empty[T]
-        case len =>
-          val r = implicitly[ClassTag[T]] match {
+
+        case _ =>
+          ct match {
             // handle specialization
             case ClassTag.Byte =>
               state.dec.readByteArray(len).asInstanceOf[Array[T]]
@@ -341,10 +356,6 @@ object BasicPicklers extends PicklerHelper with XCompatPicklers {
               state.dec.readIntArray(len).asInstanceOf[Array[T]]
             case ClassTag.Float =>
               state.dec.readFloatArray(len).asInstanceOf[Array[T]]
-            case ClassTag.Double =>
-              // remove padding
-              state.dec.readRawInt
-              state.dec.readDoubleArray(len).asInstanceOf[Array[T]]
             case _ =>
               val a = new Array[T](len)
               var i = 0
@@ -354,7 +365,6 @@ object BasicPicklers extends PicklerHelper with XCompatPicklers {
               }
               a
           }
-          r
       }
     }
   }
