@@ -15,7 +15,7 @@ jobs:
           - java: 14
             scala: 2.13.14
           - java: 8
-            scala: 3.3.3
+            scala: 3.3.8
 
     steps:
 
