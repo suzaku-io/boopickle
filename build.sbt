@@ -23,7 +23,7 @@ def addDirsFor213_+(scope: ConfigKey): Def.Initialize[Seq[File]] = Def.setting {
 val commonSettings = Seq(
   organization       := "io.suzaku",
   version            := Version.library,
-  crossScalaVersions := Seq("2.12.19", "2.13.14", "3.3.3"),
+  crossScalaVersions := Seq("2.12.19", "2.13.14", "3.3.8"),
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding",
